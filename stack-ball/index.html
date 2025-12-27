@@ -2,12 +2,14 @@
 <html>
 <head>
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+  <title>Stack Ball</title>
   <style>
     * { margin: 0; padding: 0; box-sizing: border-box; }
     body { 
       overflow: hidden; 
       touch-action: none;
       font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+      background: #1a1a2e;
     }
     #ui {
       position: absolute;
@@ -28,10 +30,10 @@
     }
     #combo {
       position: absolute;
-      top: 40%;
+      top: 35%;
       left: 50%;
       transform: translate(-50%, -50%);
-      font-size: 100px;
+      font-size: 90px;
       font-weight: 900;
       color: #FF6B35;
       text-shadow: 0 0 60px #FF6B35, 0 0 120px #FF6B35;
@@ -118,6 +120,7 @@
       color: white;
       box-shadow: 0 15px 50px rgba(102,126,234,0.5);
     }
+    /* Progress bar on right side */
     #progress {
       position: absolute;
       right: 20px;
@@ -138,10 +141,40 @@
       transition: height 0.3s;
       height: 0%;
     }
+    /* Invincibility indicator bar on left side */
+    #invincibilityBar {
+      position: absolute;
+      left: 20px;
+      top: 50%;
+      transform: translateY(-50%);
+      width: 8px;
+      height: 150px;
+      background: rgba(255,255,255,0.15);
+      border-radius: 4px;
+      z-index: 10;
+      opacity: 0;
+      transition: opacity 0.3s;
+    }
+    #invincibilityBar.visible {
+      opacity: 1;
+    }
+    #invincibilityFill {
+      position: absolute;
+      bottom: 0;
+      width: 100%;
+      background: linear-gradient(to top, #4ECDC4, #44E5E7);
+      border-radius: 4px;
+      transition: height 0.15s, background 0.3s;
+      height: 0%;
+    }
+    #invincibilityBar.invincible #invincibilityFill {
+      background: linear-gradient(to top, #FF6B35, #FFD93D);
+      box-shadow: 0 0 20px #FF6B35;
+    }
     #fireOverlay {
       position: absolute;
       top: 0; left: 0; right: 0; bottom: 0;
-      background: radial-gradient(circle at 50% 60%, rgba(255,100,0,0.3) 0%, transparent 50%);
+      background: radial-gradient(circle at 50% 60%, rgba(255,100,0,0.25) 0%, transparent 50%);
       pointer-events: none;
       opacity: 0;
       transition: opacity 0.2s;
@@ -158,6 +191,7 @@
   </div>
   <div id="combo"></div>
   <div id="progress"><div id="progressBar"></div></div>
+  <div id="invincibilityBar"><div id="invincibilityFill"></div></div>
   <div id="fireOverlay"></div>
   <div id="startScreen">
     <h1>STACK BALL</h1>
@@ -173,6 +207,7 @@
   
   <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
   <script>
+    // DOM Elements
     const scoreEl = document.getElementById('score');
     const comboEl = document.getElementById('combo');
     const startScreen = document.getElementById('startScreen');
@@ -180,32 +215,66 @@
     const finalScoreEl = document.getElementById('finalScore');
     const finalBestEl = document.getElementById('finalBest');
     const progressBar = document.getElementById('progressBar');
+    const invincibilityBar = document.getElementById('invincibilityBar');
+    const invincibilityFill = document.getElementById('invincibilityFill');
     const fireOverlay = document.getElementById('fireOverlay');
     
+    // Three.js objects
     let scene, camera, renderer, ball, pole;
-    let platforms = [], particles = [], trails = [];
+    let platforms = [], particles = [], trails = [], footprints = [];
+    
+    // Game state
     let score = 0, highScore = 0, combo = 0;
     let gameStarted = false, gameOver = false, isHolding = false;
-    let ballVelocity = 0, ballY = 12, cameraY = 18;
-    let totalPlatforms = 30, platformsSmashed = 0;
-    let screenShake = 0, fireMode = false;
+    let ballVelocity = 0, ballY = 15, cameraY = 20;
+    let totalPlatforms = 35, platformsSmashed = 0;
+    let screenShake = 0;
     let towerRotation = 0;
     
-    // Vibrant candy colors
-    const COLORS = [
-      0xFF6B6B, 0x4ECDC4, 0xFFE66D, 0x95E1D3, 
-      0xFF8B94, 0xA8E6CF, 0xFFAA5C, 0x88D8B0,
-      0xF7DC6F, 0xBB8FCE, 0x85C1E9, 0xF1948A
+    // Invincibility system (like Unity version)
+    let invincible = false;
+    let invincibilityTimer = 0;
+    let invincibilityBuildUp = 0;
+    const PLATFORMS_TO_SHOW_BAR = 10;
+    const SECONDS_PER_PLATFORM = 0.15;
+    const SECONDS_TO_ENABLE = 4;
+    const INVINCIBLE_DURATION = 3;
+    let platformsDestroyedForInvincibility = 0;
+    
+    // Gradient colors for platforms (like Unity version)
+    const GRADIENT_COLORS = [
+      { pos: 0.0, color: new THREE.Color(0xFF6B6B) },
+      { pos: 0.2, color: new THREE.Color(0xFFE66D) },
+      { pos: 0.4, color: new THREE.Color(0x4ECDC4) },
+      { pos: 0.6, color: new THREE.Color(0x95E1D3) },
+      { pos: 0.8, color: new THREE.Color(0xBB8FCE) },
+      { pos: 1.0, color: new THREE.Color(0xFF8B94) }
     ];
+    
     const BLACK = 0x1C1C1E;
     
-    const PLATFORM_GAP = 2.0;
+    // Physics constants
+    const PLATFORM_GAP = 0.4;
     const PLATFORM_RADIUS = 3.2;
-    const PLATFORM_HEIGHT = 0.8;
+    const PLATFORM_HEIGHT = 0.7;
     const PLATFORM_HOLE = 0.5;
-    const GRAVITY = 0.008;
-    const BOUNCE_FORCE = 0.25;
-    const SMASH_SPEED = 0.45;
+    const GRAVITY = 0.012;
+    const BOUNCE_FORCE = 0.28;
+    const SMASH_SPEED = 0.5;
+    const ROTATION_ANGLE = 2; // degrees per platform
+    
+    function getGradientColor(t) {
+      t = Math.max(0, Math.min(1, t));
+      for (let i = 0; i < GRADIENT_COLORS.length - 1; i++) {
+        if (t >= GRADIENT_COLORS[i].pos && t <= GRADIENT_COLORS[i + 1].pos) {
+          const localT = (t - GRADIENT_COLORS[i].pos) / (GRADIENT_COLORS[i + 1].pos - GRADIENT_COLORS[i].pos);
+          const c = new THREE.Color();
+          c.lerpColors(GRADIENT_COLORS[i].color, GRADIENT_COLORS[i + 1].color, localT);
+          return c;
+        }
+      }
+      return GRADIENT_COLORS[GRADIENT_COLORS.length - 1].color;
+    }
     
     function init() {
       scene = new THREE.Scene();
@@ -222,10 +291,10 @@
       ctx.fillRect(0, 0, 2, 512);
       scene.background = new THREE.CanvasTexture(canvas);
       
-      // Top-down angled camera (like real Stack Ball)
+      // Camera setup (top-down angled view like real Stack Ball)
       camera = new THREE.PerspectiveCamera(55, window.innerWidth / window.innerHeight, 0.1, 1000);
-      camera.position.set(0, 18, 8);
-      camera.lookAt(0, 5, 0);
+      camera.position.set(0, 20, 8.3);
+      camera.lookAt(0, 8, 0);
       
       renderer = new THREE.WebGLRenderer({ antialias: true });
       renderer.setSize(window.innerWidth, window.innerHeight);
@@ -251,26 +320,25 @@
       mainLight.shadow.camera.bottom = -15;
       scene.add(mainLight);
       
-      // Rim light for that pop
       const rimLight = new THREE.DirectionalLight(0xffffff, 0.3);
       rimLight.position.set(-5, 10, -10);
       scene.add(rimLight);
       
       // Pole (center cylinder)
-      const poleGeo = new THREE.CylinderGeometry(PLATFORM_HOLE - 0.05, PLATFORM_HOLE - 0.05, 150, 32);
+      const poleGeo = new THREE.CylinderGeometry(PLATFORM_HOLE - 0.05, PLATFORM_HOLE - 0.05, 200, 32);
       const poleMat = new THREE.MeshStandardMaterial({ 
         color: 0x2d3436,
         metalness: 0.8,
         roughness: 0.2
       });
       pole = new THREE.Mesh(poleGeo, poleMat);
-      pole.position.y = -50;
+      pole.position.y = -80;
       pole.castShadow = true;
       pole.receiveShadow = true;
       scene.add(pole);
       
       // Ball
-      const ballGeo = new THREE.SphereGeometry(0.55, 32, 32);
+      const ballGeo = new THREE.SphereGeometry(0.5, 32, 32);
       const ballMat = new THREE.MeshStandardMaterial({ 
         color: 0xffffff,
         metalness: 0.1,
@@ -295,29 +363,30 @@
     }
     
     function generatePlatforms() {
-      let currentColor = COLORS[Math.floor(Math.random() * COLORS.length)];
-      let colorCount = 0;
-      const colorLength = 2 + Math.floor(Math.random() * 3);
+      let currentRotation = 0;
+      let samePlatformCount = 0;
+      let samePlatformMax = 5 + Math.floor(Math.random() * 35);
+      let currentDangerParts = Math.floor(Math.random() * 6);
       
       for (let i = 0; i < totalPlatforms; i++) {
-        const y = 8 - (i * PLATFORM_GAP);
+        const y = 10 - (i * PLATFORM_GAP);
+        const gradientT = i / totalPlatforms;
+        const color = getGradientColor(gradientT);
         
-        colorCount++;
-        if (colorCount > colorLength) {
-          currentColor = COLORS[Math.floor(Math.random() * COLORS.length)];
-          colorCount = 0;
+        samePlatformCount++;
+        if (samePlatformCount > samePlatformMax) {
+          samePlatformCount = 0;
+          samePlatformMax = 5 + Math.floor(Math.random() * 35);
+          currentDangerParts = Math.floor(Math.random() * 6);
         }
         
-        // Black platforms increase with depth
-        const blackChance = i > 5 ? 0.12 + (i * 0.008) : 0;
-        const isBlack = Math.random() < blackChance;
-        
-        const platform = createPlatform(y, isBlack ? BLACK : currentColor, isBlack);
+        currentRotation += ROTATION_ANGLE * (Math.PI / 180);
+        const platform = createPlatform(y, color, currentDangerParts, currentRotation);
         platforms.push(platform);
       }
       
       // Win platform at bottom
-      const winY = 8 - (totalPlatforms * PLATFORM_GAP) - 2;
+      const winY = 10 - (totalPlatforms * PLATFORM_GAP) - 2;
       const winGeo = new THREE.CylinderGeometry(PLATFORM_RADIUS + 1, PLATFORM_RADIUS + 1, 1.5, 32);
       const winMat = new THREE.MeshStandardMaterial({ 
         color: 0xFFD700, 
@@ -331,19 +400,29 @@
       win.receiveShadow = true;
       win.userData.isWin = true;
       scene.add(win);
-      platforms.push({ mesh: win, isBlack: false, y: winY, isWin: true });
+      platforms.push({ mesh: win, isBlack: false, y: winY, isWin: true, segments: [] });
     }
     
-    function createPlatform(y, color, isBlack) {
+    function createPlatform(y, color, dangerPartsCount, rotation) {
       const group = new THREE.Group();
-      group.userData = { y, isBlack, smashed: false };
+      group.userData = { y, smashed: false };
       
-      // Chunky donut shape
       const segments = 8;
       const segmentAngle = (Math.PI * 2) / segments;
-      const gap = 0.08; // Gap between segments
+      const gap = 0.06;
+      
+      const segmentData = [];
+      let dangerAssigned = 0;
+      
+      // Randomly assign danger parts
+      const dangerIndices = new Set();
+      while (dangerIndices.size < dangerPartsCount && dangerIndices.size < segments - 2) {
+        const idx = Math.floor(Math.random() * segments);
+        if (Math.random() < 0.9) dangerIndices.add(idx);
+      }
       
       for (let i = 0; i < segments; i++) {
+        const isDanger = dangerIndices.has(i);
         const startAngle = i * segmentAngle + gap;
         const endAngle = (i + 1) * segmentAngle - gap;
         
@@ -351,11 +430,9 @@
         const inner = PLATFORM_HOLE;
         const outer = PLATFORM_RADIUS;
         
-        // Create arc segment
         shape.moveTo(Math.cos(startAngle) * inner, Math.sin(startAngle) * inner);
         shape.lineTo(Math.cos(startAngle) * outer, Math.sin(startAngle) * outer);
         
-        // Outer arc
         const arcPoints = 8;
         for (let j = 1; j <= arcPoints; j++) {
           const a = startAngle + (endAngle - startAngle) * (j / arcPoints);
@@ -364,7 +441,6 @@
         
         shape.lineTo(Math.cos(endAngle) * inner, Math.sin(endAngle) * inner);
         
-        // Inner arc (reverse)
         for (let j = arcPoints - 1; j >= 0; j--) {
           const a = startAngle + (endAngle - startAngle) * (j / arcPoints);
           shape.lineTo(Math.cos(a) * inner, Math.sin(a) * inner);
@@ -373,71 +449,87 @@
         const extrudeSettings = { 
           depth: PLATFORM_HEIGHT, 
           bevelEnabled: true,
-          bevelThickness: 0.1,
-          bevelSize: 0.1,
-          bevelSegments: 3
+          bevelThickness: 0.08,
+          bevelSize: 0.08,
+          bevelSegments: 2
         };
         
         const geo = new THREE.ExtrudeGeometry(shape, extrudeSettings);
         geo.rotateX(Math.PI / 2);
         geo.translate(0, -PLATFORM_HEIGHT/2, 0);
         
+        const segColor = isDanger ? BLACK : color.getHex();
         const mat = new THREE.MeshStandardMaterial({ 
-          color: color,
-          metalness: isBlack ? 0.9 : 0.1,
-          roughness: isBlack ? 0.1 : 0.4,
+          color: segColor,
+          metalness: isDanger ? 0.9 : 0.1,
+          roughness: isDanger ? 0.1 : 0.4,
         });
         
         const segment = new THREE.Mesh(geo, mat);
         segment.castShadow = true;
         segment.receiveShadow = true;
-        segment.userData.color = color;
+        segment.userData.isDanger = isDanger;
+        segment.userData.color = segColor;
+        segment.userData.angle = (startAngle + endAngle) / 2;
         group.add(segment);
+        
+        segmentData.push({ mesh: segment, isDanger, angle: segment.userData.angle });
       }
       
       group.position.y = y;
+      group.rotation.y = rotation;
       scene.add(group);
-      return { mesh: group, isBlack, y };
+      
+      const hasAnyDanger = dangerPartsCount > 0;
+      return { mesh: group, isBlack: hasAnyDanger, y, segments: segmentData, rotation };
     }
+
     
     function smashPlatform(platform) {
       if (platform.mesh.userData.smashed) return;
       platform.mesh.userData.smashed = true;
       
-      const color = platform.mesh.children[0]?.userData.color || 0xffffff;
+      screenShake = invincible ? 18 : 10;
       
-      // Screen shake
-      screenShake = fireMode ? 15 : 8;
-      
-      // Explode segments outward
+      // Explode segments outward (like Unity version - fly to sides)
       platform.mesh.children.forEach((segment, i) => {
-        const angle = (i / platform.mesh.children.length) * Math.PI * 2;
+        const angle = segment.userData.angle + platform.mesh.rotation.y;
         const piece = segment.clone();
-        piece.position.y = platform.y;
         
-        // Velocity outward and down
-        piece.userData.velocity = new THREE.Vector3(
-          Math.cos(angle) * (0.15 + Math.random() * 0.15),
-          Math.random() * 0.1 - 0.05,
-          Math.sin(angle) * (0.15 + Math.random() * 0.15)
+        // Position in world space
+        piece.position.x = Math.cos(angle) * (PLATFORM_RADIUS / 2);
+        piece.position.y = platform.y;
+        piece.position.z = Math.sin(angle) * (PLATFORM_RADIUS / 2);
+        
+        // Throw direction (outward and up, like Unity's ThrowPointOffsetX/Y)
+        const throwX = Math.cos(angle) * 8;
+        const throwY = platform.y + 13;
+        const throwZ = Math.sin(angle) * 8;
+        
+        piece.userData.targetPos = new THREE.Vector3(throwX, throwY, throwZ);
+        piece.userData.startPos = piece.position.clone();
+        piece.userData.targetRot = new THREE.Euler(
+          Math.random() * Math.PI * 2,
+          Math.random() * Math.PI * 2,
+          Math.random() * Math.PI * 2
         );
-        piece.userData.rotSpeed = new THREE.Vector3(
-          (Math.random() - 0.5) * 0.2,
-          (Math.random() - 0.5) * 0.2,
-          (Math.random() - 0.5) * 0.2
-        );
+        piece.userData.startRot = piece.rotation.clone();
         piece.userData.life = 1;
+        piece.userData.duration = 1;
+        
         scene.add(piece);
         particles.push({ mesh: piece, type: 'chunk' });
       });
       
-      // Spawn particles
-      const particleCount = fireMode ? 25 : 15;
+      // Spawn small particles
+      const particleCount = invincible ? 30 : 18;
+      const baseColor = platform.mesh.children[0]?.userData.color || 0xffffff;
+      
       for (let i = 0; i < particleCount; i++) {
-        const size = 0.08 + Math.random() * 0.12;
-        const geo = new THREE.SphereGeometry(size, 8, 8);
+        const size = 0.06 + Math.random() * 0.1;
+        const geo = new THREE.SphereGeometry(size, 6, 6);
         const mat = new THREE.MeshBasicMaterial({ 
-          color: fireMode ? 0xFF6B35 : color 
+          color: invincible ? (Math.random() > 0.5 ? 0xFF6B35 : 0xFFD93D) : baseColor
         });
         const p = new THREE.Mesh(geo, mat);
         
@@ -449,9 +541,9 @@
           Math.sin(angle) * radius
         );
         p.userData.velocity = new THREE.Vector3(
-          (Math.random() - 0.5) * 0.3,
-          Math.random() * 0.2 + 0.1,
-          (Math.random() - 0.5) * 0.3
+          (Math.random() - 0.5) * 0.35,
+          Math.random() * 0.25 + 0.1,
+          (Math.random() - 0.5) * 0.35
         );
         p.userData.life = 1;
         scene.add(p);
@@ -465,9 +557,52 @@
       scoreEl.textContent = score;
       progressBar.style.height = (platformsSmashed / totalPlatforms * 100) + '%';
       
+      // Invincibility build-up (like Unity version)
+      if (!invincible) {
+        platformsDestroyedForInvincibility++;
+        
+        if (platformsDestroyedForInvincibility >= PLATFORMS_TO_SHOW_BAR) {
+          invincibilityBuildUp += SECONDS_PER_PLATFORM;
+          
+          if (invincibilityBuildUp >= SECONDS_TO_ENABLE) {
+            enableInvincibility();
+          } else {
+            const fillPercent = (invincibilityBuildUp / SECONDS_TO_ENABLE) * 100;
+            invincibilityFill.style.height = fillPercent + '%';
+            invincibilityBar.classList.add('visible');
+          }
+        }
+      }
+      
       if (window.ReactNativeWebView) {
         window.ReactNativeWebView.postMessage(JSON.stringify({ type: 'score', score }));
       }
+    }
+    
+    function enableInvincibility() {
+      invincible = true;
+      invincibilityTimer = INVINCIBLE_DURATION;
+      invincibilityBar.classList.add('visible', 'invincible');
+      invincibilityFill.style.height = '100%';
+      fireOverlay.classList.add('active');
+      ball.material.emissive.setHex(0xFF6B35);
+      ball.material.emissiveIntensity = 0.6;
+      
+      // Hide trail during invincibility
+      trails.forEach(t => scene.remove(t));
+      trails = [];
+    }
+    
+    function disableInvincibility() {
+      invincible = false;
+      invincibilityTimer = 0;
+      invincibilityBuildUp = 0;
+      platformsDestroyedForInvincibility = 0;
+      invincibilityBar.classList.remove('visible', 'invincible');
+      invincibilityFill.style.height = '0%';
+      fireOverlay.classList.remove('active');
+      ball.material.emissive.setHex(0x000000);
+      ball.material.emissiveIntensity = 0;
     }
     
     function showCombo(num) {
@@ -477,8 +612,27 @@
       comboEl.classList.add('show');
     }
     
+    // Trail effect (only when NOT invincible)
     function spawnTrail() {
-      if (!fireMode) return;
+      if (invincible) return;
+      
+      const geo = new THREE.SphereGeometry(0.25, 8, 8);
+      const mat = new THREE.MeshBasicMaterial({ 
+        color: 0xffffff,
+        transparent: true,
+        opacity: 0.6
+      });
+      const t = new THREE.Mesh(geo, mat);
+      t.position.copy(ball.position);
+      t.position.y += 0.3;
+      t.userData.life = 1;
+      scene.add(t);
+      trails.push(t);
+    }
+    
+    // Fire trail (only when invincible)
+    function spawnFireTrail() {
+      if (!invincible) return;
       
       const geo = new THREE.SphereGeometry(0.3 + Math.random() * 0.2, 8, 8);
       const mat = new THREE.MeshBasicMaterial({ 
@@ -488,52 +642,99 @@
       });
       const t = new THREE.Mesh(geo, mat);
       t.position.copy(ball.position);
-      t.position.x += (Math.random() - 0.5) * 0.3;
-      t.position.z += (Math.random() - 0.5) * 0.3;
+      t.position.x += (Math.random() - 0.5) * 0.4;
+      t.position.z += (Math.random() - 0.5) * 0.4;
       t.userData.life = 1;
       scene.add(t);
       trails.push(t);
     }
     
+    // Footprint when bouncing (like Unity version)
+    function leaveFootprint(platformY, color) {
+      const geo = new THREE.CircleGeometry(0.4, 16);
+      const mat = new THREE.MeshBasicMaterial({ 
+        color: color,
+        transparent: true,
+        opacity: 0.5,
+        side: THREE.DoubleSide
+      });
+      const fp = new THREE.Mesh(geo, mat);
+      fp.rotation.x = -Math.PI / 2;
+      fp.position.set(ball.position.x, platformY + PLATFORM_HEIGHT/2 + 0.01, ball.position.z);
+      fp.userData.life = 1;
+      scene.add(fp);
+      footprints.push(fp);
+    }
+    
+    let lastTrailTime = 0;
+    let lastFireTrailTime = 0;
+    let lastTime = performance.now();
+    
     function update() {
       if (!gameStarted || gameOver) return;
+      
+      const now = performance.now();
+      const deltaTime = (now - lastTime) / 1000;
+      lastTime = now;
+      
+      // Invincibility timer countdown
+      if (invincible) {
+        invincibilityTimer -= deltaTime;
+        const fillPercent = (invincibilityTimer / INVINCIBLE_DURATION) * 100;
+        invincibilityFill.style.height = Math.max(0, fillPercent) + '%';
+        
+        if (invincibilityTimer <= 0) {
+          disableInvincibility();
+        }
+      } else if (!isHolding && invincibilityBuildUp > 0) {
+        // Decay invincibility build-up when not pressing (like Unity)
+        invincibilityBuildUp -= deltaTime * 0.5;
+        if (invincibilityBuildUp <= 0) {
+          invincibilityBuildUp = 0;
+          platformsDestroyedForInvincibility = 0;
+          invincibilityBar.classList.remove('visible');
+        } else {
+          const fillPercent = (invincibilityBuildUp / SECONDS_TO_ENABLE) * 100;
+          invincibilityFill.style.height = fillPercent + '%';
+        }
+      }
       
       // Ball physics
       if (isHolding) {
         ballVelocity = -SMASH_SPEED;
-        if (combo >= 3 && !fireMode) {
-          fireMode = true;
-          fireOverlay.classList.add('active');
-          ball.material.emissive.setHex(0xFF6B35);
-          ball.material.emissiveIntensity = 0.5;
+        
+        // Trail effects
+        if (invincible) {
+          if (now - lastFireTrailTime > 30) {
+            spawnFireTrail();
+            lastFireTrailTime = now;
+          }
+        } else {
+          if (now - lastTrailTime > 50) {
+            spawnTrail();
+            lastTrailTime = now;
+          }
         }
-        spawnTrail();
       } else {
         ballVelocity -= GRAVITY;
-        if (fireMode) {
-          fireMode = false;
-          fireOverlay.classList.remove('active');
-          ball.material.emissive.setHex(0x000000);
-          ball.material.emissiveIntensity = 0;
-        }
       }
       
       ballY += ballVelocity;
       ball.position.y = ballY;
       
       // Ball squash & stretch
-      const stretch = 1 + Math.abs(ballVelocity) * 1.5;
+      const stretch = 1 + Math.abs(ballVelocity) * 1.2;
       ball.scale.set(1/Math.sqrt(stretch), stretch, 1/Math.sqrt(stretch));
       
       // Ball rotation
-      ball.rotation.x += ballVelocity * 0.8;
-      ball.rotation.z += 0.02;
+      ball.rotation.x += ballVelocity * 0.6;
+      ball.rotation.z += 0.015;
       
       // Tower rotation (slow auto-rotate)
-      towerRotation += 0.003;
+      towerRotation += 0.002;
       platforms.forEach(p => {
-        if (p.mesh && !p.mesh.userData.smashed) {
-          p.mesh.rotation.y = towerRotation;
+        if (p.mesh && !p.mesh.userData.smashed && !p.isWin) {
+          p.mesh.rotation.y = p.rotation + towerRotation;
         }
       });
       
@@ -542,10 +743,10 @@
         if (platform.mesh.userData?.smashed) continue;
         
         const platY = platform.y;
-        const ballBottom = ballY - 0.55 * ball.scale.y;
+        const ballBottom = ballY - 0.5 * ball.scale.y;
         
         if (ballBottom <= platY + PLATFORM_HEIGHT/2 && 
-            ballBottom >= platY - PLATFORM_HEIGHT/2 - 0.2 && 
+            ballBottom >= platY - PLATFORM_HEIGHT/2 - 0.25 && 
             ballVelocity < 0) {
           
           if (platform.isWin) {
@@ -553,62 +754,100 @@
             return;
           }
           
-          if (platform.isBlack) {
-            if (fireMode) {
-              smashPlatform(platform);
-              combo++;
-              showCombo(combo);
-            } else {
+          // Check if hitting a danger segment
+          let hitDanger = false;
+          if (platform.segments) {
+            const ballAngle = Math.atan2(ball.position.z, ball.position.x);
+            const platformRotation = platform.mesh.rotation.y;
+            
+            for (const seg of platform.segments) {
+              if (seg.isDanger) {
+                let segAngle = seg.angle + platformRotation;
+                // Normalize angles
+                while (segAngle > Math.PI) segAngle -= Math.PI * 2;
+                while (segAngle < -Math.PI) segAngle += Math.PI * 2;
+                
+                let diff = Math.abs(ballAngle - segAngle);
+                if (diff > Math.PI) diff = Math.PI * 2 - diff;
+                
+                // Check if ball is over this segment
+                const ballRadius = Math.sqrt(ball.position.x * ball.position.x + ball.position.z * ball.position.z);
+                if (ballRadius > PLATFORM_HOLE && ballRadius < PLATFORM_RADIUS && diff < Math.PI / 8) {
+                  hitDanger = true;
+                  break;
+                }
+              }
+            }
+          }
+          
+          if (hitDanger && !invincible) {
+            if (isHolding) {
               endGame();
               return;
             }
+          }
+          
+          if (isHolding) {
+            smashPlatform(platform);
+            combo++;
+            if (combo > 1) showCombo(combo);
           } else {
-            if (isHolding) {
-              smashPlatform(platform);
-              combo++;
-              if (combo > 1) showCombo(combo);
-            } else {
-              // Bounce
-              ballVelocity = BOUNCE_FORCE;
-              ballY = platY + PLATFORM_HEIGHT/2 + 0.55;
-              combo = 0;
-              screenShake = 3;
-            }
+            // Bounce
+            ballVelocity = BOUNCE_FORCE;
+            ballY = platY + PLATFORM_HEIGHT/2 + 0.5;
+            combo = 0;
+            screenShake = 4;
+            
+            // Leave footprint
+            const color = platform.mesh.children[0]?.userData.color || 0xffffff;
+            leaveFootprint(platY, color);
           }
           break;
         }
       }
       
-      // Camera follow with smooth lerp
-      const targetCamY = ballY + 10;
-      cameraY += (targetCamY - cameraY) * 0.06;
+      // Camera follow - ONLY when pressing (like Unity CameraMover)
+      const targetCamY = ballY + 12;
+      if (isHolding && targetCamY < cameraY) {
+        cameraY += (targetCamY - cameraY) * 0.08;
+      }
       
       // Apply screen shake
       let shakeX = 0, shakeY = 0;
       if (screenShake > 0) {
-        shakeX = (Math.random() - 0.5) * screenShake * 0.03;
-        shakeY = (Math.random() - 0.5) * screenShake * 0.03;
-        screenShake *= 0.85;
+        shakeX = (Math.random() - 0.5) * screenShake * 0.025;
+        shakeY = (Math.random() - 0.5) * screenShake * 0.025;
+        screenShake *= 0.88;
         if (screenShake < 0.5) screenShake = 0;
       }
       
-      camera.position.set(shakeX, cameraY + shakeY, 8);
-      camera.lookAt(0, ballY - 3, 0);
+      camera.position.set(shakeX, cameraY + shakeY, 8.3);
+      camera.lookAt(0, ballY - 4, 0);
       
-      // Update particles
+      // Update chunk particles (platform pieces flying outward)
       particles = particles.filter(p => {
         const m = p.mesh;
-        m.position.add(m.userData.velocity);
-        m.userData.velocity.y -= 0.012;
         
         if (p.type === 'chunk') {
-          m.rotation.x += m.userData.rotSpeed.x;
-          m.rotation.y += m.userData.rotSpeed.y;
-          m.rotation.z += m.userData.rotSpeed.z;
           m.userData.life -= 0.015;
-          m.scale.setScalar(m.userData.life);
+          const t = 1 - m.userData.life;
+          
+          // Lerp position
+          m.position.lerpVectors(m.userData.startPos, m.userData.targetPos, t);
+          
+          // Lerp rotation
+          m.rotation.x = THREE.MathUtils.lerp(m.userData.startRot.x, m.userData.targetRot.x, t);
+          m.rotation.y = THREE.MathUtils.lerp(m.userData.startRot.y, m.userData.targetRot.y, t);
+          m.rotation.z = THREE.MathUtils.lerp(m.userData.startRot.z, m.userData.targetRot.z, t);
+          
+          // Fade out near end
+          if (m.userData.life < 0.3) {
+            m.scale.setScalar(m.userData.life / 0.3);
+          }
         } else {
-          m.userData.life -= 0.03;
+          m.position.add(m.userData.velocity);
+          m.userData.velocity.y -= 0.015;
+          m.userData.life -= 0.035;
           m.scale.setScalar(m.userData.life * 0.8);
         }
         
@@ -621,9 +860,9 @@
       
       // Update trails
       trails = trails.filter(t => {
-        t.userData.life -= 0.08;
+        t.userData.life -= invincible ? 0.1 : 0.06;
         t.scale.setScalar(t.userData.life);
-        t.material.opacity = t.userData.life * 0.8;
+        t.material.opacity = t.userData.life * (invincible ? 0.8 : 0.6);
         if (t.userData.life <= 0) {
           scene.remove(t);
           return false;
@@ -631,13 +870,24 @@
         return true;
       });
       
+      // Update footprints
+      footprints = footprints.filter(fp => {
+        fp.userData.life -= 0.008;
+        fp.material.opacity = fp.userData.life * 0.5;
+        if (fp.userData.life <= 0) {
+          scene.remove(fp);
+          return false;
+        }
+        return true;
+      });
+      
       // Fall off
-      if (ballY < -80) endGame();
+      if (ballY < -100) endGame();
     }
     
     function winGame() {
       gameOver = true;
-      score += 15;
+      score += 20;
       scoreEl.textContent = score;
       
       if (score > highScore) highScore = score;
@@ -647,14 +897,13 @@
       gameOverScreen.style.display = 'flex';
       
       if (window.ReactNativeWebView) {
-        window.ReactNativeWebView.postMessage(JSON.stringify({ type: 'gameOver', score }));
+        window.ReactNativeWebView.postMessage(JSON.stringify({ type: 'gameOver', score, won: true }));
       }
     }
     
     function endGame() {
       gameOver = true;
-      fireMode = false;
-      fireOverlay.classList.remove('active');
+      disableInvincibility();
       
       if (score > highScore) highScore = score;
       finalScoreEl.textContent = score;
@@ -663,15 +912,15 @@
       gameOverScreen.style.display = 'flex';
       
       // Ball explosion
-      for (let i = 0; i < 40; i++) {
-        const geo = new THREE.SphereGeometry(0.1 + Math.random() * 0.15, 8, 8);
+      for (let i = 0; i < 45; i++) {
+        const geo = new THREE.SphereGeometry(0.08 + Math.random() * 0.12, 6, 6);
         const mat = new THREE.MeshBasicMaterial({ color: 0xff4444 });
         const p = new THREE.Mesh(geo, mat);
         p.position.copy(ball.position);
         p.userData.velocity = new THREE.Vector3(
-          (Math.random() - 0.5) * 0.4,
-          (Math.random() - 0.5) * 0.4,
-          (Math.random() - 0.5) * 0.4
+          (Math.random() - 0.5) * 0.5,
+          (Math.random() - 0.5) * 0.5,
+          (Math.random() - 0.5) * 0.5
         );
         p.userData.life = 1;
         scene.add(p);
@@ -679,10 +928,10 @@
       }
       
       ball.visible = false;
-      screenShake = 20;
+      screenShake = 25;
       
       if (window.ReactNativeWebView) {
-        window.ReactNativeWebView.postMessage(JSON.stringify({ type: 'gameOver', score }));
+        window.ReactNativeWebView.postMessage(JSON.stringify({ type: 'gameOver', score, won: false }));
       }
     }
     
@@ -693,23 +942,34 @@
       particles = [];
       trails.forEach(t => scene.remove(t));
       trails = [];
+      footprints.forEach(fp => scene.remove(fp));
+      footprints = [];
       
-      score = 0; combo = 0; ballY = 12; ballVelocity = 0; cameraY = 18;
-      platformsSmashed = 0; gameOver = false; fireMode = false; screenShake = 0;
+      score = 0; combo = 0; ballY = 15; ballVelocity = 0; cameraY = 20;
+      platformsSmashed = 0; gameOver = false; screenShake = 0;
       towerRotation = 0;
+      
+      // Reset invincibility
+      invincible = false;
+      invincibilityTimer = 0;
+      invincibilityBuildUp = 0;
+      platformsDestroyedForInvincibility = 0;
+      invincibilityBar.classList.remove('visible', 'invincible');
+      invincibilityFill.style.height = '0%';
+      fireOverlay.classList.remove('active');
       
       scoreEl.textContent = '0';
       progressBar.style.height = '0%';
       gameOverScreen.style.display = 'none';
-      fireOverlay.classList.remove('active');
       
       ball.visible = true;
       ball.position.y = ballY;
       ball.scale.set(1, 1, 1);
       ball.material.emissive.setHex(0x000000);
       ball.material.emissiveIntensity = 0;
-      camera.position.set(0, cameraY, 8);
+      camera.position.set(0, cameraY, 8.3);
       
+      lastTime = performance.now();
       generatePlatforms();
     }
     
@@ -730,6 +990,7 @@
       if (!gameStarted) {
         gameStarted = true;
         startScreen.style.display = 'none';
+        lastTime = performance.now();
         return;
       }
       if (gameOver) {
