@@ -189,6 +189,7 @@
     let ballVelocity = 0, ballY = 12, cameraY = 18;
     let totalPlatforms = 30, platformsSmashed = 0;
     let screenShake = 0, fireMode = false;
+    let towerRotation = 0;
     
     // Vibrant candy colors
     const COLORS = [
@@ -528,6 +529,14 @@
       ball.rotation.x += ballVelocity * 0.8;
       ball.rotation.z += 0.02;
       
+      // Tower rotation (slow auto-rotate)
+      towerRotation += 0.003;
+      platforms.forEach(p => {
+        if (p.mesh && !p.mesh.userData.smashed) {
+          p.mesh.rotation.y = towerRotation;
+        }
+      });
+      
       // Platform collision
       for (const platform of platforms) {
         if (platform.mesh.userData?.smashed) continue;
@@ -687,6 +696,7 @@
       
       score = 0; combo = 0; ballY = 12; ballVelocity = 0; cameraY = 18;
       platformsSmashed = 0; gameOver = false; fireMode = false; screenShake = 0;
+      towerRotation = 0;
       
       scoreEl.textContent = '0';
       progressBar.style.height = '0%';
