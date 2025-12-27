@@ -1,0 +1,7 @@
+{
+  "name": "gametok-games",
+  "version": "1.0.0",
+  "scripts": {
+    "serve": "npx serve -p 3001 -C"
+  }
+}

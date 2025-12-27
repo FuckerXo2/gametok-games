@@ -1,0 +1,410 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+  <style>
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    body { 
+      overflow: hidden; 
+      touch-action: none;
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+    }
+    canvas { display: block; }
+    #ui {
+      position: absolute;
+      top: 0;
+      left: 0;
+      right: 0;
+      padding: 24px;
+      display: flex;
+      justify-content: space-between;
+      align-items: flex-start;
+      z-index: 10;
+      pointer-events: none;
+    }
+    #score {
+      font-size: 52px;
+      font-weight: 900;
+      color: white;
+      text-shadow: 0 4px 20px rgba(0,0,0,0.4);
+    }
+    #highScore {
+      font-size: 14px;
+      color: rgba(255,255,255,0.8);
+      font-weight: 600;
+      margin-top: 4px;
+    }
+    #combo {
+      position: absolute;
+      top: 45%;
+      left: 50%;
+      transform: translate(-50%, -50%);
+      font-size: 80px;
+      font-weight: 900;
+      color: white;
+      text-shadow: 0 0 60px currentColor;
+      opacity: 0;
+      pointer-events: none;
+      z-index: 20;
+    }
+    #combo.show {
+      animation: comboPop 0.4s ease-out forwards;
+    }
+    @keyframes comboPop {
+      0% { opacity: 1; transform: translate(-50%, -50%) scale(0.5); }
+      50% { transform: translate(-50%, -50%) scale(1.2); }
+      100% { opacity: 0; transform: translate(-50%, -50%) scale(1) translateY(-30px); }
+    }
+    #startScreen {
+      position: absolute;
+      top: 0; left: 0; right: 0; bottom: 0;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      background: linear-gradient(180deg, #667eea 0%, #764ba2 100%);
+      color: white;
+      z-index: 30;
+    }
+    #startScreen h1 { 
+      font-size: 48px; 
+      font-weight: 900;
+      margin-bottom: 8px;
+      text-shadow: 0 4px 30px rgba(0,0,0,0.3);
+    }
+    #startScreen p { 
+      font-size: 16px; 
+      opacity: 0.9; 
+      margin-bottom: 50px;
+    }
+    #startScreen .tap { 
+      font-size: 18px; 
+      padding: 18px 60px;
+      background: white;
+      border-radius: 40px;
+      font-weight: 800;
+      color: #764ba2;
+      box-shadow: 0 10px 40px rgba(0,0,0,0.3);
+      animation: bounce 2s infinite;
+    }
+    @keyframes bounce { 
+      0%, 100% { transform: translateY(0); } 
+      50% { transform: translateY(-10px); } 
+    }
+    #gameOver {
+      position: absolute;
+      top: 0; left: 0; right: 0; bottom: 0;
+      display: none;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      background: rgba(0,0,0,0.85);
+      backdrop-filter: blur(10px);
+      color: white;
+      z-index: 30;
+    }
+    #gameOver h2 { 
+      font-size: 28px; 
+      margin-bottom: 10px;
+      font-weight: 700;
+      opacity: 0.9;
+    }
+    #gameOver .score { 
+      font-size: 80px; 
+      font-weight: 900;
+      margin-bottom: 5px;
+    }
+    #gameOver .best {
+      font-size: 16px;
+      opacity: 0.7;
+      margin-bottom: 50px;
+    }
+    #gameOver .tap { 
+      font-size: 18px;
+      padding: 18px 60px;
+      background: linear-gradient(135deg, #667eea, #764ba2);
+      border-radius: 40px;
+      font-weight: 800;
+      color: white;
+      box-shadow: 0 10px 40px rgba(102,126,234,0.5);
+    }
+    #progress {
+      position: absolute;
+      bottom: 40px;
+      left: 50%;
+      transform: translateX(-50%);
+      width: 60%;
+      height: 8px;
+      background: rgba(255,255,255,0.2);
+      border-radius: 4px;
+      overflow: hidden;
+      z-index: 10;
+    }
+    #progressBar {
+      height: 100%;
+      background: white;
+      border-radius: 4px;
+      transition: width 0.3s;
+      width: 0%;
+    }
+  </style>
+</head>
+<body>
+  <div id="ui">
+    <div>
+      <div id="score">0</div>
+      <div id="highScore">BEST: 0</div>
+    </div>
+  </div>
+  <div id="combo"></div>
+  <div id="progress"><div id="progressBar"></div></div>
+  <div id="startScreen">
+    <h1>STACK BALL</h1>
+    <p>Hold to smash • Release to bounce</p>
+    <div class="tap">HOLD TO PLAY</div>
+  </div>
+  <div id="gameOver">
+    <h2>GAME OVER</h2>
+    <div class="score" id="finalScore">0</div>
+    <div class="best" id="finalBest">BEST: 0</div>
+    <div class="tap">TAP TO RETRY</div>
+  </div>
+  
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+  <script>
+    const scoreEl = document.getElementById('score');
+    const highScoreEl = document.getElementById('highScore');
+    const comboEl = document.getElementById('combo');
+    const startScreen = document.getElementById('startScreen');
+    const gameOverScreen = document.getElementById('gameOver');
+    const finalScoreEl = document.getElementById('finalScore');
+    const finalBestEl = document.getElementById('finalBest');
+    const progressBar = document.getElementById('progressBar');
+    
+    let scene, camera, renderer, ball, pole;
+    let platforms = [], particles = [], shatterPieces = [];
+    let score = 0, highScore = 0, combo = 0;
+    let gameStarted = false, gameOver = false, isHolding = false;
+    let ballVelocity = 0, ballY = 15, cameraY = 20;
+    let totalPlatforms = 25, platformsSmashed = 0, isSmashing = false;
+    
+    const COLORS = [0xFF6B6B, 0x4ECDC4, 0xFFE66D, 0x95E1D3, 0xF38181, 0xAA96DA, 0xFCBF49, 0x00B4D8];
+    const BLACK = 0x1a1a2e, BALL_COLOR = 0xffffff;
+    const PLATFORM_GAP = 2.2, PLATFORM_RADIUS = 3, PLATFORM_HEIGHT = 0.6;
+    const GRAVITY = 0.012, BOUNCE_FORCE = 0.35, SMASH_SPEED = 0.5;
+    
+    function init() {
+      scene = new THREE.Scene();
+      const canvas = document.createElement('canvas');
+      canvas.width = 2; canvas.height = 512;
+      const ctx = canvas.getContext('2d');
+      const gradient = ctx.createLinearGradient(0, 0, 0, 512);
+      gradient.addColorStop(0, '#667eea'); gradient.addColorStop(1, '#764ba2');
+      ctx.fillStyle = gradient; ctx.fillRect(0, 0, 2, 512);
+      scene.background = new THREE.CanvasTexture(canvas);
+      
+      camera = new THREE.PerspectiveCamera(60, window.innerWidth / window.innerHeight, 0.1, 1000);
+      camera.position.set(0, 20, 14); camera.lookAt(0, 10, 0);
+      
+      renderer = new THREE.WebGLRenderer({ antialias: true });
+      renderer.setSize(window.innerWidth, window.innerHeight);
+      renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
+      renderer.shadowMap.enabled = true;
+      document.body.appendChild(renderer.domElement);
+      
+      scene.add(new THREE.AmbientLight(0xffffff, 0.7));
+      const dir = new THREE.DirectionalLight(0xffffff, 0.8);
+      dir.position.set(5, 20, 10); dir.castShadow = true; scene.add(dir);
+      
+      pole = new THREE.Mesh(
+        new THREE.CylinderGeometry(0.4, 0.4, 100, 16),
+        new THREE.MeshStandardMaterial({ color: 0x2d3436, metalness: 0.5, roughness: 0.5 })
+      );
+      pole.position.y = -30; scene.add(pole);
+      
+      ball = new THREE.Mesh(
+        new THREE.SphereGeometry(0.7, 32, 32),
+        new THREE.MeshStandardMaterial({ color: BALL_COLOR, metalness: 0.1, roughness: 0.3 })
+      );
+      ball.castShadow = true; ball.position.y = ballY; scene.add(ball);
+      
+      generatePlatforms();
+      window.addEventListener('resize', onResize);
+      document.addEventListener('touchstart', onPress);
+      document.addEventListener('touchend', onRelease);
+      document.addEventListener('mousedown', onPress);
+      document.addEventListener('mouseup', onRelease);
+      animate();
+    }
+    
+    function generatePlatforms() {
+      let currentColor = COLORS[Math.floor(Math.random() * COLORS.length)], colorStreak = 0;
+      for (let i = 0; i < totalPlatforms; i++) {
+        const y = 10 - (i * PLATFORM_GAP);
+        colorStreak++;
+        if (colorStreak > 2 + Math.floor(Math.random() * 3)) {
+          currentColor = COLORS[Math.floor(Math.random() * COLORS.length)]; colorStreak = 0;
+        }
+        const isBlack = i > 3 && Math.random() < 0.15 + (i * 0.01);
+        platforms.push(createPlatform(y, isBlack ? BLACK : currentColor, isBlack));
+      }
+      const finishY = 10 - (totalPlatforms * PLATFORM_GAP);
+      const finish = new THREE.Mesh(
+        new THREE.CylinderGeometry(PLATFORM_RADIUS + 0.5, PLATFORM_RADIUS + 0.5, 1, 32),
+        new THREE.MeshStandardMaterial({ color: 0xFFD700, metalness: 0.6, roughness: 0.3 })
+      );
+      finish.position.y = finishY - 1; finish.userData.isFinish = true;
+      scene.add(finish);
+      platforms.push({ mesh: finish, isBlack: false, isFinish: true });
+    }
+    
+    function createPlatform(y, color, isBlack) {
+      const group = new THREE.Group();
+      group.userData = { y, isBlack, smashed: false };
+      const segments = 8, segmentAngle = (Math.PI * 2) / segments;
+      for (let i = 0; i < segments; i++) {
+        const shape = new THREE.Shape();
+        const innerR = 0.6, outerR = PLATFORM_RADIUS;
+        const startA = i * segmentAngle + 0.02, endA = (i + 1) * segmentAngle - 0.02;
+        shape.moveTo(Math.cos(startA) * innerR, Math.sin(startA) * innerR);
+        shape.lineTo(Math.cos(startA) * outerR, Math.sin(startA) * outerR);
+        shape.absarc(0, 0, outerR, startA, endA, false);
+        shape.lineTo(Math.cos(endA) * innerR, Math.sin(endA) * innerR);
+        shape.absarc(0, 0, innerR, endA, startA, true);
+        const geo = new THREE.ExtrudeGeometry(shape, { depth: PLATFORM_HEIGHT, bevelEnabled: false });
+        geo.rotateX(Math.PI / 2);
+        const mat = new THREE.MeshStandardMaterial({ color, metalness: isBlack ? 0.8 : 0.2, roughness: isBlack ? 0.2 : 0.6 });
+        const segment = new THREE.Mesh(geo, mat);
+        segment.castShadow = true; segment.receiveShadow = true;
+        segment.userData.originalColor = color;
+        group.add(segment);
+      }
+      group.position.y = y; scene.add(group);
+      return { mesh: group, isBlack, y };
+    }
+    
+    function smashPlatform(platform) {
+      if (platform.mesh.userData.smashed) return;
+      platform.mesh.userData.smashed = true;
+      const color = platform.mesh.children[0]?.userData.originalColor || 0xffffff;
+      platform.mesh.children.forEach(segment => {
+        const piece = segment.clone();
+        piece.position.copy(segment.position); piece.position.y = platform.y;
+        piece.userData.velocity = new THREE.Vector3((Math.random()-0.5)*0.4, Math.random()*0.2-0.1, (Math.random()-0.5)*0.4);
+        piece.userData.rotationSpeed = new THREE.Vector3((Math.random()-0.5)*0.3, (Math.random()-0.5)*0.3, (Math.random()-0.5)*0.3);
+        piece.userData.life = 1;
+        scene.add(piece); shatterPieces.push(piece);
+      });
+      for (let i = 0; i < 12; i++) {
+        const p = new THREE.Mesh(new THREE.SphereGeometry(0.15, 8, 8), new THREE.MeshBasicMaterial({ color }));
+        p.position.set((Math.random()-0.5)*4, platform.y, (Math.random()-0.5)*4);
+        p.userData.velocity = new THREE.Vector3((Math.random()-0.5)*0.3, Math.random()*0.3, (Math.random()-0.5)*0.3);
+        p.userData.life = 1;
+        scene.add(p); particles.push(p);
+      }
+      scene.remove(platform.mesh);
+      score++; platformsSmashed++;
+      scoreEl.textContent = score;
+      progressBar.style.width = (platformsSmashed / totalPlatforms * 100) + '%';
+      if (window.ReactNativeWebView) window.ReactNativeWebView.postMessage(JSON.stringify({ type: 'score', score }));
+    }
+    
+    function showCombo(num) {
+      comboEl.textContent = 'x' + num;
+      comboEl.className = ''; void comboEl.offsetWidth;
+      comboEl.classList.add('show');
+    }
+    
+    function update() {
+      if (!gameStarted || gameOver) return;
+      if (isHolding) { ballVelocity = -SMASH_SPEED; isSmashing = true; }
+      else { ballVelocity -= GRAVITY; isSmashing = false; }
+      ballY += ballVelocity; ball.position.y = ballY;
+      const squash = 1 + Math.abs(ballVelocity) * 0.5;
+      ball.scale.set(1/Math.sqrt(squash), squash, 1/Math.sqrt(squash));
+      ball.rotation.x += ballVelocity * 0.5;
+      
+      for (const platform of platforms) {
+        if (platform.mesh.userData?.smashed) continue;
+        const platY = platform.y || platform.mesh.position.y;
+        const ballBottom = ballY - 0.7;
+        if (ballBottom <= platY + PLATFORM_HEIGHT && ballBottom >= platY - 0.3 && ballVelocity < 0) {
+          if (platform.isFinish) { winGame(); return; }
+          if (platform.isBlack) {
+            if (isSmashing && combo >= 3) { smashPlatform(platform); combo++; showCombo(combo); }
+            else { endGame(); return; }
+          } else {
+            if (isSmashing) { smashPlatform(platform); combo++; if (combo > 1) showCombo(combo); }
+            else { ballVelocity = BOUNCE_FORCE; ballY = platY + PLATFORM_HEIGHT + 0.7; combo = 0; }
+          }
+          break;
+        }
+      }
+      
+      const targetCamY = ballY + 8;
+      cameraY += (targetCamY - cameraY) * 0.08;
+      camera.position.y = cameraY; camera.lookAt(0, ballY - 3, 0);
+      
+      particles = particles.filter(p => {
+        p.position.add(p.userData.velocity); p.userData.velocity.y -= 0.015;
+        p.userData.life -= 0.025; p.scale.setScalar(p.userData.life);
+        if (p.userData.life <= 0) { scene.remove(p); return false; }
+        return true;
+      });
+      shatterPieces = shatterPieces.filter(p => {
+        p.position.add(p.userData.velocity); p.userData.velocity.y -= 0.02;
+        p.rotation.x += p.userData.rotationSpeed.x; p.rotation.y += p.userData.rotationSpeed.y;
+        p.userData.life -= 0.02; p.scale.setScalar(p.userData.life);
+        if (p.userData.life <= 0) { scene.remove(p); return false; }
+        return true;
+      });
+      if (ballY < -60) endGame();
+    }
+    
+    function winGame() {
+      gameOver = true; score += 10; scoreEl.textContent = score;
+      if (score > highScore) { highScore = score; highScoreEl.textContent = 'BEST: ' + highScore; }
+      finalScoreEl.textContent = score; finalBestEl.textContent = 'BEST: ' + highScore;
+      gameOverScreen.querySelector('h2').textContent = 'LEVEL COMPLETE!';
+      gameOverScreen.style.display = 'flex';
+      if (window.ReactNativeWebView) window.ReactNativeWebView.postMessage(JSON.stringify({ type: 'gameOver', score }));
+    }
+    
+    function endGame() {
+      gameOver = true;
+      if (score > highScore) { highScore = score; highScoreEl.textContent = 'BEST: ' + highScore; }
+      finalScoreEl.textContent = score; finalBestEl.textContent = 'BEST: ' + highScore;
+      gameOverScreen.querySelector('h2').textContent = 'GAME OVER';
+      gameOverScreen.style.display = 'flex';
+      for (let i = 0; i < 30; i++) {
+        const p = new THREE.Mesh(new THREE.SphereGeometry(0.2, 8, 8), new THREE.MeshBasicMaterial({ color: 0xff0000 }));
+        p.position.copy(ball.position);
+        p.userData.velocity = new THREE.Vector3((Math.random()-0.5)*0.5, (Math.random()-0.5)*0.5, (Math.random()-0.5)*0.5);
+        p.userData.life = 1; scene.add(p); particles.push(p);
+      }
+      ball.visible = false;
+      if (window.ReactNativeWebView) window.ReactNativeWebView.postMessage(JSON.stringify({ type: 'gameOver', score }));
+    }
+    
+    function resetGame() {
+      platforms.forEach(p => scene.remove(p.mesh)); platforms = [];
+      particles.forEach(p => scene.remove(p)); particles = [];
+      shatterPieces.forEach(p => scene.remove(p)); shatterPieces = [];
+      score = 0; combo = 0; ballY = 15; ballVelocity = 0; cameraY = 20;
+      platformsSmashed = 0; gameOver = false; isSmashing = false;
+      scoreEl.textContent = '0'; progressBar.style.width = '0%';
+      gameOverScreen.style.display = 'none';
+      ball.visible = true; ball.position.y = ballY; ball.scale.set(1, 1, 1);
+      camera.position.y = cameraY;
+      generatePlatforms();
+    }
+    
+    function animate() { requestAnimationFrame(animate); update(); renderer.render(scene, camera); }
+    function onResize() { camera.aspect = window.innerWidth / window.innerHeight; camera.updateProjectionMatrix(); renderer.setSize(window.innerWidth, window.innerHeight); }
+    function onPress(e) { e.preventDefault(); if (!gameStarted) { gameStarted = true; startScreen.style.display = 'none'; return; } if (gameOver) { resetGame(); return; } isHolding = true; }
+    function onRelease() { isHolding = false; }
+    
+    init();
+  </script>
+</body>
+</html>
