@@ -251,13 +251,15 @@ class Fruit {
     this.leftY = this.y;
     this.leftVx = this.vx - ny * sliceForce;
     this.leftVy = this.vy + nx * sliceForce;
-    this.leftRotSpeed = -3 - Math.random() * 2;
+    // Python: random.uniform(-5, -2)
+    this.leftRotSpeed = -5 + Math.random() * 3;
     
     this.rightX = this.x + 15;
     this.rightY = this.y;
     this.rightVx = this.vx + ny * sliceForce;
     this.rightVy = this.vy - nx * sliceForce;
-    this.rightRotSpeed = 3 + Math.random() * 2;
+    // Python: random.uniform(2, 5)
+    this.rightRotSpeed = 2 + Math.random() * 3;
   }
   
   render() {
@@ -331,15 +333,24 @@ function spawnFruit() {
   const isBomb = Math.random() < CONFIG.bombChance;
   const type = isBomb ? 'bomb' : CONFIG.fruits[Math.floor(Math.random() * CONFIG.fruits.length)];
   
-  // Spawn from bottom, random x position
-  const x = CONFIG.fruitRadius + Math.random() * (width - CONFIG.fruitRadius * 2);
-  const y = height + CONFIG.fruitRadius;
+  // Random radius like Python: random.randint(35, 45)
+  const radius = 35 + Math.floor(Math.random() * 11); // 35-45
   
-  // Velocity - upward with slight horizontal
-  const vx = (Math.random() - 0.5) * 3 * speedMultiplier;
-  const vy = (-7 - Math.random() * 2) * speedMultiplier;
+  // Spawn at random x position
+  const x = radius + Math.random() * (width - radius * 2);
   
-  fruits.push(new Fruit(type, x, y, vx, vy));
+  // Spawn from middle to bottom of screen (like Python: random.randint(screen_height // 2, screen_height))
+  const y = Math.floor(height / 2) + Math.random() * (height / 2);
+  
+  // Velocity - EXACT Python values:
+  // vx = random.uniform(-1.5, 1.5) * speed_multiplier
+  // vy = random.uniform(-8, -6) * speed_multiplier
+  const vx = (Math.random() * 3 - 1.5) * speedMultiplier;
+  const vy = (-8 + Math.random() * 2) * speedMultiplier; // -8 to -6
+  
+  const fruit = new Fruit(type, x, y, vx, vy);
+  fruit.radius = radius;
+  fruits.push(fruit);
 }
 
 // ===== GAME LOGIC =====
