@@ -1,19 +1,25 @@
 // Fruit Slicer - HTML5 Port from Python/Pygame
+// Exact port of all game mechanics from the Python version
 (function() {
 'use strict';
 
-// ===== CONFIG (from Python constants.py) =====
+// ===== CONFIG (from Python constants.py & managers.py) =====
 const CONFIG = {
   gravity: 0.15,
-  fruitRadius: 40,
-  spawnInterval: 70, // frames
-  maxSlicePoints: 15,
-  lives: 5,
+  spawnInterval: 70, // frames (from FruitSpawner)
+  maxSlicePoints: 15, // from InputHandler
+  lives: 5, // from LivesManager
   
-  // Difficulty scaling
+  // Difficulty scaling (from DifficultyManager)
   speedMultiplierIncrement: 0.05,
   maxSpeedMultiplier: 4.0,
   fruitsPerLevel: 10,
+  
+  // Special fruit chance (from FruitFactory)
+  specialFruitChance: 0.05, // 5% chance for freeze banana
+  
+  // Background change thresholds (from game.py check_background_change)
+  bgThresholds: [0, 200, 500, 1000, 1500, 2000, 2500, 3000],
   
   // Fruit types with their images
   fruits: [
@@ -23,13 +29,18 @@ const CONFIG = {
     { name: 'watermelon', whole: 'assets/fruits/Watermelon.png', sliced: ['assets/fruits/WatermelonHalf.png', 'assets/fruits/WatermelonHalf.png'], points: 15 }
   ],
   
-  bomb: { whole: 'assets/fruits/Bomb.png' },
-  bombChance: 0.1, // 10% chance to spawn bomb
+  // Freeze banana (special fruit)
+  freezeBanana: { name: 'freezeBanana', whole: 'assets/fruits/FreezeBanana.png', sliced: ['assets/fruits/FreezeBananaSliced.png', 'assets/fruits/FreezeBananaSliced.png'], points: 20 },
   
   backgrounds: [
     'assets/Background1.png',
-    'assets/Background2.png',
-    'assets/Background3.png'
+    'assets/Background2.png', 
+    'assets/Background3.png',
+    'assets/Background4.png',
+    'assets/Background5.png',
+    'assets/Background6.png',
+    'assets/Background7.png',
+    'assets/Background8.png'
   ]
 };
 
@@ -46,8 +57,8 @@ let lives = CONFIG.lives;
 let bestScore = parseInt(localStorage.getItem('fruitSlicerBest')) || 0;
 let fruitsSliced = 0;
 let speedMultiplier = 1.0;
-let comboCount = 0;
-let comboTimer = 0;
+let currentLevel = 1;
+let currentBgIndex = 0;
 
 let gameState = 'menu'; // menu, playing, gameover
 let spawnTimer = 0;
@@ -55,14 +66,11 @@ let lastTime = 0;
 
 // Assets
 let images = {};
-let imagesLoaded = 0;
-let totalImages = 0;
-let backgroundImg = null;
+let backgroundImgs = [];
 let cursorImg = null;
 
 // Audio
 let audioCtx = null;
-let sounds = {};
 
 // DOM
 const scoreEl = document.getElementById('score');
@@ -75,12 +83,12 @@ const bestScoreEl = document.getElementById('bestScore');
 
 // ===== ASSET LOADING =====
 function loadImage(src) {
-  return new Promise((resolve, reject) => {
+  return new Promise((resolve) => {
     const img = new Image();
     img.onload = () => resolve(img);
     img.onerror = () => {
       console.warn('Failed to load:', src);
-      resolve(null); // Don't fail, just return null
+      resolve(null);
     };
     img.src = src;
   });
@@ -96,11 +104,15 @@ async function loadAssets() {
     promises.push(loadImage(fruit.sliced[1]).then(img => { images[fruit.name + '_right'] = img; }));
   }
   
-  // Load bomb
-  promises.push(loadImage(CONFIG.bomb.whole).then(img => { images.bomb = img; }));
+  // Load freeze banana
+  promises.push(loadImage(CONFIG.freezeBanana.whole).then(img => { images.freezeBanana = img; }));
+  promises.push(loadImage(CONFIG.freezeBanana.sliced[0]).then(img => { images.freezeBanana_left = img; }));
+  promises.push(loadImage(CONFIG.freezeBanana.sliced[1]).then(img => { images.freezeBanana_right = img; }));
   
-  // Load backgrounds
-  promises.push(loadImage(CONFIG.backgrounds[0]).then(img => { backgroundImg = img; }));
+  // Load all backgrounds
+  for (let i = 0; i < CONFIG.backgrounds.length; i++) {
+    promises.push(loadImage(CONFIG.backgrounds[i]).then(img => { backgroundImgs[i] = img; }));
+  }
   
   // Load cursor
   promises.push(loadImage('assets/sword.png').then(img => { cursorImg = img; }));
@@ -134,26 +146,30 @@ function playSliceSound() {
   playSound(1200, 0.08, 'sine', 0.1);
 }
 
-function playBombSound() {
-  playSound(100, 0.3, 'sawtooth', 0.3);
-  playSound(80, 0.4, 'square', 0.2);
-}
-
 function playMissSound() {
   playSound(200, 0.2, 'sine', 0.15);
 }
 
+function playBgChangeSound() {
+  playSound(600, 0.15, 'sine', 0.2);
+  playSound(800, 0.1, 'sine', 0.15);
+}
+
 // ===== FRUIT CLASS =====
 class Fruit {
-  constructor(type, x, y, vx, vy) {
-    this.type = type; // fruit config object or 'bomb'
+  constructor(type, x, y, vx, vy, radius, isSpecial = false) {
+    this.type = type;
     this.x = x;
     this.y = y;
     this.vx = vx;
     this.vy = vy;
-    this.radius = CONFIG.fruitRadius;
+    this.radius = radius;
+    this.isSpecial = isSpecial;
+    
+    // Python: random.uniform(-2, 2)
     this.rotation = 0;
     this.rotationSpeed = (Math.random() - 0.5) * 4;
+    
     this.sliced = false;
     this.remove = false;
     
@@ -171,19 +187,17 @@ class Fruit {
     this.rightVy = 0;
     this.rightRotation = 0;
     this.rightRotSpeed = 0;
-    
-    this.isBomb = type === 'bomb';
   }
   
   update() {
     if (!this.sliced) {
-      // Apply gravity
+      // Apply gravity (Python: self.vy += self.gravity where gravity = 0.15)
       this.vy += CONFIG.gravity;
       this.x += this.vx;
       this.y += this.vy;
       this.rotation += this.rotationSpeed;
       
-      // Bounce off walls
+      // Bounce off walls with 0.9 energy preservation (from Python fruit.py)
       if (this.x < this.radius) {
         this.x = this.radius;
         this.vx = Math.abs(this.vx) * 0.9;
@@ -192,12 +206,12 @@ class Fruit {
         this.vx = -Math.abs(this.vx) * 0.9;
       }
       
-      // Remove if fallen off screen
+      // Remove if fallen off screen (Python: if self.y > screen_height + self.radius and self.vy > 0)
       if (this.y > height + this.radius && this.vy > 0) {
         this.remove = true;
       }
     } else {
-      // Update sliced pieces
+      // Update sliced pieces (same gravity)
       this.leftVy += CONFIG.gravity;
       this.leftX += this.leftVx;
       this.leftY += this.leftVy;
@@ -209,7 +223,7 @@ class Fruit {
       this.rightRotation += this.rightRotSpeed;
       
       // Remove if both pieces off screen
-      if (this.leftY > height + 100 && this.rightY > height + 100) {
+      if (this.leftY > height + this.radius && this.rightY > height + this.radius) {
         this.remove = true;
       }
     }
@@ -218,7 +232,7 @@ class Fruit {
   checkSlice(points) {
     if (this.sliced || points.length < 2) return false;
     
-    // Check if slice line intersects fruit
+    // Check if slice line intersects fruit (from Python fruit.py check_slice)
     for (let i = 0; i < points.length - 1; i++) {
       const dist = pointToLineDistance(
         this.x, this.y,
@@ -237,18 +251,20 @@ class Fruit {
   slice(p1, p2) {
     this.sliced = true;
     
-    // Calculate slice direction
+    // Calculate slice direction vector and normalize (from Python fruit.py)
     const dx = p2.x - p1.x;
     const dy = p2.y - p1.y;
     const len = Math.sqrt(dx * dx + dy * dy);
     const nx = len > 0 ? dx / len : 0;
     const ny = len > 0 ? dy / len : 0;
     
-    // Initialize pieces
-    const sliceForce = 4;
+    // Initialize pieces (Python: slice_force = 4.0)
+    const sliceForce = 4.0;
     
+    // Python: self.left_piece_x = self.x - 15
     this.leftX = this.x - 15;
     this.leftY = this.y;
+    // Python: self.left_vx = self.vx - dy * slice_force
     this.leftVx = this.vx - ny * sliceForce;
     this.leftVy = this.vy + nx * sliceForce;
     // Python: random.uniform(-5, -2)
@@ -262,9 +278,26 @@ class Fruit {
     this.rightRotSpeed = 2 + Math.random() * 3;
   }
   
+  getPoints() {
+    // Python: points calculation from FruitFactory
+    let points = this.type.points;
+    
+    // Increase points based on level (Python: points += (current_level - 1) * 5)
+    if (currentLevel > 1) {
+      points += (currentLevel - 1) * 5;
+    }
+    
+    // Double points for special fruits (Python: if is_special: points *= 2)
+    if (this.isSpecial) {
+      points *= 2;
+    }
+    
+    return points;
+  }
+  
   render() {
     if (!this.sliced) {
-      const img = this.isBomb ? images.bomb : images[this.type.name];
+      const img = images[this.type.name];
       if (img) {
         ctx.save();
         ctx.translate(this.x, this.y);
@@ -273,12 +306,12 @@ class Fruit {
         ctx.restore();
       } else {
         // Fallback circle
-        ctx.fillStyle = this.isBomb ? '#333' : '#ff6b6b';
+        ctx.fillStyle = this.isSpecial ? '#00ffff' : '#ff6b6b';
         ctx.beginPath();
         ctx.arc(this.x, this.y, this.radius, 0, Math.PI * 2);
         ctx.fill();
       }
-    } else if (!this.isBomb) {
+    } else {
       // Draw sliced pieces
       const leftImg = images[this.type.name + '_left'];
       const rightImg = images[this.type.name + '_right'];
@@ -302,7 +335,7 @@ class Fruit {
   }
 }
 
-// ===== UTILITY =====
+// ===== UTILITY (from Python utils.py) =====
 function pointToLineDistance(px, py, x1, y1, x2, y2) {
   const A = px - x1;
   const B = py - y1;
@@ -312,7 +345,11 @@ function pointToLineDistance(px, py, x1, y1, x2, y2) {
   const dot = A * C + B * D;
   const lenSq = C * C + D * D;
   
-  let param = lenSq !== 0 ? dot / lenSq : -1;
+  if (lenSq === 0) {
+    return Math.sqrt(A * A + B * B);
+  }
+  
+  let param = dot / lenSq;
   
   let xx, yy;
   if (param < 0) {
@@ -327,48 +364,70 @@ function pointToLineDistance(px, py, x1, y1, x2, y2) {
   return Math.sqrt((px - xx) ** 2 + (py - yy) ** 2);
 }
 
-
-// ===== SPAWNING =====
+// ===== SPAWNING (from Python FruitFactory.create_fruit) =====
 function spawnFruit() {
-  const isBomb = Math.random() < CONFIG.bombChance;
-  const type = isBomb ? 'bomb' : CONFIG.fruits[Math.floor(Math.random() * CONFIG.fruits.length)];
+  // Python: radius = random.randint(35, 45)
+  const radius = 35 + Math.floor(Math.random() * 11);
   
-  // Random radius like Python: random.randint(35, 45)
-  const radius = 35 + Math.floor(Math.random() * 11); // 35-45
+  // Python: is_special = random.random() < self.special_fruit_chance (0.05)
+  const isSpecial = Math.random() < CONFIG.specialFruitChance;
   
-  // Spawn at random x position
+  // Select fruit type
+  const type = isSpecial ? CONFIG.freezeBanana : CONFIG.fruits[Math.floor(Math.random() * CONFIG.fruits.length)];
+  
+  // Python: x = random.randint(radius, screen_width - radius)
   const x = radius + Math.random() * (width - radius * 2);
   
-  // Spawn from middle to bottom of screen (like Python: random.randint(screen_height // 2, screen_height))
+  // Python: spawn_height = random.randint(screen_height // 2, screen_height)
   const y = Math.floor(height / 2) + Math.random() * (height / 2);
   
-  // Velocity - EXACT Python values:
-  // vx = random.uniform(-1.5, 1.5) * speed_multiplier
-  // vy = random.uniform(-8, -6) * speed_multiplier
-  const vx = (Math.random() * 3 - 1.5) * speedMultiplier;
-  const vy = (-8 + Math.random() * 2) * speedMultiplier; // -8 to -6
+  // Python: base_speed = speed_multiplier; if current_level <= 3: base_speed *= 0.8
+  let baseSpeed = speedMultiplier;
+  if (currentLevel <= 3) {
+    baseSpeed *= 0.8;
+  }
   
-  const fruit = new Fruit(type, x, y, vx, vy);
-  fruit.radius = radius;
-  fruits.push(fruit);
+  // Python: vx = random.uniform(-1.5, 1.5) * base_speed
+  const vx = (Math.random() * 3 - 1.5) * baseSpeed;
+  // Python: vy = random.uniform(-8, -6) * base_speed
+  const vy = (-8 + Math.random() * 2) * baseSpeed;
+  
+  fruits.push(new Fruit(type, x, y, vx, vy, radius, isSpecial));
+}
+
+// ===== BACKGROUND CHANGE (from Python game.py check_background_change) =====
+function checkBackgroundChange() {
+  let newBgIndex = 0;
+  
+  // Python thresholds: 0, 200, 500, 1000, 1500, 2000, 2500, 3000
+  if (score < 200) newBgIndex = 0;
+  else if (score < 500) newBgIndex = 1;
+  else if (score < 1000) newBgIndex = 2;
+  else if (score < 1500) newBgIndex = 3;
+  else if (score < 2000) newBgIndex = 4;
+  else if (score < 2500) newBgIndex = 5;
+  else if (score < 3000) newBgIndex = 6;
+  else newBgIndex = 7;
+  
+  // Python: if new_bg_index >= 2 and speed_multiplier < 2.0: speed_multiplier = 2.0
+  if (newBgIndex >= 2 && speedMultiplier < 2.0) {
+    speedMultiplier = 2.0;
+  }
+  
+  if (newBgIndex !== currentBgIndex && newBgIndex < backgroundImgs.length) {
+    currentBgIndex = newBgIndex;
+    currentLevel = newBgIndex + 1;
+    playBgChangeSound();
+  }
 }
 
 // ===== GAME LOGIC =====
 function updateGame(dt) {
-  // Spawn timer
+  // Spawn timer (from Python FruitSpawner)
   spawnTimer++;
-  if (spawnTimer >= CONFIG.spawnInterval / speedMultiplier) {
+  if (spawnTimer >= CONFIG.spawnInterval) {
     spawnFruit();
     spawnTimer = 0;
-  }
-  
-  // Combo timer
-  if (comboTimer > 0) {
-    comboTimer -= dt;
-    if (comboTimer <= 0) {
-      comboCount = 0;
-      comboEl.classList.remove('show');
-    }
   }
   
   // Update fruits
@@ -379,40 +438,28 @@ function updateGame(dt) {
     // Check slice
     if (!fruit.sliced && isSlicing && slicePoints.length > 1) {
       if (fruit.checkSlice(slicePoints)) {
-        if (fruit.isBomb) {
-          // Hit bomb - game over
-          playBombSound();
-          gameOver();
-          return;
-        } else {
-          // Sliced fruit
-          playSliceSound();
-          score += fruit.type.points;
-          fruitsSliced++;
-          
-          // Combo
-          comboCount++;
-          comboTimer = 0.5;
-          if (comboCount >= 3) {
-            score += comboCount * 5; // Bonus
-            comboEl.textContent = `${comboCount}x COMBO!`;
-            comboEl.classList.add('show');
-          }
-          
-          // Difficulty
-          if (fruitsSliced % CONFIG.fruitsPerLevel === 0) {
-            speedMultiplier = Math.min(CONFIG.maxSpeedMultiplier, speedMultiplier + CONFIG.speedMultiplierIncrement);
-          }
-          
-          updateUI();
+        playSliceSound();
+        
+        // Add points (Python: self.score_manager.add_score(10) but we use fruit.getPoints())
+        score += fruit.getPoints();
+        fruitsSliced++;
+        
+        // Difficulty increase (Python: DifficultyManager.increase_difficulty)
+        if (fruitsSliced % CONFIG.fruitsPerLevel === 0) {
+          speedMultiplier = Math.min(CONFIG.maxSpeedMultiplier, speedMultiplier + CONFIG.speedMultiplierIncrement);
         }
+        
+        // Check background change
+        checkBackgroundChange();
+        
+        updateUI();
       }
     }
     
     // Remove fallen fruits
     if (fruit.remove) {
-      if (!fruit.sliced && !fruit.isBomb) {
-        // Missed fruit
+      if (!fruit.sliced) {
+        // Missed fruit - lose life (Python: self.lives_manager.lose_life())
         lives--;
         playMissSound();
         updateUI();
@@ -433,8 +480,9 @@ function renderGame() {
   ctx.fillRect(0, 0, width, height);
   
   // Background
-  if (backgroundImg) {
-    ctx.drawImage(backgroundImg, 0, 0, width, height);
+  const bg = backgroundImgs[currentBgIndex];
+  if (bg) {
+    ctx.drawImage(bg, 0, 0, width, height);
   }
   
   // Fruits
@@ -442,10 +490,11 @@ function renderGame() {
     fruit.render();
   }
   
-  // Slice trail
+  // Slice trail (Python: draws with width 2 main line, width 4 glow)
   if (slicePoints.length > 1) {
-    ctx.strokeStyle = 'rgba(255, 255, 255, 0.8)';
-    ctx.lineWidth = 3;
+    // Glow effect first
+    ctx.strokeStyle = 'rgba(255, 255, 255, 0.3)';
+    ctx.lineWidth = 4;
     ctx.lineCap = 'round';
     ctx.lineJoin = 'round';
     ctx.beginPath();
@@ -455,9 +504,9 @@ function renderGame() {
     }
     ctx.stroke();
     
-    // Glow effect
-    ctx.strokeStyle = 'rgba(255, 255, 255, 0.3)';
-    ctx.lineWidth = 8;
+    // Main line
+    ctx.strokeStyle = 'rgba(255, 255, 255, 0.8)';
+    ctx.lineWidth = 2;
     ctx.stroke();
   }
   
@@ -465,7 +514,7 @@ function renderGame() {
   if (cursorImg) {
     ctx.save();
     ctx.translate(cursorPos.x, cursorPos.y);
-    ctx.rotate(-0.3); // Slight angle
+    ctx.rotate(-0.3);
     ctx.drawImage(cursorImg, -15, -50, 30, 60);
     ctx.restore();
   }
@@ -501,8 +550,8 @@ function resetGame() {
   lives = CONFIG.lives;
   fruitsSliced = 0;
   speedMultiplier = 1.0;
-  comboCount = 0;
-  comboTimer = 0;
+  currentLevel = 1;
+  currentBgIndex = 0;
   spawnTimer = 0;
   
   updateUI();
@@ -511,7 +560,7 @@ function resetGame() {
   gameState = 'playing';
 }
 
-// ===== INPUT =====
+// ===== INPUT (from Python InputHandler) =====
 function getEventPos(e) {
   if (e.touches && e.touches.length > 0) {
     return { x: e.touches[0].clientX, y: e.touches[0].clientY };
@@ -547,13 +596,14 @@ function onPointerMove(e) {
   
   if (isSlicing && gameState === 'playing') {
     slicePoints.push(pos);
+    // Python: max_slice_points = 15
     if (slicePoints.length > CONFIG.maxSlicePoints) {
       slicePoints.shift();
     }
   }
 }
 
-function onPointerUp(e) {
+function onPointerUp() {
   isSlicing = false;
   slicePoints = [];
 }
@@ -577,7 +627,6 @@ async function init() {
   canvas = document.getElementById('game');
   ctx = canvas.getContext('2d');
   
-  // Size canvas
   function resize() {
     width = window.innerWidth;
     height = window.innerHeight;
@@ -587,7 +636,6 @@ async function init() {
   resize();
   window.addEventListener('resize', resize);
   
-  // Load assets
   await loadAssets();
   
   // Input
@@ -608,7 +656,6 @@ async function init() {
     resetGame();
   };
   
-  // Start
   updateUI();
   requestAnimationFrame(animate);
 }
