@@ -212,11 +212,16 @@ function setupLights() {
 
 function setupInput() {
   const onDown = (e) => {
+    // Don't trigger on buttons
     if (e.target.tagName === 'BUTTON') return;
+    
+    // Prevent default to avoid double-firing and scrolling issues
+    if (e.cancelable) e.preventDefault();
+    
     isHolding = true;
   };
   
-  const onUp = () => {
+  const onUp = (e) => {
     isHolding = false;
     // When releasing, try to resume invincibility countdown (like original)
     if (!isInvincible && invincibleTimer > 0 && destroyedPlatformCount >= CONFIG.platformsToEnableIndicator) {
@@ -224,10 +229,14 @@ function setupInput() {
     }
   };
   
-  window.addEventListener('mousedown', onDown);
-  window.addEventListener('mouseup', onUp);
-  window.addEventListener('touchstart', onDown, { passive: true });
-  window.addEventListener('touchend', onUp, { passive: true });
+  // Use document instead of window for better mobile support
+  document.addEventListener('mousedown', onDown);
+  document.addEventListener('mouseup', onUp);
+  document.addEventListener('touchstart', onDown, { passive: false });
+  document.addEventListener('touchend', onUp, { passive: false });
+  
+  // Also handle touch cancel (when touch is interrupted)
+  document.addEventListener('touchcancel', onUp, { passive: false });
 }
 
 function setupButtons() {
