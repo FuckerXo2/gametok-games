@@ -17,6 +17,7 @@ const CONFIG = {
   
   // Special fruit chance (from FruitFactory)
   specialFruitChance: 0.05, // 5% chance for freeze banana
+  bombChance: 0.1, // 10% chance for bomb
   
   // Background change thresholds (from game.py check_background_change)
   bgThresholds: [0, 200, 500, 1000, 1500, 2000, 2500, 3000],
@@ -31,6 +32,9 @@ const CONFIG = {
   
   // Freeze banana (special fruit)
   freezeBanana: { name: 'freezeBanana', whole: 'assets/fruits/FreezeBanana.png', sliced: ['assets/fruits/FreezeBananaSliced.png', 'assets/fruits/FreezeBananaSliced.png'], points: 20 },
+  
+  // Bomb
+  bomb: { name: 'bomb', whole: 'assets/fruits/Bomb.png' },
   
   backgrounds: [
     'assets/Background1.png',
@@ -109,6 +113,9 @@ async function loadAssets() {
   promises.push(loadImage(CONFIG.freezeBanana.sliced[0]).then(img => { images.freezeBanana_left = img; }));
   promises.push(loadImage(CONFIG.freezeBanana.sliced[1]).then(img => { images.freezeBanana_right = img; }));
   
+  // Load bomb
+  promises.push(loadImage(CONFIG.bomb.whole).then(img => { images.bomb = img; }));
+  
   // Load all backgrounds
   for (let i = 0; i < CONFIG.backgrounds.length; i++) {
     promises.push(loadImage(CONFIG.backgrounds[i]).then(img => { backgroundImgs[i] = img; }));
@@ -155,9 +162,14 @@ function playBgChangeSound() {
   playSound(800, 0.1, 'sine', 0.15);
 }
 
+function playBombSound() {
+  playSound(100, 0.3, 'sawtooth', 0.3);
+  playSound(80, 0.4, 'square', 0.2);
+}
+
 // ===== FRUIT CLASS =====
 class Fruit {
-  constructor(type, x, y, vx, vy, radius, isSpecial = false) {
+  constructor(type, x, y, vx, vy, radius, isSpecial = false, isBomb = false) {
     this.type = type;
     this.x = x;
     this.y = y;
@@ -165,6 +177,7 @@ class Fruit {
     this.vy = vy;
     this.radius = radius;
     this.isSpecial = isSpecial;
+    this.isBomb = isBomb;
     
     // Python: random.uniform(-2, 2)
     this.rotation = 0;
@@ -306,12 +319,12 @@ class Fruit {
         ctx.restore();
       } else {
         // Fallback circle
-        ctx.fillStyle = this.isSpecial ? '#00ffff' : '#ff6b6b';
+        ctx.fillStyle = this.isBomb ? '#333' : (this.isSpecial ? '#00ffff' : '#ff6b6b');
         ctx.beginPath();
         ctx.arc(this.x, this.y, this.radius, 0, Math.PI * 2);
         ctx.fill();
       }
-    } else {
+    } else if (!this.isBomb) {
       // Draw sliced pieces
       const leftImg = images[this.type.name + '_left'];
       const rightImg = images[this.type.name + '_right'];
@@ -369,11 +382,21 @@ function spawnFruit() {
   // Python: radius = random.randint(35, 45)
   const radius = 35 + Math.floor(Math.random() * 11);
   
-  // Python: is_special = random.random() < self.special_fruit_chance (0.05)
-  const isSpecial = Math.random() < CONFIG.specialFruitChance;
+  // Check if bomb
+  const isBomb = Math.random() < CONFIG.bombChance;
+  
+  // Check if special (only if not bomb)
+  const isSpecial = !isBomb && Math.random() < CONFIG.specialFruitChance;
   
   // Select fruit type
-  const type = isSpecial ? CONFIG.freezeBanana : CONFIG.fruits[Math.floor(Math.random() * CONFIG.fruits.length)];
+  let type;
+  if (isBomb) {
+    type = CONFIG.bomb;
+  } else if (isSpecial) {
+    type = CONFIG.freezeBanana;
+  } else {
+    type = CONFIG.fruits[Math.floor(Math.random() * CONFIG.fruits.length)];
+  }
   
   // Python: x = random.randint(radius, screen_width - radius)
   const x = radius + Math.random() * (width - radius * 2);
@@ -392,7 +415,7 @@ function spawnFruit() {
   // Python: vy = random.uniform(-8, -6) * base_speed
   const vy = (-8 + Math.random() * 2) * baseSpeed;
   
-  fruits.push(new Fruit(type, x, y, vx, vy, radius, isSpecial));
+  fruits.push(new Fruit(type, x, y, vx, vy, radius, isSpecial, isBomb));
 }
 
 // ===== BACKGROUND CHANGE (from Python game.py check_background_change) =====
@@ -438,6 +461,13 @@ function updateGame(dt) {
     // Check slice
     if (!fruit.sliced && isSlicing && slicePoints.length > 1) {
       if (fruit.checkSlice(slicePoints)) {
+        if (fruit.isBomb) {
+          // Hit bomb - game over!
+          playBombSound();
+          gameOver();
+          return;
+        }
+        
         playSliceSound();
         
         // Add points (Python: self.score_manager.add_score(10) but we use fruit.getPoints())
@@ -458,8 +488,8 @@ function updateGame(dt) {
     
     // Remove fallen fruits
     if (fruit.remove) {
-      if (!fruit.sliced) {
-        // Missed fruit - lose life (Python: self.lives_manager.lose_life())
+      if (!fruit.sliced && !fruit.isBomb) {
+        // Missed fruit - lose life (bombs don't cost lives if missed)
         lives--;
         playMissSound();
         updateUI();
