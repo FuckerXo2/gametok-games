@@ -280,14 +280,55 @@ function sliceFruit(index) {
   // Juice splat
   createSplat(f.x + 35, f.y + 35, juiceColors[f.colorIndex]);
   
-  // Slice animation
-  f.el.style.transition = 'transform 0.2s, opacity 0.2s';
-  f.el.style.transform = 'scale(1.3) rotate(20deg)';
-  f.el.style.opacity = '0';
+  // Create two halves that fly apart
+  createHalf(f, -1); // left half
+  createHalf(f, 1);  // right half
   
-  setTimeout(function() {
-    removeFruit(fruits.indexOf(f));
-  }, 200);
+  // Remove original fruit
+  if (f.el && f.el.parentNode) f.el.parentNode.removeChild(f.el);
+  fruits.splice(index, 1);
+}
+
+function createHalf(f, dir) {
+  var half = document.createElement('div');
+  half.style.cssText = 'position:absolute;width:35px;height:70px;overflow:hidden;pointer-events:none;z-index:10;';
+  half.style.left = (f.x + (dir > 0 ? 35 : 0)) + 'px';
+  half.style.top = f.y + 'px';
+  
+  var img = document.createElement('img');
+  img.src = f.el.src;
+  img.style.cssText = 'width:70px;height:70px;position:absolute;';
+  img.style.left = (dir > 0 ? '-35px' : '0') + 'px';
+  
+  half.appendChild(img);
+  container.appendChild(half);
+  
+  // Animate the half flying away
+  var vx = dir * (4 + Math.random() * 3);
+  var vy = -5 - Math.random() * 3;
+  var rotation = 0;
+  var rotSpeed = dir * (10 + Math.random() * 10);
+  var x = f.x + (dir > 0 ? 35 : 0);
+  var y = f.y;
+  var alpha = 1;
+  
+  var animInterval = setInterval(function() {
+    vy += 0.6;
+    x += vx;
+    y += vy;
+    rotation += rotSpeed;
+    alpha -= 0.03;
+    
+    half.style.left = x + 'px';
+    half.style.top = y + 'px';
+    half.style.transform = 'rotate(' + rotation + 'deg)';
+    half.style.opacity = alpha;
+    
+    if (alpha <= 0 || y > container.offsetHeight + 100) {
+      clearInterval(animInterval);
+      if (half.parentNode) half.parentNode.removeChild(half);
+    }
+  }, 16);
 }
 
 function createSplat(x, y, color) {
