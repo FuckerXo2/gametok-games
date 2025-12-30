@@ -362,21 +362,29 @@ function createPlatform(y, rotation, color, maxDangerParts, index) {
   // Randomly pick which segments are danger (black)
   // Ensure at least minSafeParts are safe (not black)
   const dangerIndices = new Set();
-  const availableIndices = [];
-  for (let i = 0; i < CONFIG.segmentsPerPlatform; i++) {
-    availableIndices.push(i);
-  }
   
-  // Shuffle and pick danger segments
-  for (let i = availableIndices.length - 1; i > 0; i--) {
-    const j = Math.floor(Math.random() * (i + 1));
-    [availableIndices[i], availableIndices[j]] = [availableIndices[j], availableIndices[i]];
-  }
+  // Calculate how many can be danger (leave at least minSafeParts safe)
+  const maxPossibleDanger = CONFIG.segmentsPerPlatform - CONFIG.minSafeParts;
+  const actualDangerCount = Math.min(maxDangerParts, maxPossibleDanger);
   
-  // Only mark up to maxDangerParts as danger
-  const actualDangerCount = Math.min(maxDangerParts, CONFIG.segmentsPerPlatform - CONFIG.minSafeParts);
-  for (let i = 0; i < actualDangerCount; i++) {
-    dangerIndices.add(availableIndices[i]);
+  // Only add danger segments if actualDangerCount > 0
+  if (actualDangerCount > 0) {
+    // Create shuffled array of indices
+    const availableIndices = [];
+    for (let i = 0; i < CONFIG.segmentsPerPlatform; i++) {
+      availableIndices.push(i);
+    }
+    
+    // Fisher-Yates shuffle
+    for (let i = availableIndices.length - 1; i > 0; i--) {
+      const j = Math.floor(Math.random() * (i + 1));
+      [availableIndices[i], availableIndices[j]] = [availableIndices[j], availableIndices[i]];
+    }
+    
+    // Mark first N shuffled indices as danger
+    for (let i = 0; i < actualDangerCount; i++) {
+      dangerIndices.add(availableIndices[i]);
+    }
   }
   
   for (let i = 0; i < CONFIG.segmentsPerPlatform; i++) {
@@ -386,7 +394,7 @@ function createPlatform(y, rotation, color, maxDangerParts, index) {
     const startAngle = centerAngle - halfArc;
     const arcLength = segmentAngle - gapAngle;
     
-    const segColor = isDanger ? 0x111111 : color;
+    const segColor = isDanger ? 0x222222 : color;
     const seg = createSegment(startAngle, arcLength, segColor);
     seg.position.y = y;
     seg.userData = {
@@ -717,21 +725,24 @@ function checkCollisions() {
   const ballZ = ball.position.z;
   const distFromCenter = Math.sqrt(ballX * ballX + ballZ * ballZ);
   
-  // Only check collision if ball is within platform ring
-  if (distFromCenter < CONFIG.platformInnerRadius || distFromCenter > CONFIG.platformRadius) {
+  // Only check collision if ball is within platform ring area
+  if (distFromCenter < CONFIG.platformInnerRadius - 0.1 || distFromCenter > CONFIG.platformRadius + 0.1) {
     return;
   }
   
+  // Calculate ball angle in world space
   let ballAngle = Math.atan2(ballZ, ballX);
   if (ballAngle < 0) ballAngle += Math.PI * 2;
   
+  // Convert to local space (subtract container rotation)
   const containerRotation = platformsContainer ? platformsContainer.rotation.y : 0;
   let localBallAngle = ballAngle - containerRotation;
   
+  // Normalize to 0-2PI
   while (localBallAngle < 0) localBallAngle += Math.PI * 2;
   while (localBallAngle >= Math.PI * 2) localBallAngle -= Math.PI * 2;
   
-  // Check finish platform
+  // Check finish platform first
   const finishTop = finishPlatform.position.y + 0.4;
   if (ballBottom <= finishTop && ballVelocity < 0) {
     bounce(finishTop + CONFIG.ballRadius);
@@ -739,66 +750,83 @@ function checkCollisions() {
     return;
   }
   
-  // Check platforms - only check ones near the ball
+  // Check platforms - find the one we're colliding with
   for (const platform of platforms) {
     if (platform.destroyed) continue;
     
     const platTop = platform.y + CONFIG.platformThickness / 2;
     const platBottom = platform.y - CONFIG.platformThickness / 2;
     
-    // Ball must be at platform height and moving down
-    if (ballBottom <= platTop && ballBottom > platBottom - 0.1 && ballVelocity < 0) {
+    // Check if ball is at this platform's height and moving down
+    if (ballBottom <= platTop && ballBottom > platBottom - 0.15 && ballVelocity < 0) {
       // Find which segment the ball is over
-      let hitSegment = null;
       for (const seg of platform.segments) {
         if (!seg.visible) continue;
         
-        if (isAngleInSegment(localBallAngle, seg.userData.startAngle, seg.userData.endAngle)) {
-          hitSegment = seg;
-          break;
+        // Get segment angles (already in local space)
+        let startAngle = seg.userData.startAngle;
+        let endAngle = seg.userData.endAngle;
+        
+        // Normalize angles
+        while (startAngle < 0) startAngle += Math.PI * 2;
+        while (endAngle < 0) endAngle += Math.PI * 2;
+        startAngle = startAngle % (Math.PI * 2);
+        endAngle = endAngle % (Math.PI * 2);
+        
+        if (isAngleInSegment(localBallAngle, startAngle, endAngle)) {
+          handleCollision(seg, platform, platTop);
+          return;
         }
       }
       
-      if (hitSegment) {
-        handleCollision(hitSegment, platform, platTop);
-        return;
-      }
+      // If we're at platform height but didn't hit any segment,
+      // we're in a gap - let ball fall through
     }
   }
 }
 
 function isAngleInSegment(angle, startAngle, endAngle) {
   const twoPi = Math.PI * 2;
+  
+  // Normalize all angles to 0-2PI
   angle = ((angle % twoPi) + twoPi) % twoPi;
   startAngle = ((startAngle % twoPi) + twoPi) % twoPi;
   endAngle = ((endAngle % twoPi) + twoPi) % twoPi;
   
+  // Add small tolerance for edge cases
+  const tolerance = 0.01;
+  
   if (startAngle <= endAngle) {
-    return angle >= startAngle && angle <= endAngle;
+    // Normal case: segment doesn't wrap around
+    return angle >= startAngle - tolerance && angle <= endAngle + tolerance;
   } else {
-    return angle >= startAngle || angle <= endAngle;
+    // Wraparound case: segment crosses 0/2PI boundary
+    return angle >= startAngle - tolerance || angle <= endAngle + tolerance;
   }
 }
 
 function handleCollision(segment, platform, platformTop) {
-  if (isHolding) {
-    // ONLY die if segment is ACTUALLY black (isDanger === true)
-    // and we're NOT invincible
-    const isDanger = segment.userData && segment.userData.isDanger === true;
-    
-    if (isDanger && !isInvincible) {
-      // Check the segment color to be 100% sure it's black
-      const segColor = segment.material.color.getHex();
-      if (segColor === 0x111111 || segColor === 0x000000) {
-        loseGame();
-        return;
-      }
-    }
-    // If we get here, destroy the platform (it's safe)
-    destroyPlatform(platform);
-  } else if (ballVelocity < 0) {
+  // When NOT holding (smashing), always bounce
+  if (!isHolding) {
     bounce(platformTop + CONFIG.ballRadius);
+    return;
   }
+  
+  // When holding (smashing):
+  // - Black segments (isDanger) kill you UNLESS invincible
+  // - Colored segments get destroyed
+  
+  const isDanger = segment.userData && segment.userData.isDanger === true;
+  
+  if (isDanger && !isInvincible) {
+    // Hit a black segment while smashing - GAME OVER
+    loseGame();
+    return;
+  }
+  
+  // Either hit a colored segment, or hit black while invincible
+  // Destroy the entire platform ring
+  destroyPlatform(platform);
 }
 
 function bounce(newY) {
