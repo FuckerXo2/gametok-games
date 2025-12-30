@@ -1,0 +1,235 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Pac-Man</title>
+    <style>
+        @font-face {
+            font-family: "Whimsy TT";
+            font-style: normal;
+            font-weight: normal;
+            src: url("fonts/whimsytt.ttf") format("truetype");
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            -webkit-tap-highlight-color: transparent;
+        }
+
+        html, body {
+            width: 100%;
+            height: 100%;
+            overflow: hidden;
+            background-color: #000;
+            touch-action: none;
+            user-select: none;
+            -webkit-user-select: none;
+        }
+
+        html, body, input {
+            font-family: "Whimsy TT", sans-serif;
+            color: white;
+        }
+
+        #container {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%) scale(var(--scale, 1));
+            transform-origin: center center;
+            width: 336px;
+            height: 396px;
+            background: #000;
+        }
+
+        .board, .screen, .game {
+            position: absolute;
+            top: 0;
+            left: 0;
+        }
+
+        .display {
+            display: none;
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+        }
+
+        .mainScreen .main { display: block; }
+        .gameOver .input { display: block; }
+
+        .main {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            height: 100%;
+            padding-top: 150px;
+        }
+
+        .main ul {
+            list-style: none;
+            text-align: center;
+        }
+
+        .main li {
+            margin: 10px 0;
+        }
+
+        .main a {
+            color: #ccc;
+            text-decoration: none;
+            font-size: 24px;
+            display: block;
+            padding: 10px 20px;
+        }
+
+        .main a:active {
+            color: #fff;
+            transform: scale(1.1);
+        }
+
+        .input {
+            text-align: center;
+            padding-top: 100px;
+        }
+
+        .input h2 {
+            font-size: 36px;
+            margin-bottom: 20px;
+        }
+
+        .input p {
+            font-size: 20px;
+            color: rgb(255, 255, 51);
+            margin-bottom: 10px;
+        }
+
+        .input input {
+            background-color: transparent;
+            border: 2px solid rgb(0, 51, 255);
+            border-radius: 8px;
+            padding: 8px;
+            font-size: 18px;
+            color: white;
+            width: 150px;
+            margin-bottom: 15px;
+        }
+
+        .input a {
+            display: block;
+            color: #ccc;
+            text-decoration: none;
+            font-size: 20px;
+            margin: 10px;
+        }
+
+        .audio, .high, .controls, .scores, .none, .restore, .back {
+            display: none !important;
+        }
+
+        /* Touch controls overlay */
+        #touch-controls {
+            position: fixed;
+            bottom: 20px;
+            left: 50%;
+            transform: translateX(-50%);
+            display: none;
+            z-index: 100;
+        }
+
+        .playing #touch-controls,
+        .ready #touch-controls,
+        .paused #touch-controls {
+            display: block;
+        }
+
+        .dpad {
+            width: 150px;
+            height: 150px;
+            position: relative;
+        }
+
+        .dpad-btn {
+            position: absolute;
+            width: 50px;
+            height: 50px;
+            background: rgba(255, 255, 255, 0.2);
+            border: 2px solid rgba(255, 255, 255, 0.4);
+            border-radius: 8px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 24px;
+            color: rgba(255, 255, 255, 0.7);
+        }
+
+        .dpad-btn:active {
+            background: rgba(255, 255, 255, 0.4);
+        }
+
+        .dpad-up { top: 0; left: 50px; }
+        .dpad-down { bottom: 0; left: 50px; }
+        .dpad-left { top: 50px; left: 0; }
+        .dpad-right { top: 50px; right: 0; }
+
+        #pause-btn {
+            position: fixed;
+            top: 10px;
+            right: 10px;
+            width: 40px;
+            height: 40px;
+            background: rgba(255, 255, 255, 0.2);
+            border: 2px solid rgba(255, 255, 255, 0.4);
+            border-radius: 8px;
+            color: rgba(255, 255, 255, 0.7);
+            font-size: 20px;
+            display: none;
+            z-index: 100;
+        }
+
+        .playing #pause-btn,
+        .ready #pause-btn,
+        .paused #pause-btn {
+            display: block;
+        }
+    </style>
+</head>
+<body>
+    <div id="container" class="mainScreen">
+        <canvas class="board"></canvas>
+        <canvas class="game"></canvas>
+        <canvas class="screen"></canvas>
+        
+        <div class="main display">
+            <ul>
+                <li><a href="#" data-action="play">Start Game</a></li>
+            </ul>
+        </div>
+        
+        <div class="input display">
+            <h2>Game Over</h2>
+            <p>Score: <span id="final-score">0</span></p>
+            <a href="#" data-action="mainScreen">Play Again</a>
+        </div>
+    </div>
+
+    <div id="touch-controls">
+        <div class="dpad">
+            <div class="dpad-btn dpad-up" data-dir="up">▲</div>
+            <div class="dpad-btn dpad-down" data-dir="down">▼</div>
+            <div class="dpad-btn dpad-left" data-dir="left">◀</div>
+            <div class="dpad-btn dpad-right" data-dir="right">▶</div>
+        </div>
+    </div>
+
+    <button id="pause-btn">⏸</button>
+
+    <script src="game.js"></script>
+</body>
+</html>
