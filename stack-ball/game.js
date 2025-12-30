@@ -25,13 +25,12 @@ const CONFIG = {
 };
 
 // Shape types from Unity (5 shapes, each with 4 variants 0-3 danger segments)
-const SHAPES = ['Circle', 'Flower', 'Hex', 'Square', 'Spikes'];
+const SHAPES = ['Circle', 'Flower', 'Square', 'Spikes'];
 const SHAPE_FILES = {
-  Circle: 'Circle_Shape.fbx',
-  Flower: 'Flower_shape.fbx',
-  Square: 'Square_Sides.fbx',
-  Spikes: 'Spike_Shape.fbx',
-  Hex: 'Circle_Shape.fbx' // Hex uses circle as fallback
+  Circle: 'Circle_Shape.glb',
+  Flower: 'Flower_shape.glb',
+  Square: 'Square_Sides.glb',
+  Spikes: 'Spike_Shape.glb',
 };
 
 // Danger segment configs per variant (from Unity prefabs)
@@ -130,31 +129,31 @@ function playSound(name, volume = 0.5) {
 }
 
 // =============================================================================
-// FBX MODEL LOADING
+// GLB MODEL LOADING (converted from Unity FBX)
 // =============================================================================
 function loadModels() {
   return new Promise((resolve) => {
-    // Check if FBXLoader is available
-    if (typeof THREE.FBXLoader === 'undefined') {
-      console.warn('FBXLoader not available, using procedural geometry');
+    if (typeof THREE.GLTFLoader === 'undefined') {
+      console.warn('GLTFLoader not available, using procedural geometry');
       modelsLoaded = false;
       resolve();
       return;
     }
     
-    const loader = new THREE.FBXLoader();
+    const loader = new THREE.GLTFLoader();
     let loaded = 0;
     const toLoad = Object.keys(SHAPE_FILES).length;
     
     for (const [shape, file] of Object.entries(SHAPE_FILES)) {
       loader.load(
         'assets/' + file,
-        (fbx) => {
-          // Store the loaded model
-          loadedModels[shape] = fbx;
+        (gltf) => {
+          loadedModels[shape] = gltf.scene;
+          console.log('Loaded', shape, gltf.scene);
           loaded++;
           if (loaded >= toLoad) {
             modelsLoaded = true;
+            console.log('All models loaded!');
             resolve();
           }
         },
@@ -362,14 +361,14 @@ function createPlatform(y, rotDeg, index) {
   const dangerIndices = DANGER_CONFIGS[variant] || [];
   const segments = [];
   
-  // Try to use loaded FBX model
+  // Try to use loaded GLB model
   if (modelsLoaded && loadedModels[currentShape]) {
     const model = loadedModels[currentShape].clone();
+    let segIndex = 0;
     
     // Apply materials to each child mesh
     model.traverse((child) => {
       if (child.isMesh) {
-        const segIndex = parseInt(child.name) - 1; // Unity names: "1", "2", "3", "4"
         const isDanger = dangerIndices.includes(segIndex);
         
         child.material = new THREE.MeshStandardMaterial({
@@ -377,10 +376,12 @@ function createPlatform(y, rotDeg, index) {
         });
         child.userData = { isDanger, segmentIndex: segIndex };
         segments.push(child);
+        segIndex++;
       }
     });
     
-    model.scale.set(1, 1, 1);
+    // Scale the model to match Unity scale
+    model.scale.set(0.01, 0.01, 0.01); // FBX exports are usually 100x
     group.add(model);
   } else {
     // Fallback: procedural geometry (4 segments like Unity)
