@@ -1,409 +1,296 @@
-// Fruit Slicer - Mobile Optimized
+// Fruit Slicer - Ultra Lightweight for WebView
 (function() {
 'use strict';
 
-// ============================================
-// CONFIGURATION (tuned for mobile portrait)
-// ============================================
-const CONFIG = {
-  gravity: 0.35,
-  fruitSize: 70,
-  sliceTrailLength: 10,
-  maxLives: 3,
-  comboWindow: 500,
-  spawnDelay: 1000,
-  bombChance: 0.12,
-};
+const canvas = document.getElementById('game');
+const ctx = canvas.getContext('2d', { alpha: false }); // Opaque canvas = faster
 
-// Fruit images
-const FRUIT_IMAGES = [
+let W, H;
+let gameState = 'menu';
+let score = 0, lives = 3, combo = 0;
+let highScore = parseInt(localStorage.getItem('fs_hi')) || 0;
+let lastSlice = 0;
+let spawnTimer = 0;
+
+// Simple arrays - no objects with many properties
+let fruitX = [], fruitY = [], fruitVX = [], fruitVY = [];
+let fruitType = [], fruitSliced = [];
+let splatX = [], splatY = [], splatA = [], splatC = [];
+
+let sliceX = [], sliceY = [];
+let touching = false;
+let lastX = 0, lastY = 0;
+
+// Preload images
+const imgs = [];
+const imgSrcs = [
   'https://raw.githubusercontent.com/Saumya-07/Fruit-Slicer/master/images/1.png',
   'https://raw.githubusercontent.com/Saumya-07/Fruit-Slicer/master/images/2.png',
   'https://raw.githubusercontent.com/Saumya-07/Fruit-Slicer/master/images/3.png',
   'https://raw.githubusercontent.com/Saumya-07/Fruit-Slicer/master/images/4.png',
   'https://raw.githubusercontent.com/Saumya-07/Fruit-Slicer/master/images/5.png',
-  'https://raw.githubusercontent.com/Saumya-07/Fruit-Slicer/master/images/6.png',
-  'https://raw.githubusercontent.com/Saumya-07/Fruit-Slicer/master/images/7.png',
-  'https://raw.githubusercontent.com/Saumya-07/Fruit-Slicer/master/images/8.png',
-  'https://raw.githubusercontent.com/Saumya-07/Fruit-Slicer/master/images/9.png',
-  'https://raw.githubusercontent.com/Saumya-07/Fruit-Slicer/master/images/10.png',
 ];
-const BOMB_IMAGE = 'https://raw.githubusercontent.com/nicholasadamou/fruit-ninja/master/images/bomb.png';
-const HEART_IMAGE = 'https://raw.githubusercontent.com/Saumya-07/Fruit-Slicer/master/images/wrong.png';
+const colors = ['#ff6b6b','#ffa502','#ffd32a','#ff4757','#8e44ad'];
+let bombImg = null;
 
-const JUICE_COLORS = ['#ff6b6b','#ffa502','#ffd32a','#ff4757','#8e44ad','#e74c3c','#2ecc71','#fd79a8','#c0392b','#f39c12'];
-
-// ============================================
-// GAME STATE
-// ============================================
-let canvas, ctx, width, height;
-let gameState = 'menu';
-let score = 0, lives = CONFIG.maxLives, combo = 0;
-let highScore = parseInt(localStorage.getItem('fruitslicer_high')) || 0;
-let lastSliceTime = 0, spawnTimer = 0, difficulty = 1;
-
-let fruits = [];
-let splats = [];
-let sliceTrail = [];
-let isSlicing = false;
-let lastPos = null;
-
-const images = {};
-let imagesLoaded = 0;
-
-// Strict limits
-const MAX_FRUITS = 8;
-const MAX_SPLATS = 6;
-
-const ui = {
-  score: null, lives: null, combo: null,
-  menu: null, gameOver: null, finalScore: null, bestScore: null
-};
-
-// ============================================
-// INIT
-// ============================================
-function init() {
-  canvas = document.getElementById('game');
-  ctx = canvas.getContext('2d');
-  
-  ui.score = document.getElementById('score');
-  ui.lives = document.getElementById('lives');
-  ui.combo = document.getElementById('combo');
-  ui.menu = document.getElementById('menu');
-  ui.gameOver = document.getElementById('gameOver');
-  ui.finalScore = document.getElementById('finalScore');
-  ui.bestScore = document.getElementById('bestScore');
-  
-  resize();
-  window.addEventListener('resize', resize);
-  
-  preloadImages();
-  setupInput();
-  
-  document.getElementById('startBtn').onclick = startGame;
-  document.getElementById('retryBtn').onclick = startGame;
-  
-  ui.bestScore.textContent = highScore;
-  updateLivesUI();
-  
-  requestAnimationFrame(loop);
-}
-
-function preloadImages() {
-  FRUIT_IMAGES.forEach((src, i) => {
+function loadImages() {
+  imgSrcs.forEach((src, i) => {
     const img = new Image();
-    img.onload = () => imagesLoaded++;
     img.src = src;
-    images['f' + i] = img;
+    imgs[i] = img;
   });
-  const bomb = new Image();
-  bomb.onload = () => imagesLoaded++;
-  bomb.src = BOMB_IMAGE;
-  images.bomb = bomb;
+  bombImg = new Image();
+  bombImg.src = 'https://raw.githubusercontent.com/nicholasadamou/fruit-ninja/master/images/bomb.png';
 }
 
 function resize() {
-  const dpr = Math.min(window.devicePixelRatio || 1, 2);
-  width = window.innerWidth;
-  height = window.innerHeight;
-  canvas.width = width * dpr;
-  canvas.height = height * dpr;
-  canvas.style.width = width + 'px';
-  canvas.style.height = height + 'px';
-  ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+  W = window.innerWidth;
+  H = window.innerHeight;
+  canvas.width = W;
+  canvas.height = H;
 }
 
-function setupInput() {
-  const getPos = (e) => {
-    if (e.touches && e.touches[0]) return { x: e.touches[0].clientX, y: e.touches[0].clientY };
-    return { x: e.clientX, y: e.clientY };
-  };
+function init() {
+  loadImages();
+  resize();
+  window.onresize = resize;
   
-  const start = (e) => {
-    if (e.target.tagName === 'BUTTON') return;
+  // Touch/mouse
+  canvas.ontouchstart = canvas.onmousedown = (e) => {
     e.preventDefault();
-    isSlicing = true;
-    lastPos = getPos(e);
-    sliceTrail = [lastPos];
+    touching = true;
+    const p = getPos(e);
+    lastX = p.x; lastY = p.y;
+    sliceX = [p.x]; sliceY = [p.y];
   };
-  
-  const move = (e) => {
-    if (!isSlicing) return;
+  canvas.ontouchmove = canvas.onmousemove = (e) => {
+    if (!touching) return;
     e.preventDefault();
-    const pos = getPos(e);
-    if (lastPos && gameState === 'playing') checkSlice(lastPos, pos);
-    lastPos = pos;
-    sliceTrail.push(pos);
-    if (sliceTrail.length > CONFIG.sliceTrailLength) sliceTrail.shift();
+    const p = getPos(e);
+    if (gameState === 'playing') checkSlice(lastX, lastY, p.x, p.y);
+    lastX = p.x; lastY = p.y;
+    sliceX.push(p.x); sliceY.push(p.y);
+    if (sliceX.length > 8) { sliceX.shift(); sliceY.shift(); }
   };
+  canvas.ontouchend = canvas.onmouseup = canvas.onmouseleave = () => { touching = false; };
   
-  const end = () => { isSlicing = false; lastPos = null; };
+  document.getElementById('startBtn').onclick = start;
+  document.getElementById('retryBtn').onclick = start;
   
-  canvas.addEventListener('mousedown', start);
-  canvas.addEventListener('mousemove', move);
-  canvas.addEventListener('mouseup', end);
-  canvas.addEventListener('mouseleave', end);
-  canvas.addEventListener('touchstart', start, { passive: false });
-  canvas.addEventListener('touchmove', move, { passive: false });
-  canvas.addEventListener('touchend', end);
+  document.getElementById('bestScore').textContent = highScore;
+  updateLives();
+  
+  loop();
 }
 
-function startGame() {
+function getPos(e) {
+  if (e.touches && e.touches[0]) return { x: e.touches[0].clientX, y: e.touches[0].clientY };
+  return { x: e.clientX, y: e.clientY };
+}
+
+function start() {
   gameState = 'playing';
-  score = 0; lives = CONFIG.maxLives; combo = 0; difficulty = 1;
-  fruits = []; splats = []; spawnTimer = 0;
-  ui.menu.classList.add('hidden');
-  ui.gameOver.classList.add('hidden');
-  updateUI();
-  updateLivesUI();
+  score = 0; lives = 3; combo = 0; spawnTimer = 0;
+  fruitX = []; fruitY = []; fruitVX = []; fruitVY = [];
+  fruitType = []; fruitSliced = [];
+  splatX = []; splatY = []; splatA = []; splatC = [];
+  document.getElementById('menu').classList.add('hidden');
+  document.getElementById('gameOver').classList.add('hidden');
+  document.getElementById('score').textContent = '0';
+  updateLives();
 }
 
-// ============================================
-// GAME LOOP
-// ============================================
-let lastTime = 0;
-
-function loop(time) {
-  const dt = Math.min((time - lastTime) / 1000, 0.05);
-  lastTime = time;
-  
-  if (gameState === 'playing') {
-    update(dt);
-  }
-  render();
+function loop() {
+  update();
+  draw();
   requestAnimationFrame(loop);
 }
 
-function update(dt) {
-  // Spawn
-  spawnTimer -= dt * 1000;
-  if (spawnTimer <= 0 && fruits.length < MAX_FRUITS) {
-    spawnFruit();
-    spawnTimer = CONFIG.spawnDelay / Math.min(difficulty, 1.8);
+function update() {
+  if (gameState !== 'playing') return;
+  
+  // Spawn (max 5 fruits)
+  spawnTimer--;
+  if (spawnTimer <= 0 && fruitX.length < 5) {
+    spawn();
+    spawnTimer = 50 + Math.random() * 30;
   }
   
   // Update fruits
-  for (let i = fruits.length - 1; i >= 0; i--) {
-    const f = fruits[i];
-    f.vy += CONFIG.gravity;
-    f.x += f.vx;
-    f.y += f.vy;
-    f.rot += f.rotSpd;
+  for (let i = fruitX.length - 1; i >= 0; i--) {
+    fruitVY[i] += 0.4;
+    fruitX[i] += fruitVX[i];
+    fruitY[i] += fruitVY[i];
     
-    // Off screen
-    if (f.y > height + 80) {
-      if (!f.sliced && !f.bomb) loseLife();
-      fruits.splice(i, 1);
+    if (fruitY[i] > H + 50) {
+      if (!fruitSliced[i] && fruitType[i] >= 0) {
+        lives--;
+        combo = 0;
+        updateLives();
+        if (lives <= 0) endGame();
+      }
+      removeFruit(i);
     }
   }
   
   // Fade splats
-  for (let i = splats.length - 1; i >= 0; i--) {
-    splats[i].a -= dt * 0.5;
-    if (splats[i].a <= 0) splats.splice(i, 1);
-  }
-  
-  // Difficulty
-  difficulty = 1 + score * 0.02;
-}
-
-// ============================================
-// SPAWNING - Mobile optimized (throw from bottom)
-// ============================================
-function spawnFruit() {
-  const isBomb = Math.random() < CONFIG.bombChance;
-  const size = CONFIG.fruitSize;
-  
-  // Spawn from bottom, random X position
-  const margin = size;
-  const x = margin + Math.random() * (width - margin * 2);
-  const y = height + size;
-  
-  // Throw upward - calculate based on screen height
-  // Need enough velocity to reach top third of screen
-  const targetHeight = height * 0.3; // Reach top 30% of screen
-  const flightTime = 1.5; // seconds to reach peak
-  
-  // vy = -sqrt(2 * g * h) but simplified for game feel
-  const vy = -(height * 0.018 + Math.random() * 3);
-  
-  // Slight horizontal drift toward center
-  const centerPull = (width / 2 - x) * 0.003;
-  const vx = centerPull + (Math.random() - 0.5) * 2;
-  
-  const idx = Math.floor(Math.random() * FRUIT_IMAGES.length);
-  
-  fruits.push({
-    x, y, vx, vy,
-    bomb: isBomb,
-    img: isBomb ? 'bomb' : 'f' + idx,
-    color: idx,
-    size: isBomb ? size * 0.85 : size,
-    rot: 0,
-    rotSpd: (Math.random() - 0.5) * 0.15,
-    sliced: false
-  });
-}
-
-// ============================================
-// SLICING
-// ============================================
-function checkSlice(from, to) {
-  for (const f of fruits) {
-    if (f.sliced) continue;
-    if (lineHitsCircle(from.x, from.y, to.x, to.y, f.x, f.y, f.size / 2)) {
-      sliceFruit(f);
+  for (let i = splatA.length - 1; i >= 0; i--) {
+    splatA[i] -= 0.02;
+    if (splatA[i] <= 0) {
+      splatX.splice(i, 1); splatY.splice(i, 1);
+      splatA.splice(i, 1); splatC.splice(i, 1);
     }
   }
 }
 
-function lineHitsCircle(x1, y1, x2, y2, cx, cy, r) {
+function spawn() {
+  const x = 50 + Math.random() * (W - 100);
+  const isBomb = Math.random() < 0.1;
+  
+  fruitX.push(x);
+  fruitY.push(H + 40);
+  fruitVX.push((W/2 - x) * 0.008 + (Math.random() - 0.5) * 2);
+  fruitVY.push(-(H * 0.022 + Math.random() * 4));
+  fruitType.push(isBomb ? -1 : Math.floor(Math.random() * 5));
+  fruitSliced.push(false);
+}
+
+function removeFruit(i) {
+  fruitX.splice(i, 1); fruitY.splice(i, 1);
+  fruitVX.splice(i, 1); fruitVY.splice(i, 1);
+  fruitType.splice(i, 1); fruitSliced.splice(i, 1);
+}
+
+function checkSlice(x1, y1, x2, y2) {
+  for (let i = 0; i < fruitX.length; i++) {
+    if (fruitSliced[i]) continue;
+    if (lineHit(x1, y1, x2, y2, fruitX[i], fruitY[i], 35)) {
+      slice(i);
+    }
+  }
+}
+
+function lineHit(x1, y1, x2, y2, cx, cy, r) {
   const dx = x2 - x1, dy = y2 - y1;
   const fx = x1 - cx, fy = y1 - cy;
-  const a = dx * dx + dy * dy;
-  const b = 2 * (fx * dx + fy * dy);
-  const c = fx * fx + fy * fy - r * r;
-  let disc = b * b - 4 * a * c;
-  if (disc < 0) return false;
-  disc = Math.sqrt(disc);
-  const t1 = (-b - disc) / (2 * a);
-  const t2 = (-b + disc) / (2 * a);
+  const a = dx*dx + dy*dy;
+  const b = 2*(fx*dx + fy*dy);
+  const c = fx*fx + fy*fy - r*r;
+  const d = b*b - 4*a*c;
+  if (d < 0) return false;
+  const sd = Math.sqrt(d);
+  const t1 = (-b - sd) / (2*a);
+  const t2 = (-b + sd) / (2*a);
   return (t1 >= 0 && t1 <= 1) || (t2 >= 0 && t2 <= 1);
 }
 
-function sliceFruit(f) {
-  f.sliced = true;
+function slice(i) {
+  fruitSliced[i] = true;
   
-  if (f.bomb) {
-    vibrate([100, 50, 100]);
+  if (fruitType[i] < 0) {
+    // Bomb
     endGame();
     return;
   }
   
   // Combo
-  const now = performance.now();
-  if (now - lastSliceTime < CONFIG.comboWindow) {
+  const now = Date.now();
+  if (now - lastSlice < 400) {
     combo++;
-    if (combo >= 3) showCombo(combo);
+    if (combo >= 3) showCombo();
   } else {
     combo = 1;
   }
-  lastSliceTime = now;
+  lastSlice = now;
   
-  // Score
-  const pts = Math.max(1, Math.floor(combo / 2));
-  score += pts;
+  score += Math.max(1, Math.floor(combo / 2));
+  document.getElementById('score').textContent = score;
   
-  vibrate(10);
-  
-  // Splat (simple, no clipping)
-  if (splats.length < MAX_SPLATS) {
-    splats.push({ x: f.x, y: f.y, color: JUICE_COLORS[f.color] || '#ff6b6b', size: f.size, a: 0.6 });
+  // Splat (max 4)
+  if (splatX.length < 4) {
+    splatX.push(fruitX[i]);
+    splatY.push(fruitY[i]);
+    splatA.push(0.5);
+    splatC.push(colors[fruitType[i]]);
   }
   
-  updateUI();
+  // Remove immediately
+  removeFruit(i);
 }
 
-function vibrate(p) { try { navigator.vibrate && navigator.vibrate(p); } catch(e) {} }
+function showCombo() {
+  const el = document.getElementById('combo');
+  el.textContent = combo + 'x COMBO!';
+  el.classList.remove('show');
+  void el.offsetWidth;
+  el.classList.add('show');
+  setTimeout(() => el.classList.remove('show'), 400);
+}
 
-// ============================================
-// GAME STATE
-// ============================================
-function loseLife() {
-  lives--;
-  vibrate(30);
-  combo = 0;
-  updateUI();
-  updateLivesUI();
-  if (lives <= 0) endGame();
+function updateLives() {
+  const el = document.getElementById('lives');
+  el.innerHTML = '';
+  for (let i = 0; i < 3; i++) {
+    const img = document.createElement('img');
+    img.src = 'https://raw.githubusercontent.com/Saumya-07/Fruit-Slicer/master/images/wrong.png';
+    if (i >= lives) img.className = 'lost';
+    el.appendChild(img);
+  }
 }
 
 function endGame() {
-  gameState = 'gameover';
+  gameState = 'over';
   if (score > highScore) {
     highScore = score;
-    localStorage.setItem('fruitslicer_high', highScore);
+    localStorage.setItem('fs_hi', highScore);
   }
-  ui.finalScore.textContent = score;
-  ui.bestScore.textContent = highScore;
-  setTimeout(() => ui.gameOver.classList.remove('hidden'), 300);
+  document.getElementById('finalScore').textContent = score;
+  document.getElementById('bestScore').textContent = highScore;
+  setTimeout(() => document.getElementById('gameOver').classList.remove('hidden'), 200);
 }
 
-function showCombo(n) {
-  ui.combo.textContent = n + 'x COMBO!';
-  ui.combo.classList.remove('show');
-  void ui.combo.offsetWidth;
-  ui.combo.classList.add('show');
-  setTimeout(() => ui.combo.classList.remove('show'), 500);
-}
-
-function updateUI() { ui.score.textContent = score; }
-
-function updateLivesUI() {
-  let h = '';
-  for (let i = 0; i < CONFIG.maxLives; i++) {
-    h += `<img src="${HEART_IMAGE}" class="${i >= lives ? 'lost' : ''}" alt="">`;
-  }
-  ui.lives.innerHTML = h;
-}
-
-// ============================================
-// RENDER (simplified - no clipping)
-// ============================================
-function render() {
-  ctx.clearRect(0, 0, width, height);
+function draw() {
+  // Wood background
+  ctx.fillStyle = '#5d4037';
+  ctx.fillRect(0, 0, W, H);
   
   // Splats
-  for (const s of splats) {
-    ctx.globalAlpha = s.a;
-    ctx.fillStyle = s.color;
+  for (let i = 0; i < splatX.length; i++) {
+    ctx.globalAlpha = splatA[i];
+    ctx.fillStyle = splatC[i];
     ctx.beginPath();
-    ctx.arc(s.x, s.y, s.size * 0.8, 0, Math.PI * 2);
+    ctx.arc(splatX[i], splatY[i], 50, 0, Math.PI * 2);
     ctx.fill();
   }
   ctx.globalAlpha = 1;
   
   // Slice trail
-  if (sliceTrail.length > 1 && isSlicing) {
+  if (touching && sliceX.length > 1) {
+    ctx.strokeStyle = 'rgba(255,255,255,0.7)';
+    ctx.lineWidth = 6;
     ctx.lineCap = 'round';
-    ctx.shadowColor = '#fff';
-    ctx.shadowBlur = 15;
-    for (let i = 1; i < sliceTrail.length; i++) {
-      const a = i / sliceTrail.length;
-      ctx.strokeStyle = `rgba(255,255,255,${a * 0.8})`;
-      ctx.lineWidth = 3 + a * 8;
-      ctx.beginPath();
-      ctx.moveTo(sliceTrail[i-1].x, sliceTrail[i-1].y);
-      ctx.lineTo(sliceTrail[i].x, sliceTrail[i].y);
-      ctx.stroke();
+    ctx.beginPath();
+    ctx.moveTo(sliceX[0], sliceY[0]);
+    for (let i = 1; i < sliceX.length; i++) {
+      ctx.lineTo(sliceX[i], sliceY[i]);
     }
-    ctx.shadowBlur = 0;
+    ctx.stroke();
   }
   
   // Fruits
-  for (const f of fruits) {
-    if (f.sliced) continue;
-    const img = images[f.img];
-    if (!img || !img.complete) continue;
-    
-    ctx.save();
-    ctx.translate(f.x, f.y);
-    ctx.rotate(f.rot);
-    ctx.shadowColor = 'rgba(0,0,0,0.3)';
-    ctx.shadowBlur = 10;
-    ctx.shadowOffsetY = 5;
-    ctx.drawImage(img, -f.size/2, -f.size/2, f.size, f.size);
-    ctx.restore();
+  for (let i = 0; i < fruitX.length; i++) {
+    if (fruitSliced[i]) continue;
+    const img = fruitType[i] < 0 ? bombImg : imgs[fruitType[i]];
+    if (img && img.complete) {
+      ctx.drawImage(img, fruitX[i] - 35, fruitY[i] - 35, 70, 70);
+    }
   }
   
-  // Fade trail when not slicing
-  if (!isSlicing && sliceTrail.length > 0) sliceTrail.shift();
+  // Fade trail
+  if (!touching && sliceX.length > 0) {
+    sliceX.shift(); sliceY.shift();
+  }
 }
 
-// ============================================
-// START
-// ============================================
 init();
-
 })();
