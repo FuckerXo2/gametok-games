@@ -64,11 +64,10 @@ let lastMousePos = null;
 // Preloaded images
 const images = {};
 let imagesLoaded = 0;
-const totalImages = FRUIT_IMAGES.length + 1;
 
-// Audio
-const sliceSound = document.getElementById('sliceSound');
-const bombSound = document.getElementById('bombSound');
+// Limit particles to prevent memory issues
+const MAX_PARTICLES = 100;
+const MAX_SPLATS = 20;
 
 // UI
 const ui = {
@@ -372,19 +371,22 @@ function sliceFruit(fruit) {
   
   // Juice splat
   const color = JUICE_COLORS[fruit.colorIndex] || '#ff6b6b';
-  juiceSplats.push({
-    x: fruit.x,
-    y: fruit.y,
-    color,
-    size: fruit.size * 1.2,
-    alpha: 0.5,
-  });
+  if (juiceSplats.length < MAX_SPLATS) {
+    juiceSplats.push({
+      x: fruit.x,
+      y: fruit.y,
+      color,
+      size: fruit.size * 1.2,
+      alpha: 0.5,
+    });
+  }
   
   // Fruit halves
   createFruitHalves(fruit);
   
-  // Juice particles
-  for (let i = 0; i < 10; i++) {
+  // Juice particles (limit count)
+  const juiceCount = Math.min(8, MAX_PARTICLES - particles.length);
+  for (let i = 0; i < juiceCount; i++) {
     createJuiceParticle(fruit.x, fruit.y, color);
   }
   
@@ -395,6 +397,8 @@ function sliceFruit(fruit) {
 }
 
 function createFruitHalves(fruit) {
+  if (particles.length >= MAX_PARTICLES - 2) return;
+  
   [-1, 1].forEach(dir => {
     particles.push({
       x: fruit.x + dir * 15,
@@ -413,6 +417,8 @@ function createFruitHalves(fruit) {
 }
 
 function createJuiceParticle(x, y, color) {
+  if (particles.length >= MAX_PARTICLES) return;
+  
   const angle = Math.random() * Math.PI * 2;
   const speed = 4 + Math.random() * 5;
   
@@ -429,6 +435,8 @@ function createJuiceParticle(x, y, color) {
 }
 
 function createScorePopup(x, y, points) {
+  if (particles.length >= MAX_PARTICLES) return;
+  
   particles.push({
     x, y,
     vx: 0,
@@ -442,22 +450,52 @@ function createScorePopup(x, y, points) {
 // ============================================
 // AUDIO & HAPTICS
 // ============================================
-function playSliceSound() {
-  if (sliceSound) {
-    sliceSound.currentTime = 0;
-    sliceSound.play().catch(() => {});
+let audioCtx;
+
+function initAudio() {
+  if (!audioCtx) {
+    const AudioCtx = window.AudioContext || window['webkitAudioContext'];
+    audioCtx = new AudioCtx();
   }
+}
+
+function playSliceSound() {
+  try {
+    if (!audioCtx) initAudio();
+    const osc = audioCtx.createOscillator();
+    const gain = audioCtx.createGain();
+    osc.connect(gain);
+    gain.connect(audioCtx.destination);
+    osc.frequency.setValueAtTime(800 + Math.random() * 400, audioCtx.currentTime);
+    osc.frequency.exponentialRampToValueAtTime(400, audioCtx.currentTime + 0.08);
+    gain.gain.setValueAtTime(0.12, audioCtx.currentTime);
+    gain.gain.exponentialRampToValueAtTime(0.01, audioCtx.currentTime + 0.08);
+    osc.start();
+    osc.stop(audioCtx.currentTime + 0.08);
+  } catch(e) {}
 }
 
 function playBombSound() {
-  if (bombSound) {
-    bombSound.currentTime = 0;
-    bombSound.play().catch(() => {});
-  }
+  try {
+    if (!audioCtx) initAudio();
+    const osc = audioCtx.createOscillator();
+    const gain = audioCtx.createGain();
+    osc.connect(gain);
+    gain.connect(audioCtx.destination);
+    osc.type = 'sawtooth';
+    osc.frequency.setValueAtTime(150, audioCtx.currentTime);
+    osc.frequency.exponentialRampToValueAtTime(30, audioCtx.currentTime + 0.3);
+    gain.gain.setValueAtTime(0.2, audioCtx.currentTime);
+    gain.gain.exponentialRampToValueAtTime(0.01, audioCtx.currentTime + 0.3);
+    osc.start();
+    osc.stop(audioCtx.currentTime + 0.3);
+  } catch(e) {}
 }
 
 function vibrate(pattern) {
-  if (navigator.vibrate) navigator.vibrate(pattern);
+  try {
+    if (navigator.vibrate) navigator.vibrate(pattern);
+  } catch(e) {}
 }
 
 
