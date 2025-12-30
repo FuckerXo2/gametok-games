@@ -705,6 +705,11 @@ function checkCollisions() {
   const ballZ = ball.position.z;
   const distFromCenter = Math.sqrt(ballX * ballX + ballZ * ballZ);
   
+  // Only check collision if ball is within platform ring
+  if (distFromCenter < CONFIG.platformInnerRadius || distFromCenter > CONFIG.platformRadius) {
+    return;
+  }
+  
   let ballAngle = Math.atan2(ballZ, ballX);
   if (ballAngle < 0) ballAngle += Math.PI * 2;
   
@@ -722,23 +727,29 @@ function checkCollisions() {
     return;
   }
   
-  // Check platforms
+  // Check platforms - only check ones near the ball
   for (const platform of platforms) {
     if (platform.destroyed) continue;
     
     const platTop = platform.y + CONFIG.platformThickness / 2;
     const platBottom = platform.y - CONFIG.platformThickness / 2;
     
-    if (ballBottom <= platTop && ballBottom > platBottom - 0.2) {
-      if (distFromCenter >= CONFIG.platformInnerRadius && distFromCenter <= CONFIG.platformRadius) {
-        for (const seg of platform.segments) {
-          if (!seg.visible) continue;
-          
-          if (isAngleInSegment(localBallAngle, seg.userData.startAngle, seg.userData.endAngle)) {
-            handleCollision(seg, platform, platTop);
-            return;
-          }
+    // Ball must be at platform height and moving down
+    if (ballBottom <= platTop && ballBottom > platBottom - 0.1 && ballVelocity < 0) {
+      // Find which segment the ball is over
+      let hitSegment = null;
+      for (const seg of platform.segments) {
+        if (!seg.visible) continue;
+        
+        if (isAngleInSegment(localBallAngle, seg.userData.startAngle, seg.userData.endAngle)) {
+          hitSegment = seg;
+          break;
         }
+      }
+      
+      if (hitSegment) {
+        handleCollision(hitSegment, platform, platTop);
+        return;
       }
     }
   }
@@ -811,7 +822,9 @@ function destroyPlatform(platform) {
 }
 
 function throwSegment(seg, platformY) {
+  // Hide segment immediately
   seg.visible = false;
+  platformsContainer.remove(seg);
   
   const angle = (seg.userData.startAngle + seg.userData.endAngle) / 2;
   const x = Math.cos(angle) * 1.5;
@@ -822,7 +835,8 @@ function throwSegment(seg, platformY) {
   const throwX = x > 0 ? 8 : -8;
   const throwY = platformY + 13;
   
-  for (let i = 0; i < 3; i++) {
+  // Create fewer debris for performance
+  for (let i = 0; i < 2; i++) {
     createDebris(pos.clone(), color, new THREE.Vector3(throwX, throwY, z));
   }
 }
@@ -849,7 +863,7 @@ function createDebris(pos, color, throwTarget) {
       (Math.random() - 0.5) * 10,
       (Math.random() - 0.5) * 10
     ),
-    life: 1.5
+    life: 0.8  // Shorter life so they disappear faster
   });
 }
 
