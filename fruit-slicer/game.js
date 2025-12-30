@@ -26,7 +26,7 @@ var fruitImages = [
 
 var juiceColors = ['#ff6b6b', '#ffa502', '#ffd32a', '#ff4757', '#8e44ad'];
 
-var bombImage = 'https://raw.githubusercontent.com/nicholasadamou/fruit-ninja/master/images/bomb.png';
+var bombImage = 'bomb.png';
 
 // Swipe tracking
 var isSlicing = false;
@@ -82,7 +82,7 @@ function updateTrail() {
   if (!knife) {
     knife = document.createElement('img');
     knife.id = 'knife';
-    knife.src = 'https://raw.githubusercontent.com/nicholasadamou/fruit-ninja/master/images/blade.png';
+    knife.src = 'sword.png';
     knife.style.cssText = 'position:absolute;width:60px;height:60px;pointer-events:none;z-index:100;transform:translate(-50%,-50%) rotate(-45deg);display:none;';
     container.appendChild(knife);
   }
