@@ -11,16 +11,17 @@
       height: 100%; 
       overflow: hidden; 
       touch-action: none;
-      background: linear-gradient(180deg, #1a1a2e 0%, #16213e 100%);
     }
     body { 
       font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+      background: #1a1a2e;
     }
     #game-container { 
       position: relative; 
       width: 100vw; 
       height: 100vh;
       height: 100dvh;
+      background: url('https://raw.githubusercontent.com/Saumya-07/Fruit-Slicer/master/images/wood-bg2.jpg') center/cover;
     }
     canvas { 
       display: block; 
@@ -37,41 +38,52 @@
     
     #hud {
       position: absolute;
-      top: max(20px, env(safe-area-inset-top));
-      left: 20px;
-      right: 20px;
+      top: max(16px, env(safe-area-inset-top));
+      left: 16px;
+      right: 16px;
       display: flex;
       justify-content: space-between;
       align-items: flex-start;
-      color: white;
     }
-    #score-container { text-align: left; }
+    .score-box {
+      display: flex;
+      align-items: center;
+      background: rgba(0,0,0,0.5);
+      padding: 8px 16px;
+      border-radius: 20px;
+      backdrop-filter: blur(10px);
+    }
+    .score-box img {
+      width: 28px;
+      height: 28px;
+      margin-right: 8px;
+    }
     #score { 
-      font-size: 42px; 
+      font-size: 28px; 
       font-weight: 800; 
-      text-shadow: 0 4px 20px rgba(0,0,0,0.5);
+      color: #ffd700;
+      text-shadow: 0 2px 4px rgba(0,0,0,0.5);
     }
     #lives { 
-      font-size: 22px; 
-      margin-top: 4px;
+      display: flex;
+      gap: 4px;
+    }
+    #lives img {
+      width: 32px;
+      height: 32px;
       filter: drop-shadow(0 2px 4px rgba(0,0,0,0.5));
     }
-    #best {
-      font-size: 14px;
-      opacity: 0.7;
-      text-align: right;
-    }
-    #best-score {
-      font-size: 20px;
-      font-weight: 700;
+    #lives img.lost {
+      opacity: 0.3;
+      filter: grayscale(1);
     }
     
     #combo {
       position: absolute;
-      top: 45%;
+      top: 40%;
       left: 50%;
       transform: translate(-50%, -50%);
-      font-size: 72px;
+      font-size: 64px;
       font-weight: 900;
       color: #ffd700;
       text-shadow: 0 0 30px rgba(255,215,0,0.8), 0 4px 20px rgba(0,0,0,0.5);
@@ -84,7 +96,7 @@
     }
     @keyframes comboPop {
       0% { transform: translate(-50%, -50%) scale(0.3); opacity: 0; }
-      50% { transform: translate(-50%, -50%) scale(1.15); }
+      50% { transform: translate(-50%, -50%) scale(1.2); }
       100% { transform: translate(-50%, -50%) scale(1); opacity: 1; }
     }
     
@@ -97,23 +109,20 @@
       justify-content: center;
       background: rgba(0,0,0,0.85);
       backdrop-filter: blur(10px);
-      -webkit-backdrop-filter: blur(10px);
       color: white;
       pointer-events: auto;
       padding: 20px;
     }
     .screen.hidden { display: none; }
-    .screen h1 { 
-      font-size: 52px; 
-      margin-bottom: 12px;
-      background: linear-gradient(135deg, #ff6b6b, #feca57);
-      -webkit-background-clip: text;
-      -webkit-text-fill-color: transparent;
-      background-clip: text;
+    .screen img.logo {
+      width: 200px;
+      margin-bottom: 20px;
     }
-    .screen h2 { 
-      font-size: 38px; 
-      margin-bottom: 12px; 
+    .screen h1 { 
+      font-size: 42px; 
+      margin-bottom: 12px;
+      color: #ffd700;
+      text-shadow: 0 4px 20px rgba(255,215,0,0.5);
     }
     .screen p { 
       font-size: 17px; 
@@ -136,12 +145,10 @@
       border-radius: 30px;
       cursor: pointer;
       box-shadow: 0 8px 30px rgba(238,90,36,0.4);
-      transition: transform 0.2s, box-shadow 0.2s;
-      letter-spacing: 1px;
+      transition: transform 0.2s;
     }
     .btn:active { 
       transform: scale(0.95); 
-      box-shadow: 0 4px 15px rgba(238,90,36,0.3);
     }
     
     .final-stats {
@@ -151,10 +158,7 @@
     .final-stats .big {
       font-size: 56px;
       font-weight: 800;
-      background: linear-gradient(135deg, #ffd700, #ffaa00);
-      -webkit-background-clip: text;
-      -webkit-text-fill-color: transparent;
-      background-clip: text;
+      color: #ffd700;
     }
     .final-stats .label {
       font-size: 14px;
@@ -169,35 +173,41 @@
     <canvas id="game"></canvas>
     <div id="ui">
       <div id="hud">
-        <div id="score-container">
-          <div id="score">0</div>
-          <div id="lives">❤️❤️❤️</div>
+        <div class="score-box">
+          <img src="https://raw.githubusercontent.com/Saumya-07/Fruit-Slicer/master/images/scr.png" alt="score">
+          <span id="score">0</span>
         </div>
-        <div id="best">
-          <div>BEST</div>
-          <div id="best-score">0</div>
-        </div>
+        <div id="lives"></div>
       </div>
       <div id="combo"></div>
       
       <div id="menu" class="screen">
-        <h1>🍉 Fruit Slicer</h1>
+        <img class="logo" src="https://raw.githubusercontent.com/Saumya-07/Fruit-Slicer/master/images/splash.png" alt="Fruit Slicer">
+        <h1>Fruit Slicer</h1>
         <p>Swipe to slice the fruits!</p>
         <p class="warn">💣 Avoid the bombs!</p>
         <button class="btn" id="startBtn">TAP TO PLAY</button>
       </div>
       
       <div id="gameOver" class="screen hidden">
-        <h2>Game Over</h2>
+        <h1>Game Over</h1>
         <div class="final-stats">
           <div class="label">Score</div>
           <div class="big" id="finalScore">0</div>
         </div>
-        <p>Best: <span id="bestScoreEnd">0</span></p>
+        <p>Best: <span id="bestScore">0</span></p>
         <button class="btn" id="retryBtn">PLAY AGAIN</button>
       </div>
     </div>
   </div>
+  
+  <audio id="sliceSound" preload="auto">
+    <source src="https://raw.githubusercontent.com/nicholasadamou/fruit-ninja/master/sounds/splatter.mp3" type="audio/mpeg">
+  </audio>
+  <audio id="bombSound" preload="auto">
+    <source src="https://raw.githubusercontent.com/nicholasadamou/fruit-ninja/master/sounds/bomb.mp3" type="audio/mpeg">
+  </audio>
+  
   <script src="game.js"></script>
 </body>
 </html>
