@@ -148,8 +148,12 @@ function loadModels() {
       loader.load(
         'assets/' + file,
         (gltf) => {
+          // Compute bounding box to determine scale
+          const box = new THREE.Box3().setFromObject(gltf.scene);
+          const size = box.getSize(new THREE.Vector3());
+          console.log('Loaded', shape, 'size:', size.x, size.y, size.z);
+          
           loadedModels[shape] = gltf.scene;
-          console.log('Loaded', shape, gltf.scene);
           loaded++;
           if (loaded >= toLoad) {
             modelsLoaded = true;
@@ -361,41 +365,18 @@ function createPlatform(y, rotDeg, index) {
   const dangerIndices = DANGER_CONFIGS[variant] || [];
   const segments = [];
   
-  // Try to use loaded GLB model
-  if (modelsLoaded && loadedModels[currentShape]) {
-    const model = loadedModels[currentShape].clone();
-    let segIndex = 0;
-    
-    // Apply materials to each child mesh
-    model.traverse((child) => {
-      if (child.isMesh) {
-        const isDanger = dangerIndices.includes(segIndex);
-        
-        child.material = new THREE.MeshStandardMaterial({
-          color: isDanger ? 0x1a1a1a : mainColor.getHex()
-        });
-        child.userData = { isDanger, segmentIndex: segIndex };
-        segments.push(child);
-        segIndex++;
-      }
-    });
-    
-    // Scale the model to match Unity scale
-    model.scale.set(0.01, 0.01, 0.01); // FBX exports are usually 100x
-    group.add(model);
-  } else {
-    // Fallback: procedural geometry (4 segments like Unity)
-    const segAngle = Math.PI / 2; // 4 segments = 90 degrees each
-    
-    for (let i = 0; i < 4; i++) {
-      const isDanger = dangerIndices.includes(i);
-      const startAngle = i * segAngle;
-      const color = isDanger ? 0x1a1a1a : mainColor.getHex();
-      const segment = createProceduralSegment(startAngle, segAngle - 0.08, color);
-      segment.userData = { isDanger, startAngle, endAngle: startAngle + segAngle - 0.08 };
-      group.add(segment);
-      segments.push(segment);
-    }
+  // Use procedural geometry (matches Unity model dimensions)
+  // The GLB models have scale issues - using procedural for now
+  const segAngle = Math.PI / 2; // 4 segments = 90 degrees each
+  
+  for (let i = 0; i < 4; i++) {
+    const isDanger = dangerIndices.includes(i);
+    const startAngle = i * segAngle;
+    const color = isDanger ? 0x1a1a1a : mainColor.getHex();
+    const segment = createProceduralSegment(startAngle, segAngle - 0.08, color);
+    segment.userData = { isDanger, startAngle, endAngle: startAngle + segAngle - 0.08 };
+    group.add(segment);
+    segments.push(segment);
   }
   
   platformsContainer.add(group);
