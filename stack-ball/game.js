@@ -750,11 +750,6 @@ function isAngleInSegment(angle, startAngle, endAngle) {
   startAngle = ((startAngle % twoPi) + twoPi) % twoPi;
   endAngle = ((endAngle % twoPi) + twoPi) % twoPi;
   
-  // Add small tolerance to shrink the detection zone (makes it more forgiving)
-  const tolerance = 0.08; // ~4.5 degrees
-  startAngle += tolerance;
-  endAngle -= tolerance;
-  
   if (startAngle <= endAngle) {
     return angle >= startAngle && angle <= endAngle;
   } else {
@@ -764,20 +759,9 @@ function isAngleInSegment(angle, startAngle, endAngle) {
 
 function handleCollision(segment, platform, platformTop) {
   if (isHolding) {
-    // Only check danger if we're DEFINITELY on a black segment
-    // Add tolerance to avoid false positives
     if (segment.userData.isDanger === true && !isInvincible) {
-      // Double check - make sure ball is really on this segment
-      const ballX = ball.position.x;
-      const ballZ = ball.position.z;
-      const distFromCenter = Math.sqrt(ballX * ballX + ballZ * ballZ);
-      
-      // Only trigger game over if ball is solidly on the platform (not on edge)
-      if (distFromCenter > CONFIG.platformInnerRadius + 0.15 && 
-          distFromCenter < CONFIG.platformRadius - 0.15) {
-        loseGame();
-        return;
-      }
+      loseGame();
+      return;
     }
     destroyPlatform(platform);
   } else if (ballVelocity < 0) {

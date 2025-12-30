@@ -26,16 +26,29 @@
       overflow: hidden;
     }
     
-    #fruit {
+    #combo {
       position: absolute;
-      width: 70px;
-      height: 70px;
-      cursor: pointer;
-      display: none;
-      transition: transform 0.2s, opacity 0.2s;
-      -webkit-user-select: none;
-      user-select: none;
+      top: 40%;
+      left: 50%;
+      transform: translate(-50%, -50%);
+      font-size: 48px;
+      font-weight: 900;
+      color: #ffd700;
+      text-shadow: 0 0 20px rgba(255,215,0,0.8), 0 4px 15px rgba(0,0,0,0.5);
+      opacity: 0;
+      pointer-events: none;
+      z-index: 50;
     }
+    #combo.show { 
+      opacity: 1; 
+      animation: comboPop 0.5s ease-out; 
+    }
+    @keyframes comboPop {
+      0% { transform: translate(-50%, -50%) scale(0.5); opacity: 0; }
+      50% { transform: translate(-50%, -50%) scale(1.2); }
+      100% { transform: translate(-50%, -50%) scale(1); opacity: 1; }
+    }
+    
     
     #hud {
       position: absolute;
@@ -140,7 +153,6 @@
 </head>
 <body>
   <div id="fruitcontainer">
-    <img id="fruit" src="" alt="fruit">
     
     <div id="hud">
       <div class="score-box">
@@ -149,6 +161,8 @@
       </div>
       <div id="lives"></div>
     </div>
+    
+    <div id="combo"></div>
     
     <div id="menu" class="screen">
       <h1>🍉 Fruit Slicer</h1>
