@@ -6,9 +6,9 @@
 // CONFIGURATION
 // ============================================
 const CONFIG = {
-  gravity: 0.4,
-  throwPower: { min: 16, max: 22 },
-  spawnInterval: { min: 500, max: 1000 },
+  gravity: 0.15,  // Match Python version
+  throwPower: { min: 6, max: 8 },  // Gentler throw like Python
+  spawnInterval: { min: 800, max: 1200 },
   bombChance: 0.1,
   fruitSize: 80,
   sliceTrailLength: 12,
@@ -66,8 +66,9 @@ const images = {};
 let imagesLoaded = 0;
 
 // Limit particles to prevent memory issues
-const MAX_PARTICLES = 100;
-const MAX_SPLATS = 20;
+const MAX_PARTICLES = 50;
+const MAX_SPLATS = 10;
+const MAX_FRUITS = 15;
 
 // UI
 const ui = {
@@ -240,6 +241,26 @@ function update(dt) {
     fruit.y += fruit.vy;
     fruit.rotation += fruit.rotSpeed;
     
+    // Bounce off walls (like Python version)
+    const radius = fruit.size / 2;
+    if (fruit.x < radius) {
+      fruit.x = radius;
+      fruit.vx = Math.abs(fruit.vx) * 0.9;
+    } else if (fruit.x > width - radius) {
+      fruit.x = width - radius;
+      fruit.vx = -Math.abs(fruit.vx) * 0.9;
+    }
+    
+    // Remove sliced fruits after a short delay
+    if (fruit.sliced) {
+      fruit.sliceTime = fruit.sliceTime || 0;
+      fruit.sliceTime += dt;
+      if (fruit.sliceTime > 0.1) {
+        fruits.splice(i, 1);
+        continue;
+      }
+    }
+    
     // Fruit fell off screen
     if (fruit.y > height + 100) {
       if (!fruit.sliced && !fruit.isBomb) {
@@ -279,19 +300,21 @@ function update(dt) {
 // SPAWNING
 // ============================================
 function spawnFruit() {
+  // Limit total fruits on screen
+  if (fruits.length >= MAX_FRUITS) return;
+  
   const isBomb = Math.random() < CONFIG.bombChance * Math.min(difficulty, 1.5);
   
-  // Spawn from bottom
-  const x = 60 + Math.random() * (width - 120);
-  const y = height + 60;
+  // Spawn from random position along width (like Python version)
+  const fruitRadius = CONFIG.fruitSize / 2;
+  const x = fruitRadius + Math.random() * (width - fruitRadius * 2);
   
-  // Throw upward at angle
-  const angle = 70 + Math.random() * 40; // 70-110 degrees
-  const power = CONFIG.throwPower.min + Math.random() * (CONFIG.throwPower.max - CONFIG.throwPower.min);
-  const rad = angle * Math.PI / 180;
+  // Spawn from middle to bottom of screen (like Python version)
+  const y = height / 2 + Math.random() * (height / 2);
   
-  const vx = Math.cos(rad) * power * (x > width/2 ? -1 : 1) * 0.4;
-  const vy = -Math.sin(rad) * power;
+  // Gentler velocities like Python version
+  const vx = (Math.random() - 0.5) * 3;  // -1.5 to 1.5
+  const vy = -(CONFIG.throwPower.min + Math.random() * (CONFIG.throwPower.max - CONFIG.throwPower.min));
   
   const fruitIndex = Math.floor(Math.random() * FRUIT_IMAGES.length);
   
@@ -384,8 +407,8 @@ function sliceFruit(fruit) {
   // Fruit halves
   createFruitHalves(fruit);
   
-  // Juice particles (limit count)
-  const juiceCount = Math.min(8, MAX_PARTICLES - particles.length);
+  // Juice particles (reduced count)
+  const juiceCount = Math.min(4, MAX_PARTICLES - particles.length);
   for (let i = 0; i < juiceCount; i++) {
     createJuiceParticle(fruit.x, fruit.y, color);
   }
@@ -448,49 +471,10 @@ function createScorePopup(x, y, points) {
 }
 
 // ============================================
-// AUDIO & HAPTICS
+// HAPTICS (no audio - causes WebView issues)
 // ============================================
-let audioCtx;
-
-function initAudio() {
-  if (!audioCtx) {
-    const AudioCtx = window.AudioContext || window['webkitAudioContext'];
-    audioCtx = new AudioCtx();
-  }
-}
-
-function playSliceSound() {
-  try {
-    if (!audioCtx) initAudio();
-    const osc = audioCtx.createOscillator();
-    const gain = audioCtx.createGain();
-    osc.connect(gain);
-    gain.connect(audioCtx.destination);
-    osc.frequency.setValueAtTime(800 + Math.random() * 400, audioCtx.currentTime);
-    osc.frequency.exponentialRampToValueAtTime(400, audioCtx.currentTime + 0.08);
-    gain.gain.setValueAtTime(0.12, audioCtx.currentTime);
-    gain.gain.exponentialRampToValueAtTime(0.01, audioCtx.currentTime + 0.08);
-    osc.start();
-    osc.stop(audioCtx.currentTime + 0.08);
-  } catch(e) {}
-}
-
-function playBombSound() {
-  try {
-    if (!audioCtx) initAudio();
-    const osc = audioCtx.createOscillator();
-    const gain = audioCtx.createGain();
-    osc.connect(gain);
-    gain.connect(audioCtx.destination);
-    osc.type = 'sawtooth';
-    osc.frequency.setValueAtTime(150, audioCtx.currentTime);
-    osc.frequency.exponentialRampToValueAtTime(30, audioCtx.currentTime + 0.3);
-    gain.gain.setValueAtTime(0.2, audioCtx.currentTime);
-    gain.gain.exponentialRampToValueAtTime(0.01, audioCtx.currentTime + 0.3);
-    osc.start();
-    osc.stop(audioCtx.currentTime + 0.3);
-  } catch(e) {}
-}
+function playSliceSound() {}
+function playBombSound() {}
 
 function vibrate(pattern) {
   try {
