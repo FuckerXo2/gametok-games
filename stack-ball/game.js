@@ -1,4 +1,4 @@
-// Stack Ball - Full feature replica from Unity source
+// Stack Ball - Full replica with FBX 3D models from Unity source
 (function() {
 'use strict';
 
@@ -7,50 +7,50 @@
 // =============================================================================
 const CONFIG = {
   // Camera (from scene file)
-  cameraY: 2,
-  cameraZ: 5,
-  cameraRotX: 20,
-  orthoSize: 5,
-  
+  cameraY: 2, cameraZ: 5, cameraRotX: 20, orthoSize: 5,
   // Ball (from scene file & Ball.cs)
-  ballStartY: 2.15,
-  ballStartZ: -1.2,
-  ballRadius: 0.25,
-  smashVelocity: -14,      // -100 * 0.02 * 7
-  bounceVelocity: 5,       // capped at 5
-  maxUpVelocity: 5,
-  
+  ballStartY: 2.15, ballStartZ: -1.2, ballRadius: 0.25,
+  smashVelocity: -14, bounceVelocity: 5, maxUpVelocity: 5,
   // Platforms (from LevelSpawner.cs)
-  platformSpacing: 0.5,
-  rotationPerPlatform: 8,  // degrees
-  baseAddOn: 7,
-  
+  platformSpacing: 0.5, rotationPerPlatform: 8, baseAddOn: 7,
   // Rotation (from Rotator.cs)
-  rotationSpeed: 100,      // degrees/sec
-  
+  rotationSpeed: 100,
   // Physics
   gravity: 9.81,
-  
   // Invincibility (from Ball.cs)
-  invChargeRate: 0.8,      // currentTime += deltaTime * 0.8 when smashing
-  invDecayRate: 0.5,       // currentTime -= deltaTime * 0.5 when not smashing
-  invActiveDecay: 0.35,    // currentTime -= deltaTime * 0.35 when invincible
-  invShowThreshold: 0.3,   // show bar at 0.3
-  invActivateThreshold: 1.0,
-  
+  invChargeRate: 0.8, invDecayRate: 0.5, invActiveDecay: 0.35,
+  invShowThreshold: 0.3, invActivateThreshold: 1.0,
   // Shatter (from StackPartController.cs)
-  shatterForceMin: 20,
-  shatterForceMax: 35,
-  shatterTorqueMin: 110,
-  shatterTorqueMax: 180,
+  shatterForceMin: 20, shatterForceMax: 35,
+};
+
+// Shape types from Unity (5 shapes, each with 4 variants 0-3 danger segments)
+const SHAPES = ['Circle', 'Flower', 'Hex', 'Square', 'Spikes'];
+const SHAPE_FILES = {
+  Circle: 'Circle_Shape.fbx',
+  Flower: 'Flower_shape.fbx',
+  Square: 'Square_Sides.fbx',
+  Spikes: 'Spike_Shape.fbx',
+  Hex: 'Circle_Shape.fbx' // Hex uses circle as fallback
+};
+
+// Danger segment configs per variant (from Unity prefabs)
+// variant 0 = 0 danger, variant 1 = 1 danger, etc.
+const DANGER_CONFIGS = {
+  0: [],           // All safe
+  1: [0],          // Segment 1 is danger
+  2: [0, 1],       // Segments 1,2 are danger
+  3: [0, 1, 2],    // Segments 1,2,3 are danger
 };
 
 // =============================================================================
 // STATE
 // =============================================================================
 let scene, camera, renderer;
-let ball, pole, platforms = [], finishPlatform;
-let platformsContainer;
+let ball, pole, platforms = [], finishPlatform, platformsContainer;
+let loadedModels = {};
+let modelsLoaded = false;
+let currentShape = 'Circle';
 
 // Ball state
 let ballY = CONFIG.ballStartY;
@@ -59,7 +59,7 @@ let isSmashing = false;
 let isPlaying = false;
 let gameState = 'menu';
 
-// Invincibility (exact from Ball.cs)
+// Invincibility
 let invincibleTime = 0;
 let isInvincible = false;
 
@@ -82,8 +82,6 @@ let soundEnabled = true;
 
 // Colors
 let mainColor, baseColor;
-
-// Timing
 let lastTime = 0;
 
 // =============================================================================
@@ -107,7 +105,7 @@ const ui = {
 };
 
 // =============================================================================
-// AUDIO (from SoundManager.cs)
+// AUDIO
 // =============================================================================
 function loadSounds() {
   const files = {
@@ -117,7 +115,6 @@ function loadSounds() {
     win: 'assets/audio/BallLevel.mp3',
     button: 'assets/audio/button.mp3',
   };
-  
   for (const [name, src] of Object.entries(files)) {
     const audio = new Audio(src);
     audio.preload = 'auto';
@@ -133,13 +130,59 @@ function playSound(name, volume = 0.5) {
 }
 
 // =============================================================================
+// FBX MODEL LOADING
+// =============================================================================
+function loadModels() {
+  return new Promise((resolve) => {
+    // Check if FBXLoader is available
+    if (typeof THREE.FBXLoader === 'undefined') {
+      console.warn('FBXLoader not available, using procedural geometry');
+      modelsLoaded = false;
+      resolve();
+      return;
+    }
+    
+    const loader = new THREE.FBXLoader();
+    let loaded = 0;
+    const toLoad = Object.keys(SHAPE_FILES).length;
+    
+    for (const [shape, file] of Object.entries(SHAPE_FILES)) {
+      loader.load(
+        'assets/' + file,
+        (fbx) => {
+          // Store the loaded model
+          loadedModels[shape] = fbx;
+          loaded++;
+          if (loaded >= toLoad) {
+            modelsLoaded = true;
+            resolve();
+          }
+        },
+        undefined,
+        (err) => {
+          console.warn('Failed to load', file, err);
+          loaded++;
+          if (loaded >= toLoad) {
+            resolve();
+          }
+        }
+      );
+    }
+  });
+}
+
+// =============================================================================
 // INITIALIZATION
 // =============================================================================
-function init() {
+async function init() {
   loadSounds();
   setupThreeJS();
   setupInput();
   setupButtons();
+  
+  // Try to load FBX models
+  await loadModels();
+  
   buildLevel();
   lastTime = performance.now();
   animate();
@@ -148,7 +191,6 @@ function init() {
 function setupThreeJS() {
   scene = new THREE.Scene();
   
-  // Orthographic camera (from Unity scene)
   const aspect = window.innerWidth / window.innerHeight;
   const size = CONFIG.orthoSize;
   camera = new THREE.OrthographicCamera(
@@ -163,7 +205,6 @@ function setupThreeJS() {
   renderer.setClearColor(0x87CEEB);
   $('game-container').insertBefore(renderer.domElement, $('game-container').firstChild);
   
-  // Lighting
   scene.add(new THREE.AmbientLight(0xffffff, 0.6));
   const dir = new THREE.DirectionalLight(0xfff4d6, 1);
   dir.position.set(1, 2, 1);
@@ -187,15 +228,9 @@ function setupInput() {
   const onDown = (e) => {
     if (e.target.tagName === 'BUTTON') return;
     if (e.cancelable) e.preventDefault();
-    
-    if (gameState === 'menu') {
-      startGame();
-      return;
-    }
-    
+    if (gameState === 'menu') { startGame(); return; }
     isSmashing = true;
   };
-  
   const onUp = () => { isSmashing = false; };
   
   document.addEventListener('mousedown', onDown);
@@ -236,10 +271,10 @@ function startGame() {
 }
 
 // =============================================================================
-// LEVEL BUILDING
+// LEVEL BUILDING (from LevelSpawner.cs)
 // =============================================================================
 function buildLevel() {
-  // Clear
+  // Clear scene
   while (scene.children.length > 2) scene.remove(scene.children[2]);
   platforms = [];
   debris = [];
@@ -255,17 +290,18 @@ function buildLevel() {
   mainColor = new THREE.Color().setHSL(hue, 1, 0.5);
   baseColor = mainColor.clone().offsetHSL(0, 0, 0.2);
   
-  // Update UI colors
   document.documentElement.style.setProperty('--main-color', '#' + mainColor.getHexString());
   ui.currentLevel.style.background = '#' + mainColor.getHexString();
   ui.progressFill.style.background = '#' + mainColor.getHexString();
   
-  // Platform count
+  // Select random shape for this level (from ModelSelection())
+  currentShape = SHAPES[Math.floor(Math.random() * SHAPES.length)];
+  
+  // Platform count (from LevelSpawner)
   const addOn = level <= 9 ? CONFIG.baseAddOn : 0;
   totalPlatforms = Math.floor((level + addOn) * 2);
   totalPlatforms = Math.min(totalPlatforms, 50);
   
-  // Container
   platformsContainer = new THREE.Group();
   scene.add(platformsContainer);
   
@@ -277,14 +313,14 @@ function buildLevel() {
   pole.position.y = -poleHeight / 2 + 1;
   platformsContainer.add(pole);
   
-  // Platforms
+  // Platforms (from LevelSpawner for loop)
   for (let i = 0; i < totalPlatforms; i++) {
     const y = -i * CONFIG.platformSpacing;
     const rotDeg = -i * CONFIG.rotationPerPlatform;
     createPlatform(y, rotDeg, i);
   }
   
-  // Finish
+  // Finish platform
   const finishY = -totalPlatforms * CONFIG.platformSpacing - 0.5;
   const finishGeo = new THREE.CylinderGeometry(1.5, 1.5, 0.3, 32);
   const finishMat = new THREE.MeshStandardMaterial({
@@ -304,47 +340,71 @@ function buildLevel() {
   ball.visible = true;
   scene.add(ball);
   
-  // Trail
   createTrail();
-  
   updateUI();
 }
 
+// =============================================================================
+// PLATFORM CREATION
+// =============================================================================
 function createPlatform(y, rotDeg, index) {
   const group = new THREE.Group();
   group.position.y = y;
   group.rotation.y = rotDeg * Math.PI / 180;
   
-  // Difficulty
-  let maxDanger = Math.min(Math.floor(index / 5), 5);
-  const dangerCount = Math.floor(Math.random() * (maxDanger + 1));
+  // Determine variant based on level difficulty (from LevelSpawner)
+  let variant;
+  if (level <= 20) variant = Math.floor(Math.random() * 2);      // 0-1
+  else if (level <= 50) variant = 1 + Math.floor(Math.random() * 2);  // 1-2
+  else if (level <= 100) variant = 2 + Math.floor(Math.random() * 2); // 2-3
+  else variant = 3;  // Always hardest
   
-  const dangerSet = new Set();
-  const indices = [...Array(8).keys()];
-  shuffle(indices);
-  for (let i = 0; i < dangerCount; i++) dangerSet.add(indices[i]);
-  
+  const dangerIndices = DANGER_CONFIGS[variant] || [];
   const segments = [];
-  const segAngle = Math.PI / 4;
   
-  for (let i = 0; i < 8; i++) {
-    const isDanger = dangerSet.has(i);
-    const startAngle = i * segAngle;
-    const color = isDanger ? 0x1a1a1a : mainColor.getHex();
-    const segment = createSegment(startAngle, segAngle - 0.06, color);
-    segment.userData = { isDanger, startAngle, endAngle: startAngle + segAngle - 0.06 };
-    group.add(segment);
-    segments.push(segment);
+  // Try to use loaded FBX model
+  if (modelsLoaded && loadedModels[currentShape]) {
+    const model = loadedModels[currentShape].clone();
+    
+    // Apply materials to each child mesh
+    model.traverse((child) => {
+      if (child.isMesh) {
+        const segIndex = parseInt(child.name) - 1; // Unity names: "1", "2", "3", "4"
+        const isDanger = dangerIndices.includes(segIndex);
+        
+        child.material = new THREE.MeshStandardMaterial({
+          color: isDanger ? 0x1a1a1a : mainColor.getHex()
+        });
+        child.userData = { isDanger, segmentIndex: segIndex };
+        segments.push(child);
+      }
+    });
+    
+    model.scale.set(1, 1, 1);
+    group.add(model);
+  } else {
+    // Fallback: procedural geometry (4 segments like Unity)
+    const segAngle = Math.PI / 2; // 4 segments = 90 degrees each
+    
+    for (let i = 0; i < 4; i++) {
+      const isDanger = dangerIndices.includes(i);
+      const startAngle = i * segAngle;
+      const color = isDanger ? 0x1a1a1a : mainColor.getHex();
+      const segment = createProceduralSegment(startAngle, segAngle - 0.08, color);
+      segment.userData = { isDanger, startAngle, endAngle: startAngle + segAngle - 0.08 };
+      group.add(segment);
+      segments.push(segment);
+    }
   }
   
   platformsContainer.add(group);
   platforms.push({ group, y, segments, destroyed: false });
 }
 
-function createSegment(startAngle, arcLen, color) {
+function createProceduralSegment(startAngle, arcLen, color) {
   const inner = 0.25, outer = 1.5, thickness = 0.12;
   const shape = new THREE.Shape();
-  const steps = 8;
+  const steps = 12;
   
   for (let i = 0; i <= steps; i++) {
     const a = startAngle + (i / steps) * arcLen;
@@ -394,10 +454,10 @@ function animate(time = 0) {
     updateInvincibility(dt);
     checkCollisions();
     updateTrail();
-    updateFireParticles(dt);
+    updateFireParticles(dt, time);
   }
   
-  // Rotate platforms
+  // Rotate platforms (from Rotator.cs)
   if (platformsContainer) {
     platformsContainer.rotation.y += (CONFIG.rotationSpeed * Math.PI / 180) * dt;
   }
@@ -427,7 +487,7 @@ function updateBall(dt) {
   // Invincible glow
   if (isInvincible) {
     ball.material.emissive.setHex(0xff4400);
-    ball.material.emissiveIntensity = 0.5 + Math.sin(time * 0.01) * 0.3;
+    ball.material.emissiveIntensity = 0.5 + Math.sin(lastTime * 0.01) * 0.3;
   } else {
     ball.material.emissive.setHex(0x000000);
     ball.material.emissiveIntensity = 0;
@@ -448,7 +508,6 @@ function updateInvincibility(dt) {
     } else {
       invincibleTime -= dt * CONFIG.invDecayRate;
     }
-    
     invincibleTime = Math.max(0, invincibleTime);
     
     if (invincibleTime >= CONFIG.invActivateThreshold) {
@@ -462,10 +521,7 @@ function updateInvincibleUI() {
   const show = invincibleTime >= CONFIG.invShowThreshold || isInvincible;
   ui.invContainer.classList.toggle('show', show);
   
-  const fill = isInvincible 
-    ? (invincibleTime / CONFIG.invActivateThreshold) * 100
-    : (invincibleTime / CONFIG.invActivateThreshold) * 100;
-  
+  const fill = (invincibleTime / CONFIG.invActivateThreshold) * 100;
   ui.invFill.style.setProperty('--fill', fill + '%');
   ui.invFill.classList.toggle('active', isInvincible);
 }
@@ -473,13 +529,11 @@ function updateInvincibleUI() {
 function updateTrail() {
   if (!ball || trailPoints.length === 0) return;
   
-  // Shift points
   for (let i = trailPoints.length - 1; i > 0; i--) {
     trailPoints[i].copy(trailPoints[i - 1]);
   }
   trailPoints[0].copy(ball.position);
   
-  // Update geometry
   const trail = scene.children.find(c => c.type === 'Line');
   if (trail) {
     const positions = trail.geometry.attributes.position.array;
@@ -492,8 +546,7 @@ function updateTrail() {
   }
 }
 
-function updateFireParticles(dt) {
-  // Spawn fire when invincible
+function updateFireParticles(dt, time) {
   if (isInvincible && ball && Math.random() < 0.4) {
     const geo = new THREE.SphereGeometry(0.04 + Math.random() * 0.03, 6, 6);
     const mat = new THREE.MeshBasicMaterial({
@@ -513,7 +566,6 @@ function updateFireParticles(dt) {
     });
   }
   
-  // Update
   for (let i = fireParticles.length - 1; i >= 0; i--) {
     const p = fireParticles[i];
     p.velocity.y -= 3 * dt;
@@ -529,6 +581,9 @@ function updateFireParticles(dt) {
   }
 }
 
+// =============================================================================
+// COLLISION DETECTION
+// =============================================================================
 function checkCollisions() {
   const ballBottom = ballY - CONFIG.ballRadius;
   const ballX = ball.position.x;
@@ -540,13 +595,13 @@ function checkCollisions() {
   let ballAngle = Math.atan2(ballZ, ballX);
   if (ballAngle < 0) ballAngle += Math.PI * 2;
   
-  // Finish
+  // Check finish platform
   if (ballBottom <= finishPlatform.position.y + 0.15 && ballVelocity < 0) {
     winGame();
     return;
   }
   
-  // Platforms
+  // Check platforms
   for (const plat of platforms) {
     if (plat.destroyed) continue;
     
@@ -559,13 +614,22 @@ function checkCollisions() {
       while (localAngle < 0) localAngle += Math.PI * 2;
       while (localAngle >= Math.PI * 2) localAngle -= Math.PI * 2;
       
+      // Check which segment we hit
       for (const seg of plat.segments) {
         if (!seg.visible) continue;
         
-        const start = seg.userData.startAngle;
-        const end = seg.userData.endAngle;
+        // For FBX models, calculate segment angle from index
+        let startAngle, endAngle;
+        if (seg.userData.segmentIndex !== undefined) {
+          const segAngle = Math.PI / 2;
+          startAngle = seg.userData.segmentIndex * segAngle;
+          endAngle = startAngle + segAngle;
+        } else {
+          startAngle = seg.userData.startAngle;
+          endAngle = seg.userData.endAngle;
+        }
         
-        if (localAngle >= start - 0.05 && localAngle <= end + 0.05) {
+        if (localAngle >= startAngle - 0.1 && localAngle <= endAngle + 0.1) {
           if (isSmashing) {
             if (seg.userData.isDanger && !isInvincible) {
               loseGame();
@@ -590,7 +654,6 @@ function bounce(platformTop) {
 }
 
 function createSplash(y) {
-  // Create splash sprite (from Ball.cs OnCollisionEnter)
   const geo = new THREE.PlaneGeometry(0.4, 0.4);
   const mat = new THREE.MeshBasicMaterial({
     color: mainColor, transparent: true, opacity: 0.7, side: THREE.DoubleSide
@@ -617,6 +680,9 @@ function updateSplashes(dt) {
   }
 }
 
+// =============================================================================
+// DESTRUCTION (from StackPartController.cs)
+// =============================================================================
 function destroyPlatform(plat) {
   if (plat.destroyed) return;
   plat.destroyed = true;
@@ -624,7 +690,7 @@ function destroyPlatform(plat) {
   
   playSound('break');
   
-  // Shatter (from StackController.cs)
+  // Shatter each segment
   for (const seg of plat.segments) {
     shatterSegment(seg, plat.y);
   }
@@ -637,8 +703,15 @@ function destroyPlatform(plat) {
 function shatterSegment(seg, y) {
   seg.visible = false;
   
-  const color = seg.material.color.getHex();
-  const angle = (seg.userData.startAngle + seg.userData.endAngle) / 2;
+  const color = seg.material ? seg.material.color.getHex() : mainColor.getHex();
+  
+  // Get segment angle
+  let angle;
+  if (seg.userData.segmentIndex !== undefined) {
+    angle = (seg.userData.segmentIndex + 0.5) * (Math.PI / 2);
+  } else {
+    angle = (seg.userData.startAngle + seg.userData.endAngle) / 2;
+  }
   
   // From StackPartController.cs Shatter()
   for (let i = 0; i < 4; i++) {
@@ -651,7 +724,6 @@ function shatterSegment(seg, y) {
     const z = Math.sin(angle) * 0.8 + (Math.random() - 0.5) * 0.4;
     mesh.position.set(x, y, z);
     
-    // Direction: (Vector3.up * 1.5f + subDir).normalized
     const dirX = x > 0 ? 1 : -1;
     const dir = new THREE.Vector3(dirX, 1.5, 0).normalize();
     const force = CONFIG.shatterForceMin + Math.random() * (CONFIG.shatterForceMax - CONFIG.shatterForceMin);
@@ -780,13 +852,6 @@ function updateUI() {
   ui.score.textContent = score;
 }
 
-function shuffle(arr) {
-  for (let i = arr.length - 1; i > 0; i--) {
-    const j = Math.floor(Math.random() * (i + 1));
-    [arr[i], arr[j]] = [arr[j], arr[i]];
-  }
-}
-
-// Start
+// Start the game
 init();
 })();
