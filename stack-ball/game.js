@@ -359,12 +359,24 @@ function createPlatform(y, rotation, color, maxDangerParts, index) {
   const segmentAngle = (Math.PI * 2) / CONFIG.segmentsPerPlatform;
   const gapAngle = CONFIG.segmentGap;
   
-  // Assign danger parts - matching original Unity logic
+  // Randomly pick which segments are danger (black)
+  // Ensure at least minSafeParts are safe (not black)
   const dangerIndices = new Set();
+  const availableIndices = [];
   for (let i = 0; i < CONFIG.segmentsPerPlatform; i++) {
-    if (i <= maxDangerParts && Math.random() < 0.9) {
-      dangerIndices.add(i);
-    }
+    availableIndices.push(i);
+  }
+  
+  // Shuffle and pick danger segments
+  for (let i = availableIndices.length - 1; i > 0; i--) {
+    const j = Math.floor(Math.random() * (i + 1));
+    [availableIndices[i], availableIndices[j]] = [availableIndices[j], availableIndices[i]];
+  }
+  
+  // Only mark up to maxDangerParts as danger
+  const actualDangerCount = Math.min(maxDangerParts, CONFIG.segmentsPerPlatform - CONFIG.minSafeParts);
+  for (let i = 0; i < actualDangerCount; i++) {
+    dangerIndices.add(availableIndices[i]);
   }
   
   for (let i = 0; i < CONFIG.segmentsPerPlatform; i++) {
@@ -770,10 +782,19 @@ function isAngleInSegment(angle, startAngle, endAngle) {
 
 function handleCollision(segment, platform, platformTop) {
   if (isHolding) {
-    if (segment.userData.isDanger === true && !isInvincible) {
-      loseGame();
-      return;
+    // ONLY die if segment is ACTUALLY black (isDanger === true)
+    // and we're NOT invincible
+    const isDanger = segment.userData && segment.userData.isDanger === true;
+    
+    if (isDanger && !isInvincible) {
+      // Check the segment color to be 100% sure it's black
+      const segColor = segment.material.color.getHex();
+      if (segColor === 0x111111 || segColor === 0x000000) {
+        loseGame();
+        return;
+      }
     }
+    // If we get here, destroy the platform (it's safe)
     destroyPlatform(platform);
   } else if (ballVelocity < 0) {
     bounce(platformTop + CONFIG.ballRadius);
