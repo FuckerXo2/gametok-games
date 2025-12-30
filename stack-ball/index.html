@@ -5,11 +5,6 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
   <title>Stack Ball</title>
   <style>
-    @font-face {
-      font-family: 'JuneGull';
-      src: url('assets/JuneGull.ttf') format('truetype');
-    }
-    
     * {
       margin: 0;
       padding: 0;
@@ -22,8 +17,8 @@
       width: 100vw;
       height: 100vh;
       overflow: hidden;
-      font-family: 'JuneGull', Arial, sans-serif;
-      background: linear-gradient(180deg, #1a1a2e 0%, #16213e 100%);
+      font-family: Arial, sans-serif;
+      background: #1a1a2e;
       touch-action: none;
     }
     
@@ -31,226 +26,59 @@
       position: relative;
       width: 100%;
       height: 100%;
-      overflow: hidden;
     }
     
-    /* Background layers */
-    #bg-sun {
-      position: absolute;
-      top: 10%;
-      left: 50%;
-      transform: translateX(-50%);
-      width: 150px;
-      height: 150px;
-      background: url('assets/sprites/sun.png') center/contain no-repeat;
-      opacity: 0.6;
-      pointer-events: none;
+    canvas {
+      display: block;
     }
     
-    #bg-mountain {
-      position: absolute;
-      bottom: 0;
-      left: 0;
-      width: 100%;
-      height: 40%;
-      background: url('assets/sprites/mountain.png') bottom center/cover no-repeat;
-      opacity: 0.3;
-      pointer-events: none;
-    }
-    
-    /* Game viewport - 3D perspective */
-    #viewport {
-      position: absolute;
-      top: 0;
-      left: 0;
-      width: 100%;
-      height: 100%;
-      perspective: 800px;
-      perspective-origin: 50% 35%;
-    }
-    
-    /* Platform tower container */
-    #tower {
-      position: absolute;
-      left: 50%;
-      top: 50%;
-      transform-style: preserve-3d;
-      transform: translateX(-50%) translateY(-50%) rotateX(65deg);
-    }
-    
-    /* Central pole */
-    #pole {
-      position: absolute;
-      left: 50%;
-      transform: translateX(-50%);
-      width: 20px;
-      background: linear-gradient(90deg, #888 0%, #ccc 50%, #888 100%);
-      border-radius: 10px;
-      transform-style: preserve-3d;
-    }
-    
-    /* Platform ring */
-    .platform {
-      position: absolute;
-      left: 50%;
-      transform: translateX(-50%);
-      transform-style: preserve-3d;
-    }
-    
-    /* Platform segment */
-    .segment {
-      position: absolute;
-      width: 60px;
-      height: 60px;
-      transform-origin: 100% 50%;
-      border-radius: 4px;
-      box-shadow: 0 2px 4px rgba(0,0,0,0.3);
-      transition: opacity 0.1s;
-    }
-    
-    .segment.danger {
-      background: linear-gradient(135deg, #222 0%, #111 100%) !important;
-    }
-    
-    /* Ball */
-    #ball {
-      position: absolute;
-      left: 50%;
-      width: 40px;
-      height: 40px;
-      transform: translateX(-50%);
-      border-radius: 50%;
-      background: radial-gradient(circle at 30% 30%, #ff8888, #ff4444);
-      box-shadow: 0 4px 8px rgba(0,0,0,0.4), inset 0 -4px 8px rgba(0,0,0,0.2);
-      z-index: 100;
-    }
-    
-    #ball.invincible {
-      background: radial-gradient(circle at 30% 30%, #ffaa00, #ff4400);
-      box-shadow: 0 0 20px #ff4400, 0 4px 8px rgba(0,0,0,0.4);
-      animation: pulse 0.3s infinite alternate;
-    }
-    
-    @keyframes pulse {
-      from { transform: translateX(-50%) scale(1); }
-      to { transform: translateX(-50%) scale(1.1); }
-    }
-    
-    /* Finish platform */
-    #finish {
-      position: absolute;
-      left: 50%;
-      transform: translateX(-50%);
-      width: 120px;
-      height: 120px;
-      border-radius: 50%;
-      background: radial-gradient(circle, #ffd700 0%, #ffaa00 100%);
-      box-shadow: 0 0 30px rgba(255, 215, 0, 0.5);
-    }
-    
-    /* Splash effect */
-    .splash {
-      position: absolute;
-      width: 30px;
-      height: 30px;
-      background: url('assets/sprites/splashes.png') center/contain no-repeat;
-      pointer-events: none;
-      opacity: 0.8;
-    }
-    
-    /* Debris particles */
-    .debris {
-      position: absolute;
-      width: 15px;
-      height: 15px;
-      border-radius: 2px;
-      pointer-events: none;
-    }
-    
-    /* UI */
     #ui {
       position: absolute;
       top: 0;
       left: 0;
       width: 100%;
-      height: 100%;
       pointer-events: none;
-      z-index: 200;
+      z-index: 10;
     }
     
-    #ui > * {
-      pointer-events: auto;
-    }
-    
-    #level-display {
+    #level {
       position: absolute;
-      top: 50px;
+      top: 40px;
       left: 50%;
       transform: translateX(-50%);
-      font-size: 28px;
+      font-size: 24px;
+      font-weight: bold;
       color: white;
-      text-shadow: 2px 2px 4px rgba(0,0,0,0.5);
     }
     
-    #score-display {
+    #score {
       position: absolute;
-      top: 90px;
+      top: 70px;
       left: 50%;
       transform: translateX(-50%);
       font-size: 48px;
+      font-weight: bold;
       color: white;
-      text-shadow: 2px 2px 4px rgba(0,0,0,0.5);
     }
     
-    /* Progress bar */
-    #progress-container {
+    #progress-bar {
       position: absolute;
-      top: 150px;
-      left: 50%;
-      transform: translateX(-50%);
-      width: 200px;
-      height: 12px;
-      background: rgba(255,255,255,0.2);
-      border-radius: 6px;
-      overflow: hidden;
-    }
-    
-    #progress-fill {
-      height: 100%;
-      width: 0%;
-      background: linear-gradient(90deg, #ff6b6b, #feca57);
-      border-radius: 6px;
-      transition: width 0.2s;
-    }
-    
-    /* Invincible bar */
-    #invincible-container {
-      position: absolute;
-      top: 170px;
+      top: 130px;
       left: 50%;
       transform: translateX(-50%);
       width: 150px;
       height: 8px;
       background: rgba(255,255,255,0.2);
       border-radius: 4px;
-      overflow: hidden;
-      opacity: 0;
-      transition: opacity 0.3s;
     }
     
-    #invincible-container.show {
-      opacity: 1;
-    }
-    
-    #invincible-fill {
+    #progress-fill {
       height: 100%;
       width: 0%;
-      background: linear-gradient(90deg, #ff4400, #ffaa00);
+      background: linear-gradient(90deg, #ff6b6b, #feca57);
       border-radius: 4px;
-      transition: width 0.1s;
     }
     
-    /* Menu screens */
     .screen {
       position: absolute;
       top: 0;
@@ -261,116 +89,67 @@
       flex-direction: column;
       align-items: center;
       justify-content: center;
-      background: rgba(0,0,0,0.7);
-      z-index: 300;
+      background: rgba(0,0,0,0.8);
+      pointer-events: auto;
+      z-index: 20;
     }
     
-    .screen.hidden {
-      display: none;
-    }
+    .screen.hidden { display: none; }
     
     .screen h1 {
-      font-size: 48px;
+      font-size: 36px;
       color: white;
       margin-bottom: 20px;
-      text-shadow: 2px 2px 4px rgba(0,0,0,0.5);
-    }
-    
-    .screen h2 {
-      font-size: 32px;
-      color: #feca57;
-      margin-bottom: 30px;
     }
     
     .screen p {
-      font-size: 20px;
       color: #aaa;
       margin-bottom: 10px;
     }
     
     .btn {
-      padding: 15px 50px;
-      font-size: 24px;
-      font-family: 'JuneGull', Arial, sans-serif;
+      margin-top: 20px;
+      padding: 15px 40px;
+      font-size: 20px;
+      font-weight: bold;
       color: white;
       background: linear-gradient(135deg, #ff6b6b, #ee5a24);
       border: none;
-      border-radius: 30px;
+      border-radius: 25px;
       cursor: pointer;
-      margin-top: 20px;
-      box-shadow: 0 4px 15px rgba(238, 90, 36, 0.4);
-      transition: transform 0.2s, box-shadow 0.2s;
-    }
-    
-    .btn:active {
-      transform: scale(0.95);
-    }
-    
-    /* Sound toggle */
-    #sound-btn {
-      position: absolute;
-      top: 10px;
-      right: 10px;
-      width: 40px;
-      height: 40px;
-      background: url('assets/sprites/sound_on.png') center/contain no-repeat;
-      border: none;
-      cursor: pointer;
-      opacity: 0.8;
-      z-index: 250;
-    }
-    
-    #sound-btn.muted {
-      background-image: url('assets/sprites/sound_off.png');
     }
   </style>
 </head>
 <body>
   <div id="game-container">
-    <div id="bg-sun"></div>
-    <div id="bg-mountain"></div>
-    
-    <div id="viewport">
-      <div id="tower">
-        <div id="pole"></div>
-        <div id="ball"></div>
-        <div id="finish"></div>
-      </div>
-    </div>
-    
     <div id="ui">
-      <div id="level-display">Level 1</div>
-      <div id="score-display">0</div>
-      <div id="progress-container">
-        <div id="progress-fill"></div>
-      </div>
-      <div id="invincible-container">
-        <div id="invincible-fill"></div>
-      </div>
-      <button id="sound-btn"></button>
+      <div id="level">Level 1</div>
+      <div id="score">0</div>
+      <div id="progress-bar"><div id="progress-fill"></div></div>
     </div>
     
-    <div id="menu-screen" class="screen">
+    <div id="menu" class="screen">
       <h1>Stack Ball</h1>
-      <p>Hold to smash through platforms</p>
+      <p>Hold to smash platforms</p>
       <p>Avoid the black ones!</p>
-      <button class="btn" id="start-btn">TAP TO START</button>
+      <button class="btn" id="startBtn">START</button>
     </div>
     
-    <div id="win-screen" class="screen hidden">
-      <h1>🎉 Level Complete!</h1>
-      <h2 id="win-level">Level 1</h2>
-      <button class="btn" id="next-btn">NEXT LEVEL</button>
+    <div id="win" class="screen hidden">
+      <h1>Level Complete! 🎉</h1>
+      <p id="winLevel"></p>
+      <button class="btn" id="nextBtn">NEXT</button>
     </div>
     
-    <div id="lose-screen" class="screen hidden">
-      <h1>💥 Game Over</h1>
-      <p>Score: <span id="final-score">0</span></p>
-      <p>Best: <span id="best-score">0</span></p>
-      <button class="btn" id="retry-btn">TRY AGAIN</button>
+    <div id="lose" class="screen hidden">
+      <h1>Game Over 💥</h1>
+      <p>Score: <span id="finalScore">0</span></p>
+      <p>Best: <span id="bestScore">0</span></p>
+      <button class="btn" id="retryBtn">RETRY</button>
     </div>
   </div>
   
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
   <script src="game.js"></script>
 </body>
 </html>

@@ -1,621 +1,360 @@
-// Stack Ball - DOM-based rebuild using Unity source as reference
+// Stack Ball - Clean Three.js rebuild
 (function() {
 'use strict';
 
-// ===== CONFIG (from Unity Ball.cs, Generator.prefab) =====
-const CONFIG = {
-  // Level
-  platformCount: 25,
-  platformSpacing: 45,        // pixels between platforms
-  segmentsPerPlatform: 8,
-  minSafeParts: 2,            // minimum non-danger segments
-  
-  // Ball physics (from Ball.cs)
-  gravity: 1800,              // pixels/s²
-  jumpVelocity: 600,          // bounce velocity
-  smashVelocity: 1200,        // velocity when holding
-  
-  // Invincibility (from BallInvincibility)
-  platformsToEnableIndicator: 8,
-  secondsPerPlatform: 0.12,
-  secondsToEnableInvincible: 3,
-  invincibleDuration: 2.5,
-  
-  // Platform rotation (from Rotator.cs)
-  rotationSpeed: 40,          // degrees per second
-  
-  // Visual
-  platformRadius: 55,         // distance from center to segment
-  segmentWidth: 50,
-  segmentHeight: 18,
-};
+// Config
+const PLATFORM_COUNT = 30;
+const SEGMENTS_PER_PLATFORM = 8;
+const PLATFORM_SPACING = 0.5;
+const BALL_RADIUS = 0.35;
+const PLATFORM_RADIUS = 1.8;
+const INNER_RADIUS = 0.4;
+const ROTATION_SPEED = 50; // degrees/sec
 
-// ===== STATE =====
-let gameState = 'menu';       // menu, playing, win, lose
-let isHolding = false;
-let score = 0;
-let level = parseInt(localStorage.getItem('stackBallLevel')) || 1;
+// State
+let scene, camera, renderer;
+let ball, pole, platforms = [], finishPlatform;
+let ballY = 2, ballVel = 0;
+let isHolding = false, isPlaying = false;
+let gameState = 'menu';
+let score = 0, level = parseInt(localStorage.getItem('stackBallLevel')) || 1;
 let bestScore = parseInt(localStorage.getItem('stackBallBest')) || 0;
-
-// Ball state
-let ballY = 0;
-let ballVelocity = 0;
-
-// Platform state
-let platforms = [];
-let currentRotation = 0;
 let destroyedCount = 0;
+let rotation = 0;
+let lastTime = 0;
 
-// Invincibility (from Ball.cs)
-let isInvincible = false;
-let invincibleTimer = 0;
-let destroyedPlatformCount = 0;
-let invincibleChargeTimer = 0;
-
-// Particles
-let debris = [];
-let splashes = [];
-
-// Audio
-let soundEnabled = true;
-let sounds = {};
-
-// Color palettes
-const palettes = [
-  { main: '#ff6b6b', gradient: ['#ff6b6b', '#feca57'], bg: ['#1a1a2e', '#16213e'] },
-  { main: '#5f27cd', gradient: ['#5f27cd', '#341f97'], bg: ['#0c0c1e', '#1a0a2e'] },
-  { main: '#00d2d3', gradient: ['#00d2d3', '#01a3a4'], bg: ['#0a2e2e', '#0a1e2e'] },
-  { main: '#ff9f43', gradient: ['#ff9f43', '#ee5a24'], bg: ['#2d1810', '#1d1010'] },
-  { main: '#10ac84', gradient: ['#10ac84', '#1dd1a1'], bg: ['#0a2a1a', '#0a1a1a'] },
+// Colors
+const colors = [
+  [0xff6b6b, 0xfeca57],
+  [0x5f27cd, 0x9b59b6],
+  [0x00d2d3, 0x01a3a4],
+  [0xff9f43, 0xee5a24],
+  [0x10ac84, 0x1dd1a1],
 ];
 let palette;
 
-// DOM elements
-const $ = id => document.getElementById(id);
-const tower = $('tower');
-const ball = $('ball');
-const pole = $('pole');
-const finish = $('finish');
+// DOM
 const ui = {
-  level: $('level-display'),
-  score: $('score-display'),
-  progress: $('progress-fill'),
-  invBar: $('invincible-container'),
-  invFill: $('invincible-fill'),
-  menu: $('menu-screen'),
-  win: $('win-screen'),
-  winLevel: $('win-level'),
-  lose: $('lose-screen'),
-  finalScore: $('final-score'),
-  bestScore: $('best-score'),
-  soundBtn: $('sound-btn'),
+  level: document.getElementById('level'),
+  score: document.getElementById('score'),
+  progress: document.getElementById('progress-fill'),
+  menu: document.getElementById('menu'),
+  win: document.getElementById('win'),
+  winLevel: document.getElementById('winLevel'),
+  lose: document.getElementById('lose'),
+  finalScore: document.getElementById('finalScore'),
+  bestScore: document.getElementById('bestScore'),
 };
 
-// ===== AUDIO =====
-function loadSounds() {
-  const soundFiles = {
-    jump: 'assets/audio/Balljump.mp3',
-    break: 'assets/audio/BallBreakStack.wav',
-    die: 'assets/audio/BallDied.mp3',
-    level: 'assets/audio/BallLevel.mp3',
-    button: 'assets/audio/button.mp3',
-  };
-  
-  for (const [name, src] of Object.entries(soundFiles)) {
-    const audio = new Audio(src);
-    audio.preload = 'auto';
-    sounds[name] = audio;
-  }
-}
-
-function playSound(name) {
-  if (!soundEnabled || !sounds[name]) return;
-  const sound = sounds[name].cloneNode();
-  sound.volume = 0.5;
-  sound.play().catch(() => {});
-}
-
-// ===== INIT =====
+// Init
 function init() {
-  loadSounds();
+  setupThree();
   setupInput();
   setupButtons();
   buildLevel();
-  requestAnimationFrame(gameLoop);
+  animate();
+}
+
+function setupThree() {
+  scene = new THREE.Scene();
+  scene.background = new THREE.Color(0x1a1a2e);
+  
+  camera = new THREE.PerspectiveCamera(60, window.innerWidth / window.innerHeight, 0.1, 100);
+  camera.position.set(0, 5, 10);
+  camera.lookAt(0, 0, 0);
+  
+  renderer = new THREE.WebGLRenderer({ antialias: true });
+  renderer.setSize(window.innerWidth, window.innerHeight);
+  renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
+  document.getElementById('game-container').insertBefore(renderer.domElement, document.getElementById('ui'));
+  
+  // Lights
+  scene.add(new THREE.AmbientLight(0xffffff, 0.6));
+  const dir = new THREE.DirectionalLight(0xffffff, 0.8);
+  dir.position.set(5, 10, 5);
+  scene.add(dir);
+  
+  window.addEventListener('resize', () => {
+    camera.aspect = window.innerWidth / window.innerHeight;
+    camera.updateProjectionMatrix();
+    renderer.setSize(window.innerWidth, window.innerHeight);
+  });
 }
 
 function setupInput() {
-  const onDown = (e) => {
+  const down = (e) => {
     if (e.target.tagName === 'BUTTON') return;
-    if (e.cancelable) e.preventDefault();
+    e.preventDefault();
     isHolding = true;
   };
+  const up = () => { isHolding = false; };
   
-  const onUp = () => {
-    isHolding = false;
-  };
-  
-  document.addEventListener('mousedown', onDown);
-  document.addEventListener('mouseup', onUp);
-  document.addEventListener('touchstart', onDown, { passive: false });
-  document.addEventListener('touchend', onUp, { passive: false });
-  document.addEventListener('touchcancel', onUp);
+  document.addEventListener('mousedown', down);
+  document.addEventListener('mouseup', up);
+  document.addEventListener('touchstart', down, { passive: false });
+  document.addEventListener('touchend', up);
 }
 
 function setupButtons() {
-  $('start-btn').onclick = () => {
-    playSound('button');
-    startGame();
+  document.getElementById('startBtn').onclick = () => {
+    gameState = 'playing';
+    isPlaying = true;
+    ui.menu.classList.add('hidden');
   };
   
-  $('next-btn').onclick = () => {
-    playSound('button');
+  document.getElementById('nextBtn').onclick = () => {
     level++;
     localStorage.setItem('stackBallLevel', level);
     ui.win.classList.add('hidden');
     buildLevel();
-    startGame();
+    gameState = 'playing';
+    isPlaying = true;
   };
   
-  $('retry-btn').onclick = () => {
-    playSound('button');
+  document.getElementById('retryBtn').onclick = () => {
     score = 0;
     ui.lose.classList.add('hidden');
     buildLevel();
-    startGame();
-  };
-  
-  ui.soundBtn.onclick = () => {
-    soundEnabled = !soundEnabled;
-    ui.soundBtn.classList.toggle('muted', !soundEnabled);
+    gameState = 'playing';
+    isPlaying = true;
   };
 }
 
-function startGame() {
-  gameState = 'playing';
-  ui.menu.classList.add('hidden');
-}
-
-// ===== LEVEL BUILDING =====
 function buildLevel() {
-  // Clear old platforms
-  platforms.forEach(p => p.element.remove());
+  // Clear
+  while(scene.children.length > 2) scene.remove(scene.children[2]);
   platforms = [];
-  debris.forEach(d => d.element.remove());
-  debris = [];
-  splashes.forEach(s => s.element.remove());
-  splashes = [];
-  
-  // Set palette
-  palette = palettes[(level - 1) % palettes.length];
-  document.body.style.background = `linear-gradient(180deg, ${palette.bg[0]} 0%, ${palette.bg[1]} 100%)`;
-  ball.style.background = `radial-gradient(circle at 30% 30%, ${palette.main}, ${darkenColor(palette.main, 30)})`;
-  
-  // Reset state
   destroyedCount = 0;
-  destroyedPlatformCount = 0;
-  isInvincible = false;
-  invincibleTimer = 0;
-  invincibleChargeTimer = 0;
-  currentRotation = 0;
+  rotation = 0;
   
-  // Calculate tower height
-  const towerHeight = CONFIG.platformCount * CONFIG.platformSpacing;
+  palette = colors[(level - 1) % colors.length];
   
-  // Position pole
-  pole.style.height = `${towerHeight + 100}px`;
-  pole.style.top = `-50px`;
+  // Pole
+  const poleH = PLATFORM_COUNT * PLATFORM_SPACING + 3;
+  const poleGeo = new THREE.CylinderGeometry(0.2, 0.2, poleH, 16);
+  const poleMat = new THREE.MeshStandardMaterial({ color: 0xaaaaaa });
+  pole = new THREE.Mesh(poleGeo, poleMat);
+  pole.position.y = -poleH / 2 + 1;
+  scene.add(pole);
   
-  // Create platforms
-  for (let i = 0; i < CONFIG.platformCount; i++) {
-    createPlatform(i);
+  // Platforms
+  for (let i = 0; i < PLATFORM_COUNT; i++) {
+    const y = -i * PLATFORM_SPACING;
+    const dangerCount = Math.min(Math.floor(i / 5), SEGMENTS_PER_PLATFORM - 2);
+    const platform = createPlatform(y, i, dangerCount);
+    platforms.push(platform);
   }
   
-  // Position finish platform
-  finish.style.top = `${CONFIG.platformCount * CONFIG.platformSpacing + 30}px`;
+  // Finish
+  const finishY = -PLATFORM_COUNT * PLATFORM_SPACING - 0.5;
+  const finishGeo = new THREE.CylinderGeometry(PLATFORM_RADIUS, PLATFORM_RADIUS, 0.5, 32);
+  const finishMat = new THREE.MeshStandardMaterial({ color: 0xffd700, emissive: 0xffd700, emissiveIntensity: 0.3 });
+  finishPlatform = new THREE.Mesh(finishGeo, finishMat);
+  finishPlatform.position.y = finishY;
+  scene.add(finishPlatform);
   
-  // Position ball at top
-  ballY = -30;
-  ballVelocity = 0;
-  ball.style.top = `${ballY}px`;
-  ball.style.display = 'block';
-  ball.classList.remove('invincible');
+  // Ball
+  const ballGeo = new THREE.SphereGeometry(BALL_RADIUS, 24, 24);
+  const ballMat = new THREE.MeshStandardMaterial({ color: palette[0] });
+  ball = new THREE.Mesh(ballGeo, ballMat);
+  ballY = 2;
+  ballVel = 0;
+  ball.position.set(1.2, ballY, 0);
+  scene.add(ball);
   
-  // Update UI
   updateUI();
-  updateProgress();
-  updateInvincibleUI();
 }
 
-function createPlatform(index) {
-  const y = index * CONFIG.platformSpacing;
-  const element = document.createElement('div');
-  element.className = 'platform';
-  element.style.top = `${y}px`;
+function createPlatform(y, index, maxDanger) {
+  const group = new THREE.Group();
+  group.position.y = y;
   
-  // Determine danger count for this platform group
-  const groupIndex = Math.floor(index / 5);
-  const maxDanger = Math.min(groupIndex, CONFIG.segmentsPerPlatform - CONFIG.minSafeParts);
-  const dangerCount = Math.floor(Math.random() * (maxDanger + 1));
+  // Pick random danger segments
+  const dangerSet = new Set();
+  const indices = [...Array(SEGMENTS_PER_PLATFORM).keys()];
+  shuffle(indices);
+  for (let i = 0; i < maxDanger; i++) dangerSet.add(indices[i]);
   
-  // Randomly select which segments are danger
-  const dangerIndices = new Set();
-  const indices = [...Array(CONFIG.segmentsPerPlatform).keys()];
-  shuffleArray(indices);
-  for (let i = 0; i < dangerCount; i++) {
-    dangerIndices.add(indices[i]);
-  }
-  
-  // Create segments
   const segments = [];
-  const segmentAngle = 360 / CONFIG.segmentsPerPlatform;
-  const t = index / CONFIG.platformCount;
-  const color = lerpColor(palette.gradient[0], palette.gradient[1], t);
+  const segAngle = (Math.PI * 2) / SEGMENTS_PER_PLATFORM;
+  const t = index / PLATFORM_COUNT;
+  const color = lerpColor(palette[0], palette[1], t);
   
-  for (let i = 0; i < CONFIG.segmentsPerPlatform; i++) {
-    const seg = document.createElement('div');
-    seg.className = 'segment';
-    if (dangerIndices.has(i)) {
-      seg.classList.add('danger');
+  for (let i = 0; i < SEGMENTS_PER_PLATFORM; i++) {
+    const isDanger = dangerSet.has(i);
+    const startAngle = i * segAngle;
+    const seg = createSegment(startAngle, segAngle - 0.05, isDanger ? 0x222222 : color);
+    seg.userData = { isDanger, startAngle, endAngle: startAngle + segAngle - 0.05 };
+    group.add(seg);
+    segments.push(seg);
+  }
+  
+  scene.add(group);
+  return { group, y, segments, destroyed: false };
+}
+
+function createSegment(startAngle, arcLen, color) {
+  const shape = new THREE.Shape();
+  const inner = INNER_RADIUS, outer = PLATFORM_RADIUS;
+  const steps = 8;
+  
+  // Outer arc
+  for (let i = 0; i <= steps; i++) {
+    const a = startAngle + (i / steps) * arcLen;
+    const x = Math.cos(a) * outer;
+    const z = Math.sin(a) * outer;
+    if (i === 0) shape.moveTo(x, z);
+    else shape.lineTo(x, z);
+  }
+  
+  // Inner arc (reverse)
+  for (let i = steps; i >= 0; i--) {
+    const a = startAngle + (i / steps) * arcLen;
+    shape.lineTo(Math.cos(a) * inner, Math.sin(a) * inner);
+  }
+  
+  shape.closePath();
+  
+  const geo = new THREE.ExtrudeGeometry(shape, { depth: 0.2, bevelEnabled: false });
+  geo.rotateX(Math.PI / 2);
+  geo.translate(0, 0.1, 0);
+  
+  const mat = new THREE.MeshStandardMaterial({ color });
+  return new THREE.Mesh(geo, mat);
+}
+
+// Game loop
+function animate(time = 0) {
+  requestAnimationFrame(animate);
+  
+  const dt = Math.min((time - lastTime) / 1000, 0.05);
+  lastTime = time;
+  
+  if (isPlaying) {
+    // Ball physics
+    if (isHolding) {
+      ballVel = -12; // smash down
     } else {
-      seg.style.background = `linear-gradient(135deg, ${color}, ${darkenColor(color, 20)})`;
+      ballVel += 30 * dt; // gravity
     }
+    ballY += ballVel * dt;
+    ball.position.y = ballY;
     
-    const angle = i * segmentAngle;
-    seg.style.width = `${CONFIG.segmentWidth}px`;
-    seg.style.height = `${CONFIG.segmentHeight}px`;
-    seg.style.left = '50%';
-    seg.style.top = '50%';
-    seg.style.transform = `rotate(${angle}deg) translateX(${CONFIG.platformRadius}px) translateY(-50%)`;
-    seg.dataset.angle = angle;
-    seg.dataset.isDanger = dangerIndices.has(i);
+    // Rotate platforms
+    rotation += ROTATION_SPEED * dt;
+    platforms.forEach(p => { if (!p.destroyed) p.group.rotation.y = rotation * Math.PI / 180; });
     
-    element.appendChild(seg);
-    segments.push({
-      element: seg,
-      angle: angle,
-      isDanger: dangerIndices.has(i),
-      destroyed: false
-    });
+    checkCollision();
   }
   
-  tower.appendChild(element);
-  platforms.push({
-    element,
-    y,
-    segments,
-    destroyed: false,
-    index
-  });
+  // Camera follow
+  camera.position.y += (ballY + 4 - camera.position.y) * 0.1;
+  camera.lookAt(0, ballY, 0);
+  
+  renderer.render(scene, camera);
 }
 
-// ===== GAME LOOP =====
-let lastTime = 0;
-
-function gameLoop(currentTime) {
-  const dt = Math.min((currentTime - lastTime) / 1000, 0.05) || 0.016;
-  lastTime = currentTime;
+function checkCollision() {
+  const ballBottom = ballY - BALL_RADIUS;
+  const ballX = ball.position.x;
+  const ballZ = ball.position.z;
+  const dist = Math.sqrt(ballX * ballX + ballZ * ballZ);
   
-  if (gameState === 'playing') {
-    updateBall(dt);
-    checkCollisions();
-    updateInvincibility(dt);
-  }
+  // Must be over platform ring
+  if (dist < INNER_RADIUS || dist > PLATFORM_RADIUS) return;
   
-  // Always rotate platforms
-  currentRotation += CONFIG.rotationSpeed * dt;
-  tower.style.transform = `translateX(-50%) translateY(-50%) rotateX(65deg) rotateZ(${currentRotation}deg)`;
+  // Ball angle in world
+  let ballAngle = Math.atan2(ballZ, ballX);
+  if (ballAngle < 0) ballAngle += Math.PI * 2;
   
-  updateParticles(dt);
-  
-  requestAnimationFrame(gameLoop);
-}
-
-function updateBall(dt) {
-  if (isHolding) {
-    // Smashing down (from Ball.cs FixedUpdate)
-    ballVelocity = CONFIG.smashVelocity;
-  } else {
-    // Apply gravity
-    ballVelocity += CONFIG.gravity * dt;
-  }
-  
-  ballY += ballVelocity * dt;
-  ball.style.top = `${ballY}px`;
-  
-  // Invincible visual
-  ball.classList.toggle('invincible', isInvincible);
-}
-
-function checkCollisions() {
-  const ballBottom = ballY + 20; // ball radius
-  const ballAngle = (((-currentRotation % 360) + 360) % 360);
-  
-  // Check finish platform
-  const finishY = CONFIG.platformCount * CONFIG.platformSpacing + 30;
-  if (ballBottom >= finishY && ballVelocity > 0) {
+  // Check finish
+  if (ballBottom <= finishPlatform.position.y + 0.25 && ballVel < 0) {
     winGame();
     return;
   }
   
   // Check platforms
-  for (const platform of platforms) {
-    if (platform.destroyed) continue;
+  for (const plat of platforms) {
+    if (plat.destroyed) continue;
     
-    const platTop = platform.y;
-    const platBottom = platform.y + CONFIG.segmentHeight;
+    const top = plat.y + 0.1;
+    const bot = plat.y - 0.1;
     
-    // Check if ball is at this platform's height
-    if (ballBottom >= platTop && ballBottom <= platBottom + 10 && ballVelocity > 0) {
-      // Find which segment we're over
-      const hitSegment = findSegmentAtAngle(platform, ballAngle);
+    if (ballBottom <= top && ballBottom > bot && ballVel < 0) {
+      // Get local angle (subtract rotation)
+      let localAngle = ballAngle - (rotation * Math.PI / 180);
+      while (localAngle < 0) localAngle += Math.PI * 2;
+      while (localAngle >= Math.PI * 2) localAngle -= Math.PI * 2;
       
-      if (hitSegment && !hitSegment.destroyed) {
-        handleCollision(hitSegment, platform, platTop);
-        return;
+      // Find segment
+      for (const seg of plat.segments) {
+        if (!seg.visible) continue;
+        
+        let start = seg.userData.startAngle;
+        let end = seg.userData.endAngle;
+        
+        // Check if angle is in segment
+        if (localAngle >= start && localAngle <= end) {
+          if (isHolding) {
+            // Smashing
+            if (seg.userData.isDanger) {
+              loseGame();
+              return;
+            }
+            destroyPlatform(plat);
+          } else {
+            // Bounce
+            ballY = top + BALL_RADIUS;
+            ballVel = 8;
+          }
+          return;
+        }
       }
     }
   }
 }
 
-function findSegmentAtAngle(platform, ballAngle) {
-  const segmentArc = 360 / CONFIG.segmentsPerPlatform;
-  
-  for (const seg of platform.segments) {
-    if (seg.destroyed) continue;
-    
-    let segStart = seg.angle - segmentArc / 2;
-    let segEnd = seg.angle + segmentArc / 2;
-    
-    // Normalize
-    let checkAngle = ballAngle;
-    if (segStart < 0) {
-      segStart += 360;
-      if (checkAngle < 180) checkAngle += 360;
-    }
-    if (segEnd > 360) {
-      segEnd -= 360;
-      if (checkAngle > 180) checkAngle -= 360;
-    }
-    
-    // Simple check
-    const angleDiff = Math.abs(((ballAngle - seg.angle + 180) % 360) - 180);
-    if (angleDiff < segmentArc / 2 + 5) {
-      return seg;
-    }
-  }
-  return null;
-}
-
-function handleCollision(segment, platform, platformTop) {
-  // From Ball.cs OnCollisionEnter
-  if (!isHolding) {
-    // Bounce (not smashing)
-    bounce(platformTop);
-    return;
-  }
-  
-  // Smashing
-  if (segment.isDanger && !isInvincible) {
-    // Hit danger while smashing = GAME OVER
-    loseGame();
-    return;
-  }
-  
-  // Destroy platform (safe segment or invincible)
-  destroyPlatform(platform);
-}
-
-function bounce(platformTop) {
-  ballY = platformTop - 20;
-  ballVelocity = -CONFIG.jumpVelocity;
-  playSound('jump');
-  createSplash(platformTop);
-}
-
-function destroyPlatform(platform) {
-  if (platform.destroyed) return;
-  platform.destroyed = true;
+function destroyPlatform(plat) {
+  plat.destroyed = true;
+  plat.segments.forEach(s => s.visible = false);
   destroyedCount++;
-  
-  playSound('break');
-  
-  // Shatter all segments (from StackController.cs)
-  for (const seg of platform.segments) {
-    if (!seg.destroyed) {
-      shatterSegment(seg, platform.y);
-    }
-  }
-  
-  platform.element.style.display = 'none';
-  
-  // Score
-  score += isInvincible ? 2 : 1;
+  score++;
   updateUI();
-  updateProgress();
-  
-  // Invincibility charge (from Ball.cs)
-  if (!isInvincible) {
-    destroyedPlatformCount++;
-    if (destroyedPlatformCount >= CONFIG.platformsToEnableIndicator) {
-      invincibleChargeTimer += CONFIG.secondsPerPlatform;
-      if (invincibleChargeTimer >= CONFIG.secondsToEnableInvincible) {
-        activateInvincible();
-      }
-      updateInvincibleUI();
-    }
-  }
+  ui.progress.style.width = `${(destroyedCount / PLATFORM_COUNT) * 100}%`;
 }
 
-function shatterSegment(seg, platformY) {
-  seg.destroyed = true;
-  seg.element.style.opacity = '0';
-  
-  // Create debris (from StackPartController.cs Shatter)
-  const angle = parseFloat(seg.element.dataset.angle);
-  const color = seg.isDanger ? '#222' : seg.element.style.background;
-  
-  for (let i = 0; i < 3; i++) {
-    createDebris(angle, platformY, seg.isDanger ? '#333' : palette.main);
-  }
-}
-
-// ===== INVINCIBILITY =====
-function updateInvincibility(dt) {
-  if (isInvincible) {
-    invincibleTimer -= dt;
-    updateInvincibleUI();
-    if (invincibleTimer <= 0) {
-      deactivateInvincible();
-    }
-  }
-}
-
-function activateInvincible() {
-  isInvincible = true;
-  invincibleTimer = CONFIG.invincibleDuration;
-  invincibleChargeTimer = 0;
-}
-
-function deactivateInvincible() {
-  isInvincible = false;
-  destroyedPlatformCount = 0;
-  invincibleChargeTimer = 0;
-  updateInvincibleUI();
-}
-
-function updateInvincibleUI() {
-  const show = destroyedPlatformCount >= CONFIG.platformsToEnableIndicator || isInvincible;
-  ui.invBar.classList.toggle('show', show);
-  
-  let fill;
-  if (isInvincible) {
-    fill = invincibleTimer / CONFIG.invincibleDuration;
-  } else {
-    fill = invincibleChargeTimer / CONFIG.secondsToEnableInvincible;
-  }
-  ui.invFill.style.width = `${Math.max(0, fill) * 100}%`;
-}
-
-// ===== PARTICLES =====
-function createDebris(angle, y, color) {
-  const el = document.createElement('div');
-  el.className = 'debris';
-  el.style.background = color;
-  el.style.left = '50%';
-  el.style.top = `${y}px`;
-  tower.appendChild(el);
-  
-  const rad = (angle + currentRotation) * Math.PI / 180;
-  const throwDir = Math.cos(rad) > 0 ? 1 : -1;
-  
-  debris.push({
-    element: el,
-    x: 0,
-    y: y,
-    vx: throwDir * (200 + Math.random() * 150),
-    vy: -(300 + Math.random() * 200),
-    rotation: 0,
-    rotSpeed: (Math.random() - 0.5) * 720,
-    life: 0.8
-  });
-}
-
-function createSplash(y) {
-  const el = document.createElement('div');
-  el.className = 'splash';
-  el.style.left = '50%';
-  el.style.top = `${y}px`;
-  el.style.transform = 'translateX(-50%)';
-  tower.appendChild(el);
-  
-  splashes.push({
-    element: el,
-    life: 0.5
-  });
-}
-
-function updateParticles(dt) {
-  // Update debris
-  for (let i = debris.length - 1; i >= 0; i--) {
-    const d = debris[i];
-    d.vy += 1500 * dt; // gravity
-    d.x += d.vx * dt;
-    d.y += d.vy * dt;
-    d.rotation += d.rotSpeed * dt;
-    d.life -= dt;
-    
-    d.element.style.transform = `translateX(${d.x}px) rotate(${d.rotation}deg)`;
-    d.element.style.top = `${d.y}px`;
-    d.element.style.opacity = Math.max(0, d.life / 0.8);
-    
-    if (d.life <= 0) {
-      d.element.remove();
-      debris.splice(i, 1);
-    }
-  }
-  
-  // Update splashes
-  for (let i = splashes.length - 1; i >= 0; i--) {
-    const s = splashes[i];
-    s.life -= dt;
-    s.element.style.opacity = Math.max(0, s.life / 0.5);
-    
-    if (s.life <= 0) {
-      s.element.remove();
-      splashes.splice(i, 1);
-    }
-  }
-}
-
-// ===== GAME STATES =====
 function winGame() {
+  isPlaying = false;
   gameState = 'win';
-  isHolding = false;
-  playSound('level');
-  saveBestScore();
-  
-  ui.winLevel.textContent = `Level ${level} Complete!`;
+  saveBest();
+  ui.winLevel.textContent = `Level ${level}`;
   ui.win.classList.remove('hidden');
 }
 
 function loseGame() {
+  isPlaying = false;
   gameState = 'lose';
-  isHolding = false;
-  playSound('die');
-  saveBestScore();
-  
-  // Explode ball
-  ball.style.display = 'none';
-  for (let i = 0; i < 15; i++) {
-    createDebris(i * 24, ballY, palette.main);
-  }
-  
+  saveBest();
+  ball.visible = false;
   ui.finalScore.textContent = score;
   ui.bestScore.textContent = bestScore;
   ui.lose.classList.remove('hidden');
 }
 
-function saveBestScore() {
+function saveBest() {
   if (score > bestScore) {
     bestScore = score;
     localStorage.setItem('stackBallBest', bestScore);
   }
 }
 
-// ===== UI =====
 function updateUI() {
   ui.level.textContent = `Level ${level}`;
   ui.score.textContent = score;
 }
 
-function updateProgress() {
-  const pct = (destroyedCount / CONFIG.platformCount) * 100;
-  ui.progress.style.width = `${pct}%`;
-}
-
-// ===== UTILS =====
-function shuffleArray(arr) {
+// Utils
+function shuffle(arr) {
   for (let i = arr.length - 1; i > 0; i--) {
     const j = Math.floor(Math.random() * (i + 1));
     [arr[i], arr[j]] = [arr[j], arr[i]];
@@ -623,31 +362,10 @@ function shuffleArray(arr) {
 }
 
 function lerpColor(a, b, t) {
-  const parse = c => {
-    const hex = c.replace('#', '');
-    return [
-      parseInt(hex.substr(0, 2), 16),
-      parseInt(hex.substr(2, 2), 16),
-      parseInt(hex.substr(4, 2), 16)
-    ];
-  };
-  const [r1, g1, b1] = parse(a);
-  const [r2, g2, b2] = parse(b);
-  const r = Math.round(r1 + (r2 - r1) * t);
-  const g = Math.round(g1 + (g2 - g1) * t);
-  const bl = Math.round(b1 + (b2 - b1) * t);
-  return `#${r.toString(16).padStart(2,'0')}${g.toString(16).padStart(2,'0')}${bl.toString(16).padStart(2,'0')}`;
+  const c1 = new THREE.Color(a);
+  const c2 = new THREE.Color(b);
+  return c1.lerp(c2, t).getHex();
 }
 
-function darkenColor(color, percent) {
-  const hex = color.replace('#', '');
-  const r = Math.max(0, parseInt(hex.substr(0, 2), 16) - percent);
-  const g = Math.max(0, parseInt(hex.substr(2, 2), 16) - percent);
-  const b = Math.max(0, parseInt(hex.substr(4, 2), 16) - percent);
-  return `#${r.toString(16).padStart(2,'0')}${g.toString(16).padStart(2,'0')}${b.toString(16).padStart(2,'0')}`;
-}
-
-// Start
 init();
-
 })();
