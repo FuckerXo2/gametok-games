@@ -365,7 +365,7 @@ function createPlatform(y, rotDeg, index) {
   const dangerIndices = DANGER_CONFIGS[variant] || [];
   const segments = [];
   
-  // Try to use loaded GLB model (converted from Unity FBX with 0.01 scale)
+  // Try to use loaded GLB model (converted from Unity FBX)
   if (modelsLoaded && loadedModels[currentShape]) {
     const model = loadedModels[currentShape].clone();
     let segIndex = 0;
@@ -384,9 +384,12 @@ function createPlatform(y, rotDeg, index) {
       }
     });
     
-    // Models are pre-scaled to 0.01 during conversion
-    // Just need to rotate from FBX Y-up to match our setup
-    model.rotation.x = -Math.PI / 2;
+    // Unity FBX model is ~5.5 units wide, we need ~3 units (radius 1.5)
+    // Model center is at Y=-10.5, need to move up
+    const scaleFactor = 3 / 5.5;
+    model.scale.set(scaleFactor, scaleFactor, scaleFactor);
+    model.position.y = 10.5 * scaleFactor; // Compensate for model offset
+    model.rotation.x = -Math.PI / 2; // FBX Y-up to Three.js
     group.add(model);
   } else {
     // Fallback: procedural geometry (4 segments like Unity)
