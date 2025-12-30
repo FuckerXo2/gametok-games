@@ -101,8 +101,12 @@ function start() {
 }
 
 function loop() {
-  update();
-  draw();
+  try {
+    update();
+    draw();
+  } catch(e) {
+    console.error('Game error:', e);
+  }
   requestAnimationFrame(loop);
 }
 
@@ -162,7 +166,8 @@ function removeFruit(i) {
 }
 
 function checkSlice(x1, y1, x2, y2) {
-  for (let i = 0; i < fruitX.length; i++) {
+  // Check from end to avoid index issues when removing
+  for (let i = fruitX.length - 1; i >= 0; i--) {
     if (fruitSliced[i]) continue;
     if (lineHit(x1, y1, x2, y2, fruitX[i], fruitY[i], 35)) {
       slice(i);
@@ -174,6 +179,7 @@ function lineHit(x1, y1, x2, y2, cx, cy, r) {
   const dx = x2 - x1, dy = y2 - y1;
   const fx = x1 - cx, fy = y1 - cy;
   const a = dx*dx + dy*dy;
+  if (a < 0.001) return false; // No movement, skip
   const b = 2*(fx*dx + fy*dy);
   const c = fx*fx + fy*fy - r*r;
   const d = b*b - 4*a*c;
