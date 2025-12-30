@@ -129,52 +129,6 @@ function playSound(name, volume = 0.5) {
 }
 
 // =============================================================================
-// GLB MODEL LOADING (converted from Unity FBX)
-// =============================================================================
-function loadModels() {
-  return new Promise((resolve) => {
-    if (typeof THREE.GLTFLoader === 'undefined') {
-      console.warn('GLTFLoader not available, using procedural geometry');
-      modelsLoaded = false;
-      resolve();
-      return;
-    }
-    
-    const loader = new THREE.GLTFLoader();
-    let loaded = 0;
-    const toLoad = Object.keys(SHAPE_FILES).length;
-    
-    for (const [shape, file] of Object.entries(SHAPE_FILES)) {
-      loader.load(
-        'assets/' + file,
-        (gltf) => {
-          // Compute bounding box to determine scale
-          const box = new THREE.Box3().setFromObject(gltf.scene);
-          const size = box.getSize(new THREE.Vector3());
-          console.log('Loaded', shape, 'size:', size.x, size.y, size.z);
-          
-          loadedModels[shape] = gltf.scene;
-          loaded++;
-          if (loaded >= toLoad) {
-            modelsLoaded = true;
-            console.log('All models loaded!');
-            resolve();
-          }
-        },
-        undefined,
-        (err) => {
-          console.warn('Failed to load', file, err);
-          loaded++;
-          if (loaded >= toLoad) {
-            resolve();
-          }
-        }
-      );
-    }
-  });
-}
-
-// =============================================================================
 // INITIALIZATION
 // =============================================================================
 async function init() {
@@ -182,10 +136,6 @@ async function init() {
   setupThreeJS();
   setupInput();
   setupButtons();
-  
-  // Try to load FBX models
-  await loadModels();
-  
   buildLevel();
   lastTime = performance.now();
   animate();
@@ -297,7 +247,7 @@ function buildLevel() {
   ui.currentLevel.style.background = '#' + mainColor.getHexString();
   ui.progressFill.style.background = '#' + mainColor.getHexString();
   
-  // Select random shape for this level (from ModelSelection())
+  // Select random shape for this level (visual variety)
   currentShape = SHAPES[Math.floor(Math.random() * SHAPES.length)];
   
   // Platform count (from LevelSpawner)
@@ -365,45 +315,18 @@ function createPlatform(y, rotDeg, index) {
   const dangerIndices = DANGER_CONFIGS[variant] || [];
   const segments = [];
   
-  // Try to use loaded GLB model (converted from Unity FBX)
-  if (modelsLoaded && loadedModels[currentShape]) {
-    const model = loadedModels[currentShape].clone();
-    let segIndex = 0;
-    
-    // Apply materials to each child mesh
-    model.traverse((child) => {
-      if (child.isMesh) {
-        const isDanger = dangerIndices.includes(segIndex);
-        
-        child.material = new THREE.MeshStandardMaterial({
-          color: isDanger ? 0x1a1a1a : mainColor.getHex()
-        });
-        child.userData = { isDanger, segmentIndex: segIndex };
-        segments.push(child);
-        segIndex++;
-      }
-    });
-    
-    // Unity FBX model is ~5.5 units wide, we need ~3 units (radius 1.5)
-    // Model center is at Y=-10.5, need to move up
-    const scaleFactor = 3 / 5.5;
-    model.scale.set(scaleFactor, scaleFactor, scaleFactor);
-    model.position.y = 10.5 * scaleFactor; // Compensate for model offset
-    model.rotation.x = -Math.PI / 2; // FBX Y-up to Three.js
-    group.add(model);
-  } else {
-    // Fallback: procedural geometry (4 segments like Unity)
-    const segAngle = Math.PI / 2; // 4 segments = 90 degrees each
-    
-    for (let i = 0; i < 4; i++) {
-      const isDanger = dangerIndices.includes(i);
-      const startAngle = i * segAngle;
-      const color = isDanger ? 0x1a1a1a : mainColor.getHex();
-      const segment = createProceduralSegment(startAngle, segAngle - 0.08, color);
-      segment.userData = { isDanger, startAngle, endAngle: startAngle + segAngle - 0.08 };
-      group.add(segment);
-      segments.push(segment);
-    }
+  // Use procedural geometry - Unity FBX models have wrong structure
+  // The FBX models are complex 3D shapes, not flat ring segments
+  const segAngle = Math.PI / 2; // 4 segments = 90 degrees each
+  
+  for (let i = 0; i < 4; i++) {
+    const isDanger = dangerIndices.includes(i);
+    const startAngle = i * segAngle;
+    const color = isDanger ? 0x1a1a1a : mainColor.getHex();
+    const segment = createProceduralSegment(startAngle, segAngle - 0.08, color);
+    segment.userData = { isDanger, startAngle, endAngle: startAngle + segAngle - 0.08 };
+    group.add(segment);
+    segments.push(segment);
   }
   
   platformsContainer.add(group);
