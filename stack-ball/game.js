@@ -1,841 +1,416 @@
-// Stack Ball 3D - Faithful Three.js Recreation
+// Stack Ball - DOM-based rebuild using Unity source as reference
 (function() {
 'use strict';
 
-// ===== CONFIG (matching original Unity values) =====
+// ===== CONFIG (from Unity Ball.cs, Generator.prefab) =====
 const CONFIG = {
-  // Platform generation (from Generator.prefab)
-  platformCount: 50,              // Original: 140, reduced for web
-  platformHeightOffset: 0.4,      // _offsetHeight
-  platformRotationOffset: 2,      // _offestAngle (degrees)
+  // Level
+  platformCount: 25,
+  platformSpacing: 45,        // pixels between platforms
+  segmentsPerPlatform: 8,
+  minSafeParts: 2,            // minimum non-danger segments
   
-  // Platform geometry (from CirclePlatform.prefab - segments positioned at radius ~1.49)
-  platformRadius: 1.6,            // Outer radius of wedge
-  platformInnerRadius: 0.35,      // Inner hole radius  
-  platformThickness: 0.25,        // Height/thickness of segment
-  segmentsPerPlatform: 8,         // 8 wedge segments
-  minSafeParts: 2,                // PLATFORM_SAFE_PARTS
-  segmentGap: 0.03,               // Small gap between segments
-  
-  // Ball (from Ball.prefab)
-  ballRadius: 0.3,
-  gravity: 25,
-  jumpPower: 11,                  // _jumpPower
-  moveSpeed: 8,                   // _moveSpeed
+  // Ball physics (from Ball.cs)
+  gravity: 1800,              // pixels/s²
+  jumpVelocity: 600,          // bounce velocity
+  smashVelocity: 1200,        // velocity when holding
   
   // Invincibility (from BallInvincibility)
-  platformsToEnableIndicator: 10,
-  secondsPerPlatform: 0.15,
-  secondsToEnableInvincible: 4,    // _secondsToEnableInvincible
-  invincibleSeconds: 3,            // _invincibleSeconds
+  platformsToEnableIndicator: 8,
+  secondsPerPlatform: 0.12,
+  secondsToEnableInvincible: 3,
+  invincibleDuration: 2.5,
   
-  // Platform rotation speed (degrees per second) - from Generator.prefab _anglePerSecond
-  platformRotationSpeed: 55,
+  // Platform rotation (from Rotator.cs)
+  rotationSpeed: 40,          // degrees per second
   
-  // Camera (from CameraMover)
-  cameraTrackOffset: { x: 0, y: 3, z: -8.3 },
-  cameraTrackDelay: 0.25,
-  
-  // Audio
-  soundEnabled: true,
-  basePitch: 1.0,
-  pitchIncrement: 0.02,
-  maxPitch: 3.0,
-  pitchResetDelay: 3.0
+  // Visual
+  platformRadius: 55,         // distance from center to segment
+  segmentWidth: 50,
+  segmentHeight: 18,
 };
 
 // ===== STATE =====
-let scene, camera, renderer;
-let ball, ballVelocity = 0;
-let platforms = [];
-let particles = [];
-let pole, finishPlatform;
-let platformsContainer; // Container that rotates all platforms
-
-let isPlaying = false;
+let gameState = 'menu';       // menu, playing, win, lose
 let isHolding = false;
-let gameState = 'menu'; // menu, playing, win, lose
-
-// Invincibility state
-let isInvincible = false;
-let destroyedPlatformCount = 0;
-let invincibleTimer = 0;
-let invincibleTimerRunning = false;
-
-// Score/Level
 let score = 0;
 let level = parseInt(localStorage.getItem('stackBallLevel')) || 1;
 let bestScore = parseInt(localStorage.getItem('stackBallBest')) || 0;
+
+// Ball state
+let ballY = 0;
+let ballVelocity = 0;
+
+// Platform state
+let platforms = [];
+let currentRotation = 0;
 let destroyedCount = 0;
 
-// Camera
-let cameraTargetY = 0;
-let cameraVelocity = 0;
+// Invincibility (from Ball.cs)
+let isInvincible = false;
+let invincibleTimer = 0;
+let destroyedPlatformCount = 0;
+let invincibleChargeTimer = 0;
 
-// Trail effect
-let trailPoints = [];
-let trailMesh = null;
-const TRAIL_LENGTH = 15;
-
-// Footprints
-let footprints = [];
-
-// Fire particles (invincibility)
-let fireParticles = [];
+// Particles
+let debris = [];
+let splashes = [];
 
 // Audio
-let audioCtx = null;
-let currentPitch = 1.0;
-let pitchResetTimer = 0;
+let soundEnabled = true;
+let sounds = {};
 
-let palette;
-let lastTime = 0;
-
+// Color palettes
 const palettes = [
-  { main: 0xff6b6b, gradient: [0xff6b6b, 0xfeca57], bg: 0x1a1a2e },
-  { main: 0x5f27cd, gradient: [0x5f27cd, 0x341f97], bg: 0x0c0c1e },
-  { main: 0x00d2d3, gradient: [0x00d2d3, 0x01a3a4], bg: 0x0a2e2e },
-  { main: 0xff9f43, gradient: [0xff9f43, 0xee5a24], bg: 0x2d1810 },
-  { main: 0x10ac84, gradient: [0x10ac84, 0x1dd1a1], bg: 0x0a2a1a },
-  { main: 0xe056fd, gradient: [0xe056fd, 0xbe2edd], bg: 0x2a1a2e },
+  { main: '#ff6b6b', gradient: ['#ff6b6b', '#feca57'], bg: ['#1a1a2e', '#16213e'] },
+  { main: '#5f27cd', gradient: ['#5f27cd', '#341f97'], bg: ['#0c0c1e', '#1a0a2e'] },
+  { main: '#00d2d3', gradient: ['#00d2d3', '#01a3a4'], bg: ['#0a2e2e', '#0a1e2e'] },
+  { main: '#ff9f43', gradient: ['#ff9f43', '#ee5a24'], bg: ['#2d1810', '#1d1010'] },
+  { main: '#10ac84', gradient: ['#10ac84', '#1dd1a1'], bg: ['#0a2a1a', '#0a1a1a'] },
 ];
+let palette;
 
-// ===== DOM =====
+// DOM elements
+const $ = id => document.getElementById(id);
+const tower = $('tower');
+const ball = $('ball');
+const pole = $('pole');
+const finish = $('finish');
 const ui = {
-  level: document.getElementById('level'),
-  score: document.getElementById('score'),
-  progress: document.getElementById('progress-fill'),
-  invBar: document.getElementById('invincible-container'),
-  invFill: document.getElementById('invincible-fill'),
-  menu: document.getElementById('menu'),
-  win: document.getElementById('win'),
-  winLevel: document.getElementById('winLevel'),
-  lose: document.getElementById('lose'),
-  finalScore: document.getElementById('finalScore'),
-  bestScore: document.getElementById('bestScore')
+  level: $('level-display'),
+  score: $('score-display'),
+  progress: $('progress-fill'),
+  invBar: $('invincible-container'),
+  invFill: $('invincible-fill'),
+  menu: $('menu-screen'),
+  win: $('win-screen'),
+  winLevel: $('win-level'),
+  lose: $('lose-screen'),
+  finalScore: $('final-score'),
+  bestScore: $('best-score'),
+  soundBtn: $('sound-btn'),
 };
+
+// ===== AUDIO =====
+function loadSounds() {
+  const soundFiles = {
+    jump: 'assets/audio/Balljump.mp3',
+    break: 'assets/audio/BallBreakStack.wav',
+    die: 'assets/audio/BallDied.mp3',
+    level: 'assets/audio/BallLevel.mp3',
+    button: 'assets/audio/button.mp3',
+  };
+  
+  for (const [name, src] of Object.entries(soundFiles)) {
+    const audio = new Audio(src);
+    audio.preload = 'auto';
+    sounds[name] = audio;
+  }
+}
+
+function playSound(name) {
+  if (!soundEnabled || !sounds[name]) return;
+  const sound = sounds[name].cloneNode();
+  sound.volume = 0.5;
+  sound.play().catch(() => {});
+}
 
 // ===== INIT =====
 function init() {
-  setupThreeJS();
-  setupAudio();
+  loadSounds();
   setupInput();
   setupButtons();
   buildLevel();
-  lastTime = performance.now();
-  animate();
-}
-
-function setupThreeJS() {
-  scene = new THREE.Scene();
-  camera = new THREE.PerspectiveCamera(60, window.innerWidth / window.innerHeight, 0.1, 1000);
-  
-  renderer = new THREE.WebGLRenderer({ antialias: true });
-  renderer.setSize(window.innerWidth, window.innerHeight);
-  renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
-  renderer.shadowMap.enabled = true;
-  document.getElementById('game-container').insertBefore(renderer.domElement, document.getElementById('ui'));
-  
-  window.addEventListener('resize', () => {
-    camera.aspect = window.innerWidth / window.innerHeight;
-    camera.updateProjectionMatrix();
-    renderer.setSize(window.innerWidth, window.innerHeight);
-  });
-}
-
-function setupAudio() {
-  // Create audio context on first user interaction
-  const initAudio = () => {
-    if (!audioCtx) {
-      audioCtx = new (window.AudioContext || window.webkitAudioContext)();
-    }
-    window.removeEventListener('click', initAudio);
-    window.removeEventListener('touchstart', initAudio);
-  };
-  window.addEventListener('click', initAudio);
-  window.addEventListener('touchstart', initAudio);
-}
-
-function playSound(frequency, duration, type = 'square') {
-  if (!audioCtx || !CONFIG.soundEnabled) return;
-  
-  const oscillator = audioCtx.createOscillator();
-  const gainNode = audioCtx.createGain();
-  
-  oscillator.connect(gainNode);
-  gainNode.connect(audioCtx.destination);
-  
-  oscillator.frequency.value = frequency * currentPitch;
-  oscillator.type = type;
-  
-  gainNode.gain.setValueAtTime(0.15, audioCtx.currentTime);
-  gainNode.gain.exponentialRampToValueAtTime(0.01, audioCtx.currentTime + duration);
-  
-  oscillator.start(audioCtx.currentTime);
-  oscillator.stop(audioCtx.currentTime + duration);
-}
-
-function playBreakSound() {
-  playSound(200, 0.1, 'square');
-  playSound(150, 0.15, 'sawtooth');
-  
-  // Increase pitch like original FXHandler
-  currentPitch += CONFIG.pitchIncrement;
-  if (currentPitch >= CONFIG.maxPitch) {
-    currentPitch = CONFIG.basePitch;
-  }
-  pitchResetTimer = CONFIG.pitchResetDelay;
-}
-
-function playWinSound() {
-  currentPitch = 0.8;
-  playSound(523, 0.15, 'sine'); // C5
-  setTimeout(() => playSound(659, 0.15, 'sine'), 100); // E5
-  setTimeout(() => playSound(784, 0.3, 'sine'), 200); // G5
-}
-
-function setupLights() {
-  const ambient = new THREE.AmbientLight(0xffffff, 0.6);
-  scene.add(ambient);
-  
-  const dir = new THREE.DirectionalLight(0xffffff, 0.8);
-  dir.position.set(5, 10, 7);
-  dir.castShadow = true;
-  dir.shadow.mapSize.width = 2048;
-  dir.shadow.mapSize.height = 2048;
-  scene.add(dir);
-  
-  const fill = new THREE.DirectionalLight(0xffffff, 0.3);
-  fill.position.set(-3, 5, -5);
-  scene.add(fill);
+  requestAnimationFrame(gameLoop);
 }
 
 function setupInput() {
   const onDown = (e) => {
-    // Don't trigger on buttons
     if (e.target.tagName === 'BUTTON') return;
-    
-    // Prevent default to avoid double-firing and scrolling issues
     if (e.cancelable) e.preventDefault();
-    
     isHolding = true;
   };
   
-  const onUp = (e) => {
+  const onUp = () => {
     isHolding = false;
-    // When releasing, try to resume invincibility countdown (like original)
-    if (!isInvincible && invincibleTimer > 0 && destroyedPlatformCount >= CONFIG.platformsToEnableIndicator) {
-      invincibleTimerRunning = true;
-    }
   };
   
-  // Use document instead of window for better mobile support
   document.addEventListener('mousedown', onDown);
   document.addEventListener('mouseup', onUp);
   document.addEventListener('touchstart', onDown, { passive: false });
   document.addEventListener('touchend', onUp, { passive: false });
-  
-  // Also handle touch cancel (when touch is interrupted)
-  document.addEventListener('touchcancel', onUp, { passive: false });
+  document.addEventListener('touchcancel', onUp);
 }
 
 function setupButtons() {
-  document.getElementById('startBtn').onclick = () => {
-    gameState = 'playing';
-    isPlaying = true;
-    ui.menu.classList.add('hidden');
+  $('start-btn').onclick = () => {
+    playSound('button');
+    startGame();
   };
   
-  document.getElementById('nextBtn').onclick = () => {
+  $('next-btn').onclick = () => {
+    playSound('button');
     level++;
     localStorage.setItem('stackBallLevel', level);
     ui.win.classList.add('hidden');
     buildLevel();
-    gameState = 'playing';
-    isPlaying = true;
+    startGame();
   };
   
-  document.getElementById('retryBtn').onclick = () => {
+  $('retry-btn').onclick = () => {
+    playSound('button');
     score = 0;
     ui.lose.classList.add('hidden');
     buildLevel();
-    gameState = 'playing';
-    isPlaying = true;
+    startGame();
   };
+  
+  ui.soundBtn.onclick = () => {
+    soundEnabled = !soundEnabled;
+    ui.soundBtn.classList.toggle('muted', !soundEnabled);
+  };
+}
+
+function startGame() {
+  gameState = 'playing';
+  ui.menu.classList.add('hidden');
 }
 
 // ===== LEVEL BUILDING =====
 function buildLevel() {
-  // Clear scene
-  while (scene.children.length > 0) scene.remove(scene.children[0]);
+  // Clear old platforms
+  platforms.forEach(p => p.element.remove());
   platforms = [];
-  particles = [];
-  trailPoints = [];
-  footprints = [];
-  fireParticles = [];
+  debris.forEach(d => d.element.remove());
+  debris = [];
+  splashes.forEach(s => s.element.remove());
+  splashes = [];
   
-  if (trailMesh) {
-    scene.remove(trailMesh);
-    trailMesh = null;
-  }
-  
-  setupLights();
-  
+  // Set palette
   palette = palettes[(level - 1) % palettes.length];
-  scene.background = new THREE.Color(palette.bg);
+  document.body.style.background = `linear-gradient(180deg, ${palette.bg[0]} 0%, ${palette.bg[1]} 100%)`;
+  ball.style.background = `radial-gradient(circle at 30% 30%, ${palette.main}, ${darkenColor(palette.main, 30)})`;
   
   // Reset state
   destroyedCount = 0;
   destroyedPlatformCount = 0;
   isInvincible = false;
   invincibleTimer = 0;
-  invincibleTimerRunning = false;
-  currentPitch = CONFIG.basePitch;
-  pitchResetTimer = 0;
+  invincibleChargeTimer = 0;
+  currentRotation = 0;
   
-  createPole();
-  createPlatforms();
-  createFinishPlatform();
-  createBall();
-  createTrail();
+  // Calculate tower height
+  const towerHeight = CONFIG.platformCount * CONFIG.platformSpacing;
   
-  // Camera: positioned behind (Z+), looking down at ~25 degrees
-  cameraTargetY = ball.position.y + CONFIG.cameraTrackOffset.y;
-  camera.position.set(0, cameraTargetY, 8.3);
-  camera.rotation.x = -0.44; // ~25 degrees looking down
+  // Position pole
+  pole.style.height = `${towerHeight + 100}px`;
+  pole.style.top = `-50px`;
   
+  // Create platforms
+  for (let i = 0; i < CONFIG.platformCount; i++) {
+    createPlatform(i);
+  }
+  
+  // Position finish platform
+  finish.style.top = `${CONFIG.platformCount * CONFIG.platformSpacing + 30}px`;
+  
+  // Position ball at top
+  ballY = -30;
+  ballVelocity = 0;
+  ball.style.top = `${ballY}px`;
+  ball.style.display = 'block';
+  ball.classList.remove('invincible');
+  
+  // Update UI
   updateUI();
   updateProgress();
   updateInvincibleUI();
 }
 
-function createPole() {
-  // Create a container for all platforms that will rotate
-  platformsContainer = new THREE.Group();
-  scene.add(platformsContainer);
+function createPlatform(index) {
+  const y = index * CONFIG.platformSpacing;
+  const element = document.createElement('div');
+  element.className = 'platform';
+  element.style.top = `${y}px`;
   
-  const stackHeight = CONFIG.platformCount * CONFIG.platformHeightOffset;
-  const poleHeight = stackHeight + 4;
-  const poleRadius = 0.25;
+  // Determine danger count for this platform group
+  const groupIndex = Math.floor(index / 5);
+  const maxDanger = Math.min(groupIndex, CONFIG.segmentsPerPlatform - CONFIG.minSafeParts);
+  const dangerCount = Math.floor(Math.random() * (maxDanger + 1));
   
-  const geo = new THREE.CylinderGeometry(poleRadius, poleRadius, poleHeight, 32);
-  const mat = new THREE.MeshStandardMaterial({ 
-    color: 0xcccccc,
-    metalness: 0.2, 
-    roughness: 0.8 
-  });
-  pole = new THREE.Mesh(geo, mat);
-  pole.position.y = -stackHeight / 2;
-  pole.castShadow = true;
-  pole.receiveShadow = true;
-  platformsContainer.add(pole);
-}
-
-function createPlatforms() {
-  let currentY = 0;
-  let currentRotation = 0;
-  
-  // Group platforms with same danger count (like original)
-  let i = 0;
-  while (i < CONFIG.platformCount) {
-    const groupSize = Math.floor(Math.random() * 6) + 5; // 5-10 platforms per group
-    const maxDangerParts = Math.floor(Math.random() * (CONFIG.segmentsPerPlatform - CONFIG.minSafeParts));
-    
-    for (let j = 0; j < groupSize && i < CONFIG.platformCount; j++, i++) {
-      currentY -= CONFIG.platformHeightOffset;
-      currentRotation += CONFIG.platformRotationOffset * Math.PI / 180;
-      
-      const t = i / CONFIG.platformCount;
-      const color = lerpColor(palette.gradient[0], palette.gradient[1], t);
-      
-      const platform = createPlatform(currentY, currentRotation, color, maxDangerParts, i);
-      platforms.push(platform);
-    }
-  }
-}
-
-function createPlatform(y, rotation, color, maxDangerParts, index) {
-  const segments = [];
-  const segmentAngle = (Math.PI * 2) / CONFIG.segmentsPerPlatform;
-  const gapAngle = CONFIG.segmentGap;
-  
-  // Randomly pick which segments are danger (black)
-  // Ensure at least minSafeParts are safe (not black)
+  // Randomly select which segments are danger
   const dangerIndices = new Set();
-  
-  // Calculate how many can be danger (leave at least minSafeParts safe)
-  const maxPossibleDanger = CONFIG.segmentsPerPlatform - CONFIG.minSafeParts;
-  const actualDangerCount = Math.min(maxDangerParts, maxPossibleDanger);
-  
-  // Only add danger segments if actualDangerCount > 0
-  if (actualDangerCount > 0) {
-    // Create shuffled array of indices
-    const availableIndices = [];
-    for (let i = 0; i < CONFIG.segmentsPerPlatform; i++) {
-      availableIndices.push(i);
-    }
-    
-    // Fisher-Yates shuffle
-    for (let i = availableIndices.length - 1; i > 0; i--) {
-      const j = Math.floor(Math.random() * (i + 1));
-      [availableIndices[i], availableIndices[j]] = [availableIndices[j], availableIndices[i]];
-    }
-    
-    // Mark first N shuffled indices as danger
-    for (let i = 0; i < actualDangerCount; i++) {
-      dangerIndices.add(availableIndices[i]);
-    }
+  const indices = [...Array(CONFIG.segmentsPerPlatform).keys()];
+  shuffleArray(indices);
+  for (let i = 0; i < dangerCount; i++) {
+    dangerIndices.add(indices[i]);
   }
+  
+  // Create segments
+  const segments = [];
+  const segmentAngle = 360 / CONFIG.segmentsPerPlatform;
+  const t = index / CONFIG.platformCount;
+  const color = lerpColor(palette.gradient[0], palette.gradient[1], t);
   
   for (let i = 0; i < CONFIG.segmentsPerPlatform; i++) {
-    const isDanger = dangerIndices.has(i);
-    const centerAngle = rotation + i * segmentAngle;
-    const halfArc = (segmentAngle - gapAngle) / 2;
-    const startAngle = centerAngle - halfArc;
-    const arcLength = segmentAngle - gapAngle;
-    
-    const segColor = isDanger ? 0x222222 : color;
-    const seg = createSegment(startAngle, arcLength, segColor);
-    seg.position.y = y;
-    seg.userData = {
-      isDanger: isDanger,
-      startAngle: startAngle,
-      endAngle: startAngle + arcLength,
-      platformIndex: index
-    };
-    seg.castShadow = true;
-    seg.receiveShadow = true;
-    platformsContainer.add(seg);
-    segments.push(seg);
-  }
-  
-  return { y, segments, destroyed: false };
-}
-
-function createSegment(startAngle, arcLength, color) {
-  const inner = CONFIG.platformInnerRadius;
-  const outer = CONFIG.platformRadius;
-  const thickness = CONFIG.platformThickness;
-  
-  const geometry = new THREE.BufferGeometry();
-  const vertices = [];
-  const indices = [];
-  const steps = 12;
-  const halfThick = thickness / 2;
-  
-  // Top face vertices
-  for (let i = 0; i <= steps; i++) {
-    const a = startAngle + (i / steps) * arcLength;
-    const cos = Math.cos(a);
-    const sin = Math.sin(a);
-    vertices.push(cos * outer, halfThick, sin * outer);
-    vertices.push(cos * inner, halfThick, sin * inner);
-  }
-  
-  // Bottom face vertices
-  for (let i = 0; i <= steps; i++) {
-    const a = startAngle + (i / steps) * arcLength;
-    const cos = Math.cos(a);
-    const sin = Math.sin(a);
-    vertices.push(cos * outer, -halfThick, sin * outer);
-    vertices.push(cos * inner, -halfThick, sin * inner);
-  }
-  
-  const topStart = 0;
-  const bottomStart = (steps + 1) * 2;
-  
-  // Top face triangles
-  for (let i = 0; i < steps; i++) {
-    const o1 = topStart + i * 2;
-    const i1 = topStart + i * 2 + 1;
-    const o2 = topStart + (i + 1) * 2;
-    const i2 = topStart + (i + 1) * 2 + 1;
-    indices.push(o1, i1, o2);
-    indices.push(i1, i2, o2);
-  }
-  
-  // Bottom face triangles
-  for (let i = 0; i < steps; i++) {
-    const o1 = bottomStart + i * 2;
-    const i1 = bottomStart + i * 2 + 1;
-    const o2 = bottomStart + (i + 1) * 2;
-    const i2 = bottomStart + (i + 1) * 2 + 1;
-    indices.push(o1, o2, i1);
-    indices.push(i1, o2, i2);
-  }
-  
-  // Outer arc face
-  for (let i = 0; i < steps; i++) {
-    const to1 = topStart + i * 2;
-    const to2 = topStart + (i + 1) * 2;
-    const bo1 = bottomStart + i * 2;
-    const bo2 = bottomStart + (i + 1) * 2;
-    indices.push(to1, to2, bo1);
-    indices.push(bo1, to2, bo2);
-  }
-  
-  // Inner arc face
-  for (let i = 0; i < steps; i++) {
-    const ti1 = topStart + i * 2 + 1;
-    const ti2 = topStart + (i + 1) * 2 + 1;
-    const bi1 = bottomStart + i * 2 + 1;
-    const bi2 = bottomStart + (i + 1) * 2 + 1;
-    indices.push(ti1, bi1, ti2);
-    indices.push(bi1, bi2, ti2);
-  }
-  
-  // Side faces
-  const ts1o = topStart;
-  const ts1i = topStart + 1;
-  const bs1o = bottomStart;
-  const bs1i = bottomStart + 1;
-  indices.push(ts1o, bs1o, ts1i);
-  indices.push(ts1i, bs1o, bs1i);
-  
-  const te1o = topStart + steps * 2;
-  const te1i = topStart + steps * 2 + 1;
-  const be1o = bottomStart + steps * 2;
-  const be1i = bottomStart + steps * 2 + 1;
-  indices.push(te1o, te1i, be1o);
-  indices.push(te1i, be1i, be1o);
-  
-  geometry.setAttribute('position', new THREE.Float32BufferAttribute(vertices, 3));
-  geometry.setIndex(indices);
-  geometry.computeVertexNormals();
-  
-  const mat = new THREE.MeshStandardMaterial({ 
-    color, 
-    metalness: 0.1, 
-    roughness: 0.7,
-    side: THREE.DoubleSide
-  });
-  
-  return new THREE.Mesh(geometry, mat);
-}
-
-function createFinishPlatform() {
-  const y = -(CONFIG.platformCount * CONFIG.platformHeightOffset) - 1;
-  const geo = new THREE.CylinderGeometry(CONFIG.platformRadius, CONFIG.platformRadius, 0.8, 32);
-  const mat = new THREE.MeshStandardMaterial({
-    color: 0xffd700,
-    metalness: 0.6,
-    roughness: 0.3,
-    emissive: 0xffd700,
-    emissiveIntensity: 0.2
-  });
-  finishPlatform = new THREE.Mesh(geo, mat);
-  finishPlatform.position.y = y;
-  finishPlatform.receiveShadow = true;
-  platformsContainer.add(finishPlatform);
-}
-
-function createBall() {
-  const geo = new THREE.SphereGeometry(CONFIG.ballRadius, 32, 32);
-  const mat = new THREE.MeshStandardMaterial({
-    color: palette.main,
-    metalness: 0.3,
-    roughness: 0.4
-  });
-  ball = new THREE.Mesh(geo, mat);
-  ball.position.set(1.2, 1.5, 0);
-  ball.castShadow = true;
-  ball.visible = true;
-  ballVelocity = 0;
-  scene.add(ball);
-}
-
-function createTrail() {
-  trailPoints = [];
-  for (let i = 0; i < TRAIL_LENGTH; i++) {
-    trailPoints.push(ball.position.clone());
-  }
-  
-  const geometry = new THREE.BufferGeometry();
-  const positions = new Float32Array(TRAIL_LENGTH * 3);
-  const colors = new Float32Array(TRAIL_LENGTH * 3);
-  
-  geometry.setAttribute('position', new THREE.BufferAttribute(positions, 3));
-  geometry.setAttribute('color', new THREE.BufferAttribute(colors, 3));
-  
-  const material = new THREE.LineBasicMaterial({
-    vertexColors: true,
-    transparent: true,
-    opacity: 0.8,
-    linewidth: 2
-  });
-  
-  trailMesh = new THREE.Line(geometry, material);
-  scene.add(trailMesh);
-}
-
-function updateTrail() {
-  if (!trailMesh || !ball) return;
-  
-  for (let i = TRAIL_LENGTH - 1; i > 0; i--) {
-    trailPoints[i].copy(trailPoints[i - 1]);
-  }
-  trailPoints[0].copy(ball.position);
-  
-  const positions = trailMesh.geometry.attributes.position.array;
-  const colors = trailMesh.geometry.attributes.color.array;
-  const trailColor = new THREE.Color(palette.main);
-  
-  for (let i = 0; i < TRAIL_LENGTH; i++) {
-    positions[i * 3] = trailPoints[i].x;
-    positions[i * 3 + 1] = trailPoints[i].y;
-    positions[i * 3 + 2] = trailPoints[i].z;
-    
-    const alpha = 1 - (i / TRAIL_LENGTH);
-    colors[i * 3] = trailColor.r * alpha;
-    colors[i * 3 + 1] = trailColor.g * alpha;
-    colors[i * 3 + 2] = trailColor.b * alpha;
-  }
-  
-  trailMesh.geometry.attributes.position.needsUpdate = true;
-  trailMesh.geometry.attributes.color.needsUpdate = true;
-}
-
-function createFootprint(position) {
-  const geo = new THREE.CircleGeometry(CONFIG.ballRadius * 0.8, 16);
-  const mat = new THREE.MeshBasicMaterial({
-    color: palette.main,
-    transparent: true,
-    opacity: 0.6,
-    side: THREE.DoubleSide
-  });
-  const footprint = new THREE.Mesh(geo, mat);
-  footprint.position.copy(position);
-  footprint.position.y += 0.01;
-  footprint.rotation.x = -Math.PI / 2;
-  footprint.userData.life = 2.0;
-  platformsContainer.add(footprint);
-  footprints.push(footprint);
-}
-
-function updateFootprints(dt) {
-  for (let i = footprints.length - 1; i >= 0; i--) {
-    const fp = footprints[i];
-    fp.userData.life -= dt;
-    fp.material.opacity = Math.max(0, fp.userData.life / 2.0) * 0.6;
-    
-    if (fp.userData.life <= 0) {
-      platformsContainer.remove(fp);
-      footprints.splice(i, 1);
+    const seg = document.createElement('div');
+    seg.className = 'segment';
+    if (dangerIndices.has(i)) {
+      seg.classList.add('danger');
+    } else {
+      seg.style.background = `linear-gradient(135deg, ${color}, ${darkenColor(color, 20)})`;
     }
-  }
-}
-
-function updateFireParticles(dt) {
-  if (isInvincible && ball && Math.random() < 0.3) {
-    const geo = new THREE.SphereGeometry(0.05 + Math.random() * 0.05, 8, 8);
-    const mat = new THREE.MeshBasicMaterial({
-      color: Math.random() < 0.5 ? 0xff4400 : 0xffaa00,
-      transparent: true,
-      opacity: 1
+    
+    const angle = i * segmentAngle;
+    seg.style.width = `${CONFIG.segmentWidth}px`;
+    seg.style.height = `${CONFIG.segmentHeight}px`;
+    seg.style.left = '50%';
+    seg.style.top = '50%';
+    seg.style.transform = `rotate(${angle}deg) translateX(${CONFIG.platformRadius}px) translateY(-50%)`;
+    seg.dataset.angle = angle;
+    seg.dataset.isDanger = dangerIndices.has(i);
+    
+    element.appendChild(seg);
+    segments.push({
+      element: seg,
+      angle: angle,
+      isDanger: dangerIndices.has(i),
+      destroyed: false
     });
-    const particle = new THREE.Mesh(geo, mat);
-    particle.position.copy(ball.position);
-    particle.position.x += (Math.random() - 0.5) * 0.3;
-    particle.position.z += (Math.random() - 0.5) * 0.3;
-    particle.userData = {
-      velocity: new THREE.Vector3(
-        (Math.random() - 0.5) * 2,
-        2 + Math.random() * 2,
-        (Math.random() - 0.5) * 2
-      ),
-      life: 0.5 + Math.random() * 0.3
-    };
-    scene.add(particle);
-    fireParticles.push(particle);
   }
   
-  for (let i = fireParticles.length - 1; i >= 0; i--) {
-    const p = fireParticles[i];
-    p.position.add(p.userData.velocity.clone().multiplyScalar(dt));
-    p.userData.velocity.y -= 5 * dt;
-    p.userData.life -= dt;
-    p.material.opacity = p.userData.life / 0.8;
-    p.scale.multiplyScalar(0.97);
-    
-    if (p.userData.life <= 0) {
-      scene.remove(p);
-      fireParticles.splice(i, 1);
-    }
-  }
+  tower.appendChild(element);
+  platforms.push({
+    element,
+    y,
+    segments,
+    destroyed: false,
+    index
+  });
 }
-
 
 // ===== GAME LOOP =====
-function animate(currentTime) {
-  requestAnimationFrame(animate);
-  
+let lastTime = 0;
+
+function gameLoop(currentTime) {
   const dt = Math.min((currentTime - lastTime) / 1000, 0.05) || 0.016;
   lastTime = currentTime;
   
-  if (isPlaying) {
+  if (gameState === 'playing') {
     updateBall(dt);
     checkCollisions();
-    updateInvincibleTimer(dt);
-    updateTrail();
-    updateFireParticles(dt);
+    updateInvincibility(dt);
   }
   
-  // Rotate platforms continuously (like Rotator.cs)
-  if (platformsContainer) {
-    platformsContainer.rotation.y += (CONFIG.platformRotationSpeed * Math.PI / 180) * dt;
-  }
+  // Always rotate platforms
+  currentRotation += CONFIG.rotationSpeed * dt;
+  tower.style.transform = `translateX(-50%) translateY(-50%) rotateX(65deg) rotateZ(${currentRotation}deg)`;
   
   updateParticles(dt);
-  updateFootprints(dt);
-  updateCamera(dt);
   
-  // Pitch reset timer (like original FXHandler)
-  if (pitchResetTimer > 0) {
-    pitchResetTimer -= dt;
-    if (pitchResetTimer <= 0) {
-      currentPitch = CONFIG.basePitch;
-    }
-  }
-  
-  renderer.render(scene, camera);
+  requestAnimationFrame(gameLoop);
 }
 
 function updateBall(dt) {
   if (isHolding) {
-    ballVelocity = -CONFIG.moveSpeed;
+    // Smashing down (from Ball.cs FixedUpdate)
+    ballVelocity = CONFIG.smashVelocity;
   } else {
-    ballVelocity -= CONFIG.gravity * dt;
+    // Apply gravity
+    ballVelocity += CONFIG.gravity * dt;
   }
   
-  ball.position.y += ballVelocity * dt;
+  ballY += ballVelocity * dt;
+  ball.style.top = `${ballY}px`;
   
-  // Invincible visual effect
-  if (isInvincible) {
-    ball.material.emissive.setHex(0xff0000);
-    ball.material.emissiveIntensity = 0.5 + Math.sin(performance.now() * 0.01) * 0.3;
-  } else {
-    ball.material.emissive.setHex(0x000000);
-    ball.material.emissiveIntensity = 0;
-  }
+  // Invincible visual
+  ball.classList.toggle('invincible', isInvincible);
 }
 
 function checkCollisions() {
-  const ballBottom = ball.position.y - CONFIG.ballRadius;
-  const ballX = ball.position.x;
-  const ballZ = ball.position.z;
-  const distFromCenter = Math.sqrt(ballX * ballX + ballZ * ballZ);
+  const ballBottom = ballY + 20; // ball radius
+  const ballAngle = (((-currentRotation % 360) + 360) % 360);
   
-  // Only check collision if ball is within platform ring area
-  if (distFromCenter < CONFIG.platformInnerRadius - 0.1 || distFromCenter > CONFIG.platformRadius + 0.1) {
-    return;
-  }
-  
-  // Calculate ball angle in world space
-  let ballAngle = Math.atan2(ballZ, ballX);
-  if (ballAngle < 0) ballAngle += Math.PI * 2;
-  
-  // Convert to local space (subtract container rotation)
-  const containerRotation = platformsContainer ? platformsContainer.rotation.y : 0;
-  let localBallAngle = ballAngle - containerRotation;
-  
-  // Normalize to 0-2PI
-  while (localBallAngle < 0) localBallAngle += Math.PI * 2;
-  while (localBallAngle >= Math.PI * 2) localBallAngle -= Math.PI * 2;
-  
-  // Check finish platform first
-  const finishTop = finishPlatform.position.y + 0.4;
-  if (ballBottom <= finishTop && ballVelocity < 0) {
-    bounce(finishTop + CONFIG.ballRadius);
+  // Check finish platform
+  const finishY = CONFIG.platformCount * CONFIG.platformSpacing + 30;
+  if (ballBottom >= finishY && ballVelocity > 0) {
     winGame();
     return;
   }
   
-  // Check platforms - find the one we're colliding with
+  // Check platforms
   for (const platform of platforms) {
     if (platform.destroyed) continue;
     
-    const platTop = platform.y + CONFIG.platformThickness / 2;
-    const platBottom = platform.y - CONFIG.platformThickness / 2;
+    const platTop = platform.y;
+    const platBottom = platform.y + CONFIG.segmentHeight;
     
-    // Check if ball is at this platform's height and moving down
-    if (ballBottom <= platTop && ballBottom > platBottom - 0.15 && ballVelocity < 0) {
-      // Find which segment the ball is over
-      for (const seg of platform.segments) {
-        if (!seg.visible) continue;
-        
-        // Get segment angles (already in local space)
-        let startAngle = seg.userData.startAngle;
-        let endAngle = seg.userData.endAngle;
-        
-        // Normalize angles
-        while (startAngle < 0) startAngle += Math.PI * 2;
-        while (endAngle < 0) endAngle += Math.PI * 2;
-        startAngle = startAngle % (Math.PI * 2);
-        endAngle = endAngle % (Math.PI * 2);
-        
-        if (isAngleInSegment(localBallAngle, startAngle, endAngle)) {
-          handleCollision(seg, platform, platTop);
-          return;
-        }
-      }
+    // Check if ball is at this platform's height
+    if (ballBottom >= platTop && ballBottom <= platBottom + 10 && ballVelocity > 0) {
+      // Find which segment we're over
+      const hitSegment = findSegmentAtAngle(platform, ballAngle);
       
-      // If we're at platform height but didn't hit any segment,
-      // we're in a gap - let ball fall through
+      if (hitSegment && !hitSegment.destroyed) {
+        handleCollision(hitSegment, platform, platTop);
+        return;
+      }
     }
   }
 }
 
-function isAngleInSegment(angle, startAngle, endAngle) {
-  const twoPi = Math.PI * 2;
+function findSegmentAtAngle(platform, ballAngle) {
+  const segmentArc = 360 / CONFIG.segmentsPerPlatform;
   
-  // Normalize all angles to 0-2PI
-  angle = ((angle % twoPi) + twoPi) % twoPi;
-  startAngle = ((startAngle % twoPi) + twoPi) % twoPi;
-  endAngle = ((endAngle % twoPi) + twoPi) % twoPi;
-  
-  // Add small tolerance for edge cases
-  const tolerance = 0.01;
-  
-  if (startAngle <= endAngle) {
-    // Normal case: segment doesn't wrap around
-    return angle >= startAngle - tolerance && angle <= endAngle + tolerance;
-  } else {
-    // Wraparound case: segment crosses 0/2PI boundary
-    return angle >= startAngle - tolerance || angle <= endAngle + tolerance;
+  for (const seg of platform.segments) {
+    if (seg.destroyed) continue;
+    
+    let segStart = seg.angle - segmentArc / 2;
+    let segEnd = seg.angle + segmentArc / 2;
+    
+    // Normalize
+    let checkAngle = ballAngle;
+    if (segStart < 0) {
+      segStart += 360;
+      if (checkAngle < 180) checkAngle += 360;
+    }
+    if (segEnd > 360) {
+      segEnd -= 360;
+      if (checkAngle > 180) checkAngle -= 360;
+    }
+    
+    // Simple check
+    const angleDiff = Math.abs(((ballAngle - seg.angle + 180) % 360) - 180);
+    if (angleDiff < segmentArc / 2 + 5) {
+      return seg;
+    }
   }
+  return null;
 }
 
 function handleCollision(segment, platform, platformTop) {
-  // When NOT holding (smashing), always bounce
+  // From Ball.cs OnCollisionEnter
   if (!isHolding) {
-    bounce(platformTop + CONFIG.ballRadius);
+    // Bounce (not smashing)
+    bounce(platformTop);
     return;
   }
   
-  // When holding (smashing):
-  // - Black segments (isDanger) kill you UNLESS invincible
-  // - Colored segments get destroyed
-  
-  const isDanger = segment.userData && segment.userData.isDanger === true;
-  
-  if (isDanger && !isInvincible) {
-    // Hit a black segment while smashing - GAME OVER
+  // Smashing
+  if (segment.isDanger && !isInvincible) {
+    // Hit danger while smashing = GAME OVER
     loseGame();
     return;
   }
   
-  // Either hit a colored segment, or hit black while invincible
-  // Destroy the entire platform ring
+  // Destroy platform (safe segment or invincible)
   destroyPlatform(platform);
 }
 
-function bounce(newY) {
-  const footprintPos = new THREE.Vector3(ball.position.x, newY - CONFIG.ballRadius, ball.position.z);
-  const localPos = platformsContainer.worldToLocal(footprintPos.clone());
-  createFootprint(localPos);
-  
-  ball.position.y = newY;
-  ballVelocity = CONFIG.jumpPower;
+function bounce(platformTop) {
+  ballY = platformTop - 20;
+  ballVelocity = -CONFIG.jumpVelocity;
+  playSound('jump');
+  createSplash(platformTop);
 }
 
 function destroyPlatform(platform) {
@@ -843,26 +418,28 @@ function destroyPlatform(platform) {
   platform.destroyed = true;
   destroyedCount++;
   
-  playBreakSound();
+  playSound('break');
   
+  // Shatter all segments (from StackController.cs)
   for (const seg of platform.segments) {
-    if (!seg.visible) continue;
-    throwSegment(seg, platform.y);
+    if (!seg.destroyed) {
+      shatterSegment(seg, platform.y);
+    }
   }
   
+  platform.element.style.display = 'none';
+  
+  // Score
   score += isInvincible ? 2 : 1;
   updateUI();
   updateProgress();
   
-  // Invincibility logic
+  // Invincibility charge (from Ball.cs)
   if (!isInvincible) {
     destroyedPlatformCount++;
-    
     if (destroyedPlatformCount >= CONFIG.platformsToEnableIndicator) {
-      invincibleTimerRunning = false;
-      invincibleTimer += CONFIG.secondsPerPlatform;
-      
-      if (invincibleTimer >= CONFIG.secondsToEnableInvincible) {
+      invincibleChargeTimer += CONFIG.secondsPerPlatform;
+      if (invincibleChargeTimer >= CONFIG.secondsToEnableInvincible) {
         activateInvincible();
       }
       updateInvincibleUI();
@@ -870,106 +447,40 @@ function destroyPlatform(platform) {
   }
 }
 
-function throwSegment(seg, platformY) {
-  // Hide segment immediately
-  seg.visible = false;
-  platformsContainer.remove(seg);
+function shatterSegment(seg, platformY) {
+  seg.destroyed = true;
+  seg.element.style.opacity = '0';
   
-  const angle = (seg.userData.startAngle + seg.userData.endAngle) / 2;
-  const x = Math.cos(angle) * 1.5;
-  const z = Math.sin(angle) * 1.5;
-  const pos = new THREE.Vector3(x, platformY, z);
-  const color = seg.material.color.getHex();
+  // Create debris (from StackPartController.cs Shatter)
+  const angle = parseFloat(seg.element.dataset.angle);
+  const color = seg.isDanger ? '#222' : seg.element.style.background;
   
-  const throwX = x > 0 ? 8 : -8;
-  const throwY = platformY + 13;
-  
-  // Create fewer debris for performance
-  for (let i = 0; i < 2; i++) {
-    createDebris(pos.clone(), color, new THREE.Vector3(throwX, throwY, z));
-  }
-}
-
-function createDebris(pos, color, throwTarget) {
-  const size = 0.15 + Math.random() * 0.1;
-  const geo = new THREE.BoxGeometry(size, size, size);
-  const mat = new THREE.MeshStandardMaterial({ color });
-  const mesh = new THREE.Mesh(geo, mat);
-  
-  mesh.position.copy(pos);
-  mesh.position.x += (Math.random() - 0.5);
-  mesh.position.z += (Math.random() - 0.5);
-  
-  const dir = throwTarget.clone().sub(pos).normalize();
-  const speed = 8 + Math.random() * 4;
-  
-  scene.add(mesh);
-  particles.push({
-    mesh,
-    velocity: dir.multiplyScalar(speed),
-    rotSpeed: new THREE.Vector3(
-      (Math.random() - 0.5) * 10,
-      (Math.random() - 0.5) * 10,
-      (Math.random() - 0.5) * 10
-    ),
-    life: 0.8  // Shorter life so they disappear faster
-  });
-}
-
-function updateParticles(dt) {
-  for (let i = particles.length - 1; i >= 0; i--) {
-    const p = particles[i];
-    p.velocity.y -= CONFIG.gravity * dt * 0.5;
-    p.mesh.position.add(p.velocity.clone().multiplyScalar(dt));
-    p.mesh.rotation.x += p.rotSpeed.x * dt;
-    p.mesh.rotation.y += p.rotSpeed.y * dt;
-    p.mesh.rotation.z += p.rotSpeed.z * dt;
-    p.life -= dt;
-    
-    if (p.life <= 0) {
-      scene.remove(p.mesh);
-      particles.splice(i, 1);
-    }
+  for (let i = 0; i < 3; i++) {
+    createDebris(angle, platformY, seg.isDanger ? '#333' : palette.main);
   }
 }
 
 // ===== INVINCIBILITY =====
-function updateInvincibleTimer(dt) {
+function updateInvincibility(dt) {
   if (isInvincible) {
     invincibleTimer -= dt;
     updateInvincibleUI();
-    
     if (invincibleTimer <= 0) {
       deactivateInvincible();
-    }
-  } else if (invincibleTimerRunning && invincibleTimer > 0) {
-    invincibleTimer -= dt;
-    updateInvincibleUI();
-    
-    if (invincibleTimer <= 0) {
-      resetInvincibleProgress();
     }
   }
 }
 
 function activateInvincible() {
   isInvincible = true;
-  invincibleTimer = CONFIG.invincibleSeconds;
-  invincibleTimerRunning = false;
-  ui.invFill.classList.add('active');
-  updateInvincibleUI();
+  invincibleTimer = CONFIG.invincibleDuration;
+  invincibleChargeTimer = 0;
 }
 
 function deactivateInvincible() {
   isInvincible = false;
-  resetInvincibleProgress();
-  ui.invFill.classList.remove('active');
-}
-
-function resetInvincibleProgress() {
   destroyedPlatformCount = 0;
-  invincibleTimer = 0;
-  invincibleTimerRunning = false;
+  invincibleChargeTimer = 0;
   updateInvincibleUI();
 }
 
@@ -979,72 +490,110 @@ function updateInvincibleUI() {
   
   let fill;
   if (isInvincible) {
-    fill = invincibleTimer / CONFIG.invincibleSeconds;
+    fill = invincibleTimer / CONFIG.invincibleDuration;
   } else {
-    fill = invincibleTimer / CONFIG.secondsToEnableInvincible;
+    fill = invincibleChargeTimer / CONFIG.secondsToEnableInvincible;
   }
   ui.invFill.style.width = `${Math.max(0, fill) * 100}%`;
 }
 
-// ===== CAMERA =====
-function updateCamera(dt) {
-  if (!ball) return;
+// ===== PARTICLES =====
+function createDebris(angle, y, color) {
+  const el = document.createElement('div');
+  el.className = 'debris';
+  el.style.background = color;
+  el.style.left = '50%';
+  el.style.top = `${y}px`;
+  tower.appendChild(el);
   
-  const tempTargetY = ball.position.y + CONFIG.cameraTrackOffset.y;
+  const rad = (angle + currentRotation) * Math.PI / 180;
+  const throwDir = Math.cos(rad) > 0 ? 1 : -1;
   
-  if (isHolding && tempTargetY < cameraTargetY) {
-    cameraTargetY = tempTargetY;
+  debris.push({
+    element: el,
+    x: 0,
+    y: y,
+    vx: throwDir * (200 + Math.random() * 150),
+    vy: -(300 + Math.random() * 200),
+    rotation: 0,
+    rotSpeed: (Math.random() - 0.5) * 720,
+    life: 0.8
+  });
+}
+
+function createSplash(y) {
+  const el = document.createElement('div');
+  el.className = 'splash';
+  el.style.left = '50%';
+  el.style.top = `${y}px`;
+  el.style.transform = 'translateX(-50%)';
+  tower.appendChild(el);
+  
+  splashes.push({
+    element: el,
+    life: 0.5
+  });
+}
+
+function updateParticles(dt) {
+  // Update debris
+  for (let i = debris.length - 1; i >= 0; i--) {
+    const d = debris[i];
+    d.vy += 1500 * dt; // gravity
+    d.x += d.vx * dt;
+    d.y += d.vy * dt;
+    d.rotation += d.rotSpeed * dt;
+    d.life -= dt;
+    
+    d.element.style.transform = `translateX(${d.x}px) rotate(${d.rotation}deg)`;
+    d.element.style.top = `${d.y}px`;
+    d.element.style.opacity = Math.max(0, d.life / 0.8);
+    
+    if (d.life <= 0) {
+      d.element.remove();
+      debris.splice(i, 1);
+    }
   }
   
-  // Smooth damp
-  const smoothTime = CONFIG.cameraTrackDelay;
-  const omega = 2 / smoothTime;
-  const x = omega * dt;
-  const exp = 1 / (1 + x + 0.48 * x * x + 0.235 * x * x * x);
-  const delta = camera.position.y - cameraTargetY;
-  const temp = (cameraVelocity + omega * delta) * dt;
-  cameraVelocity = (cameraVelocity - omega * temp) * exp;
-  camera.position.y = cameraTargetY + (delta + temp) * exp;
-  
-  camera.position.x = 0;
-  camera.position.z = 8.3;
+  // Update splashes
+  for (let i = splashes.length - 1; i >= 0; i--) {
+    const s = splashes[i];
+    s.life -= dt;
+    s.element.style.opacity = Math.max(0, s.life / 0.5);
+    
+    if (s.life <= 0) {
+      s.element.remove();
+      splashes.splice(i, 1);
+    }
+  }
 }
 
 // ===== GAME STATES =====
 function winGame() {
   gameState = 'win';
-  isPlaying = false;
   isHolding = false;
+  playSound('level');
   saveBestScore();
-  playWinSound();
   
-  ui.winLevel.textContent = `Level ${level} Cleared!`;
+  ui.winLevel.textContent = `Level ${level} Complete!`;
   ui.win.classList.remove('hidden');
 }
 
 function loseGame() {
   gameState = 'lose';
-  isPlaying = false;
   isHolding = false;
+  playSound('die');
   saveBestScore();
+  
+  // Explode ball
+  ball.style.display = 'none';
+  for (let i = 0; i < 15; i++) {
+    createDebris(i * 24, ballY, palette.main);
+  }
   
   ui.finalScore.textContent = score;
   ui.bestScore.textContent = bestScore;
   ui.lose.classList.remove('hidden');
-  
-  // Explode ball
-  for (let i = 0; i < 20; i++) {
-    createDebris(
-      ball.position.clone(),
-      palette.main,
-      new THREE.Vector3(
-        (Math.random() - 0.5) * 10,
-        ball.position.y + 5,
-        (Math.random() - 0.5) * 10
-      )
-    );
-  }
-  ball.visible = false;
 }
 
 function saveBestScore() {
@@ -1066,10 +615,36 @@ function updateProgress() {
 }
 
 // ===== UTILS =====
+function shuffleArray(arr) {
+  for (let i = arr.length - 1; i > 0; i--) {
+    const j = Math.floor(Math.random() * (i + 1));
+    [arr[i], arr[j]] = [arr[j], arr[i]];
+  }
+}
+
 function lerpColor(a, b, t) {
-  const c1 = new THREE.Color(a);
-  const c2 = new THREE.Color(b);
-  return c1.lerp(c2, t).getHex();
+  const parse = c => {
+    const hex = c.replace('#', '');
+    return [
+      parseInt(hex.substr(0, 2), 16),
+      parseInt(hex.substr(2, 2), 16),
+      parseInt(hex.substr(4, 2), 16)
+    ];
+  };
+  const [r1, g1, b1] = parse(a);
+  const [r2, g2, b2] = parse(b);
+  const r = Math.round(r1 + (r2 - r1) * t);
+  const g = Math.round(g1 + (g2 - g1) * t);
+  const bl = Math.round(b1 + (b2 - b1) * t);
+  return `#${r.toString(16).padStart(2,'0')}${g.toString(16).padStart(2,'0')}${bl.toString(16).padStart(2,'0')}`;
+}
+
+function darkenColor(color, percent) {
+  const hex = color.replace('#', '');
+  const r = Math.max(0, parseInt(hex.substr(0, 2), 16) - percent);
+  const g = Math.max(0, parseInt(hex.substr(2, 2), 16) - percent);
+  const b = Math.max(0, parseInt(hex.substr(4, 2), 16) - percent);
+  return `#${r.toString(16).padStart(2,'0')}${g.toString(16).padStart(2,'0')}${b.toString(16).padStart(2,'0')}`;
 }
 
 // Start
