@@ -53,48 +53,10 @@
             clip-path: polygon(100% 50%, 50% 50%, 65% 15%, 100% 0%, 100% 100%, 65% 85%);
         }
 
-        #controls {
-            position: fixed;
-            bottom: 30px;
-            left: 50%;
-            transform: translateX(-50%);
-            z-index: 10;
-        }
-
-        .dpad {
-            width: 180px; height: 180px;
-            position: relative;
-        }
-
-        .dpad-btn {
-            position: absolute;
-            width: 60px; height: 60px;
-            background: rgba(255,255,255,0.15);
-            border: 2px solid rgba(255,255,255,0.3);
-            border-radius: 12px;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            font-size: 28px;
-            color: rgba(255,255,255,0.8);
-            transition: background 0.1s;
-        }
-
-        .dpad-btn:active, .dpad-btn.active {
-            background: rgba(255,255,255,0.35);
-            transform: scale(0.95);
-        }
-
-        .dpad-up { top: 0; left: 60px; }
-        .dpad-down { bottom: 0; left: 60px; }
-        .dpad-left { top: 60px; left: 0; }
-        .dpad-right { top: 60px; right: 0; }
-        .dpad-center { top: 60px; left: 60px; background: rgba(255,255,255,0.05); border: none; }
-
         #start-screen, #game-over {
             position: fixed;
             inset: 0;
-            background: rgba(0,0,0,0.9);
+            background: rgba(0,0,0,0.95);
             display: flex;
             flex-direction: column;
             align-items: center;
@@ -120,21 +82,21 @@
         }
 
         .btn {
-            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-            color: #fff;
+            background: linear-gradient(135deg, #FFFF00 0%, #FFD700 100%);
+            color: #000;
             border: none;
             padding: 16px 48px;
             font-size: 20px;
             font-weight: bold;
             border-radius: 30px;
             cursor: pointer;
-            box-shadow: 0 10px 30px rgba(102,126,234,0.4);
+            box-shadow: 0 10px 30px rgba(255,255,0,0.3);
             transition: transform 0.2s, box-shadow 0.2s;
         }
 
         .btn:active {
             transform: scale(0.95);
-            box-shadow: 0 5px 15px rgba(102,126,234,0.4);
+            box-shadow: 0 5px 15px rgba(255,255,0,0.3);
         }
 
         .final-score {
@@ -146,13 +108,66 @@
 
         .ghost-parade {
             display: flex;
-            gap: 15px;
+            gap: 20px;
             margin: 30px 0;
         }
 
         .ghost-icon {
-            font-size: 36px;
+            width: 40px;
+            height: 44px;
+            position: relative;
             animation: float 2s ease-in-out infinite;
+        }
+
+        .ghost-icon:nth-child(1) .ghost-body { background: #FF0000; }
+        .ghost-icon:nth-child(2) .ghost-body { background: #FFB8FF; }
+        .ghost-icon:nth-child(3) .ghost-body { background: #00FFFF; }
+        .ghost-icon:nth-child(4) .ghost-body { background: #FFB852; }
+
+        .ghost-body {
+            width: 40px;
+            height: 40px;
+            border-radius: 20px 20px 0 0;
+            position: relative;
+        }
+
+        .ghost-body::after {
+            content: '';
+            position: absolute;
+            bottom: -8px;
+            left: 0;
+            width: 40px;
+            height: 12px;
+            background: inherit;
+            clip-path: polygon(0% 0%, 12.5% 100%, 25% 0%, 37.5% 100%, 50% 0%, 62.5% 100%, 75% 0%, 87.5% 100%, 100% 0%);
+        }
+
+        .ghost-eyes {
+            position: absolute;
+            top: 12px;
+            left: 50%;
+            transform: translateX(-50%);
+            display: flex;
+            gap: 6px;
+        }
+
+        .ghost-eye {
+            width: 10px;
+            height: 12px;
+            background: #fff;
+            border-radius: 50%;
+            position: relative;
+        }
+
+        .ghost-eye::after {
+            content: '';
+            position: absolute;
+            width: 5px;
+            height: 6px;
+            background: #00f;
+            border-radius: 50%;
+            top: 3px;
+            left: 3px;
         }
 
         .ghost-icon:nth-child(2) { animation-delay: 0.2s; }
@@ -162,6 +177,43 @@
         @keyframes float {
             0%, 100% { transform: translateY(0); }
             50% { transform: translateY(-10px); }
+        }
+
+        .swipe-hint {
+            position: fixed;
+            bottom: 80px;
+            left: 50%;
+            transform: translateX(-50%);
+            color: rgba(255,255,255,0.5);
+            font-size: 14px;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            z-index: 10;
+            pointer-events: none;
+            opacity: 1;
+            transition: opacity 0.5s;
+        }
+
+        .swipe-hint.hidden { opacity: 0; }
+
+        .swipe-arrows {
+            display: flex;
+            gap: 4px;
+        }
+
+        .swipe-arrows span {
+            font-size: 16px;
+            animation: pulse 1.5s ease-in-out infinite;
+        }
+
+        .swipe-arrows span:nth-child(2) { animation-delay: 0.1s; }
+        .swipe-arrows span:nth-child(3) { animation-delay: 0.2s; }
+        .swipe-arrows span:nth-child(4) { animation-delay: 0.3s; }
+
+        @keyframes pulse {
+            0%, 100% { opacity: 0.5; }
+            50% { opacity: 1; }
         }
 
         .hidden { display: none !important; }
@@ -175,25 +227,53 @@
         <div class="lives"></div>
     </div>
 
-    <div id="controls" class="hidden">
-        <div class="dpad">
-            <div class="dpad-btn dpad-up" data-dir="up">▲</div>
-            <div class="dpad-btn dpad-down" data-dir="down">▼</div>
-            <div class="dpad-btn dpad-left" data-dir="left">◀</div>
-            <div class="dpad-btn dpad-right" data-dir="right">▶</div>
-            <div class="dpad-btn dpad-center"></div>
+    <div id="swipe-hint" class="swipe-hint hidden">
+        <div class="swipe-arrows">
+            <span>↑</span>
+            <span>↓</span>
+            <span>←</span>
+            <span>→</span>
         </div>
+        <span>Swipe to move</span>
     </div>
 
     <div id="start-screen">
         <div class="ghost-parade">
-            <span class="ghost-icon">👻</span>
-            <span class="ghost-icon">👻</span>
-            <span class="ghost-icon">👻</span>
-            <span class="ghost-icon">👻</span>
+            <div class="ghost-icon">
+                <div class="ghost-body">
+                    <div class="ghost-eyes">
+                        <div class="ghost-eye"></div>
+                        <div class="ghost-eye"></div>
+                    </div>
+                </div>
+            </div>
+            <div class="ghost-icon">
+                <div class="ghost-body">
+                    <div class="ghost-eyes">
+                        <div class="ghost-eye"></div>
+                        <div class="ghost-eye"></div>
+                    </div>
+                </div>
+            </div>
+            <div class="ghost-icon">
+                <div class="ghost-body">
+                    <div class="ghost-eyes">
+                        <div class="ghost-eye"></div>
+                        <div class="ghost-eye"></div>
+                    </div>
+                </div>
+            </div>
+            <div class="ghost-icon">
+                <div class="ghost-body">
+                    <div class="ghost-eyes">
+                        <div class="ghost-eye"></div>
+                        <div class="ghost-eye"></div>
+                    </div>
+                </div>
+            </div>
         </div>
         <div class="title">PAC-MAN</div>
-        <div class="subtitle">Swipe or use D-pad to move</div>
+        <div class="subtitle">Swipe anywhere to move</div>
         <button class="btn" id="start-btn">PLAY</button>
     </div>
 

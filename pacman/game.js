@@ -1,15 +1,13 @@
-// PAC-MAN - Built from scratch for mobile
+// PAC-MAN - Mobile swipe controls only
 (function() {
     'use strict';
 
-    // ============== CONFIG ==============
     const TILE = 20;
     const COLS = 19;
     const ROWS = 21;
     const WIDTH = COLS * TILE;
     const HEIGHT = ROWS * TILE;
 
-    // Colors
     const COLORS = {
         wall: '#2121DE',
         dot: '#FFB8FF',
@@ -23,7 +21,7 @@
         eyes: '#FFFFFF'
     };
 
-    // Map: 0=empty, 1=wall, 2=dot, 3=power dot, 4=ghost house
+    // Classic Pac-Man maze
     const MAP = [
         [1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1],
         [1,2,2,2,2,2,2,2,2,1,2,2,2,2,2,2,2,2,1],
@@ -48,9 +46,8 @@
         [1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1]
     ];
 
-    // ============== GAME STATE ==============
     let canvas, ctx;
-    let gameState = 'start'; // start, playing, gameover
+    let gameState = 'start';
     let score = 0;
     let lives = 3;
     let level = 1;
@@ -60,15 +57,14 @@
     let lastTime = 0;
     let frightenedTimer = 0;
     let inputDir = null;
+    let swipeCount = 0;
 
-    // ============== INIT ==============
     function init() {
         canvas = document.getElementById('game');
         ctx = canvas.getContext('2d');
         
-        // Scale for device
         const maxWidth = window.innerWidth - 20;
-        const maxHeight = window.innerHeight - 280;
+        const maxHeight = window.innerHeight - 160;
         const scale = Math.min(maxWidth / WIDTH, maxHeight / HEIGHT, 2);
         
         canvas.width = WIDTH;
@@ -76,7 +72,7 @@
         canvas.style.width = (WIDTH * scale) + 'px';
         canvas.style.height = (HEIGHT * scale) + 'px';
 
-        setupControls();
+        setupSwipeControls();
         draw();
     }
 
@@ -84,13 +80,14 @@
         score = 0;
         lives = 3;
         level = 1;
+        swipeCount = 0;
         resetLevel();
         gameState = 'playing';
         
         document.getElementById('start-screen').classList.add('hidden');
         document.getElementById('game-over').classList.add('hidden');
         document.getElementById('ui').classList.remove('hidden');
-        document.getElementById('controls').classList.remove('hidden');
+        document.getElementById('swipe-hint').classList.remove('hidden');
         
         updateUI();
         lastTime = performance.now();
@@ -98,18 +95,15 @@
     }
 
     function resetLevel() {
-        // Copy map
         map = MAP.map(row => [...row]);
         dotsLeft = 0;
         
-        // Count dots
         for (let y = 0; y < ROWS; y++) {
             for (let x = 0; x < COLS; x++) {
                 if (map[y][x] === 2 || map[y][x] === 3) dotsLeft++;
             }
         }
 
-        // Create Pac-Man
         pacman = {
             x: 9 * TILE + TILE/2,
             y: 15 * TILE + TILE/2,
@@ -120,7 +114,6 @@
             mouthDir: 1
         };
 
-        // Create ghosts
         ghosts = [
             createGhost(9, 9, COLORS.blinky, 'blinky'),
             createGhost(8, 9, COLORS.pinky, 'pinky'),
@@ -140,14 +133,11 @@
             speed: 2.2 + Math.random() * 0.3,
             color: color,
             name: name,
-            mode: 'scatter',
             frightened: false,
-            eaten: false,
-            eyeOffset: 0
+            eaten: false
         };
     }
 
-    // ============== GAME LOOP ==============
     function gameLoop(time) {
         if (gameState !== 'playing') return;
 
@@ -161,7 +151,6 @@
     }
 
     function update(dt) {
-        // Update frightened timer
         if (frightenedTimer > 0) {
             frightenedTimer -= dt * 16.67;
             if (frightenedTimer <= 0) {
@@ -173,7 +162,6 @@
         ghosts.forEach(g => updateGhost(g, dt));
         checkCollisions();
 
-        // Level complete
         if (dotsLeft <= 0) {
             level++;
             resetLevel();
@@ -181,12 +169,10 @@
     }
 
     function updatePacman(dt) {
-        // Animate mouth
         pacman.mouthAngle += 0.15 * pacman.mouthDir * dt;
         if (pacman.mouthAngle > 0.4) pacman.mouthDir = -1;
         if (pacman.mouthAngle < 0.05) pacman.mouthDir = 1;
 
-        // Try to change direction
         if (inputDir) {
             const nextTile = getTile(
                 pacman.x + inputDir.x * TILE,
@@ -197,7 +183,6 @@
             }
         }
 
-        // Check if can turn
         const tile = getTile(pacman.x, pacman.y);
         const centerX = tile.x * TILE + TILE/2;
         const centerY = tile.y * TILE + TILE/2;
@@ -211,26 +196,21 @@
             }
         }
 
-        // Move
         const newX = pacman.x + pacman.dir.x * pacman.speed * dt;
         const newY = pacman.y + pacman.dir.y * pacman.speed * dt;
 
-        // Check wall collision
         const newTile = getTile(newX, newY);
         if (!isWall(newTile.x, newTile.y)) {
             pacman.x = newX;
             pacman.y = newY;
         } else {
-            // Snap to center
             pacman.x = tile.x * TILE + TILE/2;
             pacman.y = tile.y * TILE + TILE/2;
         }
 
-        // Tunnel wrap
         if (pacman.x < 0) pacman.x = WIDTH;
         if (pacman.x > WIDTH) pacman.x = 0;
 
-        // Eat dots
         if (map[tile.y] && map[tile.y][tile.x] === 2) {
             map[tile.y][tile.x] = 0;
             score += 10;
@@ -250,7 +230,6 @@
 
     function updateGhost(ghost, dt) {
         if (ghost.eaten) {
-            // Return to ghost house
             const homeX = 9 * TILE + TILE/2;
             const homeY = 9 * TILE + TILE/2;
             const dx = homeX - ghost.x;
@@ -267,14 +246,10 @@
             return;
         }
 
-        // Eye animation
-        ghost.eyeOffset = Math.sin(performance.now() / 200) * 2;
-
         const tile = getTile(ghost.x, ghost.y);
         const centerX = tile.x * TILE + TILE/2;
         const centerY = tile.y * TILE + TILE/2;
 
-        // At intersection, choose direction
         if (Math.abs(ghost.x - centerX) < 2 && Math.abs(ghost.y - centerY) < 2) {
             ghost.x = centerX;
             ghost.y = centerY;
@@ -286,7 +261,6 @@
                 { x: 1, y: 0 }
             ];
 
-            // Filter valid directions (not walls, not reverse)
             const validDirs = dirs.filter(d => {
                 if (d.x === -ghost.dir.x && d.y === -ghost.dir.y) return false;
                 return !isWall(tile.x + d.x, tile.y + d.y);
@@ -294,24 +268,20 @@
 
             if (validDirs.length > 0) {
                 if (ghost.frightened) {
-                    // Random direction when frightened
                     ghost.dir = validDirs[Math.floor(Math.random() * validDirs.length)];
                 } else {
-                    // Chase Pac-Man (simplified AI)
                     let target = { x: pacman.x, y: pacman.y };
                     
-                    // Different targeting per ghost
                     if (ghost.name === 'pinky') {
                         target.x = pacman.x + pacman.dir.x * TILE * 4;
                         target.y = pacman.y + pacman.dir.y * TILE * 4;
                     } else if (ghost.name === 'clyde') {
                         const dist = Math.sqrt(Math.pow(ghost.x - pacman.x, 2) + Math.pow(ghost.y - pacman.y, 2));
                         if (dist < TILE * 8) {
-                            target = { x: 0, y: HEIGHT }; // Scatter
+                            target = { x: 0, y: HEIGHT };
                         }
                     }
 
-                    // Find direction closest to target
                     let bestDir = validDirs[0];
                     let bestDist = Infinity;
                     
@@ -330,12 +300,10 @@
             }
         }
 
-        // Move
         const speed = ghost.frightened ? ghost.speed * 0.5 : ghost.speed;
         ghost.x += ghost.dir.x * speed * dt;
         ghost.y += ghost.dir.y * speed * dt;
 
-        // Tunnel wrap
         if (ghost.x < 0) ghost.x = WIDTH;
         if (ghost.x > WIDTH) ghost.x = 0;
     }
@@ -351,19 +319,16 @@
 
             if (dist < TILE * 0.8) {
                 if (ghost.frightened) {
-                    // Eat ghost
                     ghost.eaten = true;
                     score += 200;
                     updateUI();
                 } else {
-                    // Pac-Man dies
                     lives--;
                     updateUI();
                     
                     if (lives <= 0) {
                         gameOver();
                     } else {
-                        // Reset positions
                         pacman.x = 9 * TILE + TILE/2;
                         pacman.y = 15 * TILE + TILE/2;
                         pacman.dir = { x: 0, y: 0 };
@@ -385,11 +350,14 @@
         document.getElementById('final-score').textContent = score;
         document.getElementById('game-over').classList.remove('hidden');
         document.getElementById('ui').classList.add('hidden');
-        document.getElementById('controls').classList.add('hidden');
+        document.getElementById('swipe-hint').classList.add('hidden');
+        
+        // Send score to parent app
+        if (window.ReactNativeWebView) {
+            window.ReactNativeWebView.postMessage(JSON.stringify({ type: 'gameOver', score: score }));
+        }
     }
 
-
-    // ============== DRAWING ==============
     function draw() {
         ctx.fillStyle = '#000';
         ctx.fillRect(0, 0, WIDTH, HEIGHT);
@@ -407,19 +375,16 @@
                 const py = y * TILE;
 
                 if (tile === 1) {
-                    // Wall with rounded corners
                     ctx.fillStyle = COLORS.wall;
                     ctx.beginPath();
                     roundRect(ctx, px + 2, py + 2, TILE - 4, TILE - 4, 4);
                     ctx.fill();
                 } else if (tile === 2) {
-                    // Dot
                     ctx.fillStyle = COLORS.dot;
                     ctx.beginPath();
                     ctx.arc(px + TILE/2, py + TILE/2, 3, 0, Math.PI * 2);
                     ctx.fill();
                 } else if (tile === 3) {
-                    // Power dot (pulsing)
                     const pulse = Math.sin(performance.now() / 200) * 0.3 + 0.7;
                     ctx.fillStyle = COLORS.powerDot;
                     ctx.beginPath();
@@ -434,7 +399,6 @@
         ctx.save();
         ctx.translate(pacman.x, pacman.y);
         
-        // Rotate based on direction
         let angle = 0;
         if (pacman.dir.x === 1) angle = 0;
         else if (pacman.dir.x === -1) angle = Math.PI;
@@ -443,7 +407,6 @@
         
         ctx.rotate(angle);
 
-        // Draw Pac-Man with mouth
         ctx.fillStyle = COLORS.pacman;
         ctx.beginPath();
         ctx.arc(0, 0, TILE/2 - 2, pacman.mouthAngle, Math.PI * 2 - pacman.mouthAngle);
@@ -451,7 +414,6 @@
         ctx.closePath();
         ctx.fill();
 
-        // Eye
         ctx.fillStyle = '#000';
         ctx.beginPath();
         ctx.arc(-2, -5, 2, 0, Math.PI * 2);
@@ -467,10 +429,8 @@
         const size = TILE/2 - 2;
 
         if (ghost.eaten) {
-            // Just eyes
-            drawGhostEyes(ghost, 0);
+            drawGhostEyes(ghost);
         } else {
-            // Body
             ctx.fillStyle = ghost.frightened ? 
                 (frightenedTimer < 2000 && Math.floor(frightenedTimer / 200) % 2 ? '#FFF' : COLORS.frightened) : 
                 ghost.color;
@@ -479,7 +439,6 @@
             ctx.arc(0, -2, size, Math.PI, 0);
             ctx.lineTo(size, size - 2);
             
-            // Wavy bottom
             const wave = Math.sin(performance.now() / 100) * 2;
             for (let i = 0; i < 4; i++) {
                 const wx = size - (i * size / 2);
@@ -490,18 +449,15 @@
             ctx.closePath();
             ctx.fill();
 
-            // Eyes
             if (!ghost.frightened) {
-                drawGhostEyes(ghost, ghost.eyeOffset);
+                drawGhostEyes(ghost);
             } else {
-                // Frightened face
                 ctx.fillStyle = '#FFF';
                 ctx.beginPath();
                 ctx.arc(-4, -2, 2, 0, Math.PI * 2);
                 ctx.arc(4, -2, 2, 0, Math.PI * 2);
                 ctx.fill();
                 
-                // Wavy mouth
                 ctx.strokeStyle = '#FFF';
                 ctx.lineWidth = 1.5;
                 ctx.beginPath();
@@ -516,15 +472,13 @@
         ctx.restore();
     }
 
-    function drawGhostEyes(ghost, offset) {
-        // Eye whites
+    function drawGhostEyes(ghost) {
         ctx.fillStyle = '#FFF';
         ctx.beginPath();
         ctx.ellipse(-4, -2, 4, 5, 0, 0, Math.PI * 2);
         ctx.ellipse(4, -2, 4, 5, 0, 0, Math.PI * 2);
         ctx.fill();
 
-        // Pupils - look at Pac-Man
         const dx = pacman.x - ghost.x;
         const dy = pacman.y - ghost.y;
         const dist = Math.sqrt(dx*dx + dy*dy) || 1;
@@ -533,8 +487,8 @@
 
         ctx.fillStyle = '#00F';
         ctx.beginPath();
-        ctx.arc(-4 + px, -2 + py + offset, 2, 0, Math.PI * 2);
-        ctx.arc(4 + px, -2 + py + offset, 2, 0, Math.PI * 2);
+        ctx.arc(-4 + px, -2 + py, 2, 0, Math.PI * 2);
+        ctx.arc(4 + px, -2 + py, 2, 0, Math.PI * 2);
         ctx.fill();
     }
 
@@ -550,7 +504,6 @@
         ctx.quadraticCurveTo(x, y, x + r, y);
     }
 
-    // ============== HELPERS ==============
     function getTile(x, y) {
         return {
             x: Math.floor(x / TILE),
@@ -559,7 +512,7 @@
     }
 
     function isWall(tx, ty) {
-        if (tx < 0 || tx >= COLS || ty < 0 || ty >= ROWS) return false; // Tunnel
+        if (tx < 0 || tx >= COLS || ty < 0 || ty >= ROWS) return false;
         return map[ty] && map[ty][tx] === 1;
     }
 
@@ -575,46 +528,26 @@
         }
     }
 
-    // ============== CONTROLS ==============
-    function setupControls() {
-        // D-pad buttons
-        document.querySelectorAll('.dpad-btn[data-dir]').forEach(btn => {
-            const dir = btn.dataset.dir;
-            
-            const setDir = (e) => {
-                e.preventDefault();
-                btn.classList.add('active');
-                switch(dir) {
-                    case 'up': inputDir = { x: 0, y: -1 }; break;
-                    case 'down': inputDir = { x: 0, y: 1 }; break;
-                    case 'left': inputDir = { x: -1, y: 0 }; break;
-                    case 'right': inputDir = { x: 1, y: 0 }; break;
-                }
-            };
-            
-            const clearActive = () => btn.classList.remove('active');
-            
-            btn.addEventListener('touchstart', setDir, { passive: false });
-            btn.addEventListener('touchend', clearActive);
-            btn.addEventListener('mousedown', setDir);
-            btn.addEventListener('mouseup', clearActive);
-            btn.addEventListener('mouseleave', clearActive);
-        });
-
-        // Swipe controls
+    function setupSwipeControls() {
         let touchStart = null;
-        
+        const minSwipe = 30;
+
+        // Touch start
         document.addEventListener('touchstart', (e) => {
-            if (e.target.closest('.dpad') || e.target.closest('.btn')) return;
-            touchStart = { x: e.touches[0].clientX, y: e.touches[0].clientY };
+            if (e.target.closest('.btn')) return;
+            touchStart = { 
+                x: e.touches[0].clientX, 
+                y: e.touches[0].clientY,
+                time: Date.now()
+            };
         }, { passive: true });
 
+        // Touch move - continuous swipe detection
         document.addEventListener('touchmove', (e) => {
-            if (!touchStart) return;
+            if (!touchStart || e.target.closest('.btn')) return;
             
             const dx = e.touches[0].clientX - touchStart.x;
             const dy = e.touches[0].clientY - touchStart.y;
-            const minSwipe = 20;
 
             if (Math.abs(dx) > minSwipe || Math.abs(dy) > minSwipe) {
                 if (Math.abs(dx) > Math.abs(dy)) {
@@ -622,15 +555,47 @@
                 } else {
                     inputDir = { x: 0, y: dy > 0 ? 1 : -1 };
                 }
-                touchStart = { x: e.touches[0].clientX, y: e.touches[0].clientY };
+                
+                // Reset touch start for continuous swiping
+                touchStart = { 
+                    x: e.touches[0].clientX, 
+                    y: e.touches[0].clientY,
+                    time: Date.now()
+                };
+                
+                // Hide hint after a few swipes
+                swipeCount++;
+                if (swipeCount > 3) {
+                    document.getElementById('swipe-hint').classList.add('hidden');
+                }
             }
         }, { passive: true });
 
-        document.addEventListener('touchend', () => {
+        // Touch end - quick flick detection
+        document.addEventListener('touchend', (e) => {
+            if (!touchStart || e.target.closest('.btn')) {
+                touchStart = null;
+                return;
+            }
+            
+            const touch = e.changedTouches[0];
+            const dx = touch.clientX - touchStart.x;
+            const dy = touch.clientY - touchStart.y;
+            const dt = Date.now() - touchStart.time;
+            
+            // Quick flick (fast swipe)
+            if (dt < 200 && (Math.abs(dx) > 20 || Math.abs(dy) > 20)) {
+                if (Math.abs(dx) > Math.abs(dy)) {
+                    inputDir = { x: dx > 0 ? 1 : -1, y: 0 };
+                } else {
+                    inputDir = { x: 0, y: dy > 0 ? 1 : -1 };
+                }
+            }
+            
             touchStart = null;
         });
 
-        // Keyboard (for testing)
+        // Keyboard for testing
         document.addEventListener('keydown', (e) => {
             switch(e.key) {
                 case 'ArrowUp': case 'w': inputDir = { x: 0, y: -1 }; break;
@@ -640,11 +605,9 @@
             }
         });
 
-        // Start/Restart buttons
         document.getElementById('start-btn').addEventListener('click', startGame);
         document.getElementById('restart-btn').addEventListener('click', startGame);
     }
 
-    // ============== START ==============
     window.addEventListener('load', init);
 })();
