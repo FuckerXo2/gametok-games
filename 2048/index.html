@@ -1,0 +1,110 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>2048</title>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        html, body {
+            width: 100%; height: 100%;
+            background: #faf8ef;
+            overflow: hidden;
+            touch-action: none;
+            user-select: none;
+            font-family: 'Arial Rounded MT Bold', 'Helvetica Rounded', Arial, sans-serif;
+        }
+        #game-container {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            height: 100%;
+            padding: 20px;
+        }
+        #header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            width: 100%;
+            max-width: 340px;
+            margin-bottom: 20px;
+        }
+        .title { font-size: 48px; font-weight: bold; color: #776e65; }
+        .score-box {
+            background: #bbada0;
+            padding: 8px 16px;
+            border-radius: 6px;
+            text-align: center;
+        }
+        .score-label { font-size: 11px; color: #eee4da; text-transform: uppercase; }
+        .score-value { font-size: 22px; font-weight: bold; color: #fff; }
+        #board {
+            background: #bbada0;
+            border-radius: 8px;
+            padding: 10px;
+            display: grid;
+            grid-template-columns: repeat(4, 1fr);
+            gap: 10px;
+        }
+        .cell {
+            width: 75px; height: 75px;
+            background: rgba(238,228,218,0.35);
+            border-radius: 6px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 32px;
+            font-weight: bold;
+            color: #776e65;
+            transition: transform 0.1s;
+        }
+        .cell[data-value="2"] { background: #eee4da; }
+        .cell[data-value="4"] { background: #ede0c8; }
+        .cell[data-value="8"] { background: #f2b179; color: #f9f6f2; }
+        .cell[data-value="16"] { background: #f59563; color: #f9f6f2; }
+        .cell[data-value="32"] { background: #f67c5f; color: #f9f6f2; }
+        .cell[data-value="64"] { background: #f65e3b; color: #f9f6f2; }
+        .cell[data-value="128"] { background: #edcf72; color: #f9f6f2; font-size: 28px; }
+        .cell[data-value="256"] { background: #edcc61; color: #f9f6f2; font-size: 28px; }
+        .cell[data-value="512"] { background: #edc850; color: #f9f6f2; font-size: 28px; }
+        .cell[data-value="1024"] { background: #edc53f; color: #f9f6f2; font-size: 24px; }
+        .cell[data-value="2048"] { background: #edc22e; color: #f9f6f2; font-size: 24px; }
+        .hint { color: #776e65; font-size: 14px; margin-top: 20px; opacity: 0.7; }
+        #game-over {
+            position: fixed; inset: 0;
+            background: rgba(250,248,239,0.9);
+            display: none; flex-direction: column;
+            align-items: center; justify-content: center;
+            z-index: 100;
+        }
+        .game-over-title { font-size: 48px; font-weight: bold; color: #776e65; margin-bottom: 10px; }
+        .final-score { font-size: 64px; font-weight: bold; color: #f67c5f; margin: 20px 0; }
+        .btn {
+            background: #8f7a66;
+            color: #f9f6f2; border: none;
+            padding: 16px 48px; font-size: 18px; font-weight: bold;
+            border-radius: 6px; cursor: pointer; margin-top: 20px;
+        }
+    </style>
+</head>
+<body>
+    <div id="game-container">
+        <div id="header">
+            <div class="title">2048</div>
+            <div class="score-box">
+                <div class="score-label">Score</div>
+                <div class="score-value" id="score">0</div>
+            </div>
+        </div>
+        <div id="board"></div>
+        <div class="hint">Swipe to move tiles</div>
+    </div>
+    <div id="game-over">
+        <div class="game-over-title">Game Over!</div>
+        <div class="final-score" id="final-score">0</div>
+        <button class="btn" id="restart-btn">Try Again</button>
+    </div>
+    <script src="game.js"></script>
+</body>
+</html>

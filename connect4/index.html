@@ -1,0 +1,96 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Connect 4</title>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        html, body {
+            width: 100%; height: 100%;
+            background: linear-gradient(135deg, #1a1a2e 0%, #16213e 100%);
+            overflow: hidden;
+            touch-action: none;
+            user-select: none;
+            font-family: -apple-system, BlinkMacSystemFont, sans-serif;
+        }
+        #game-container {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            height: 100%;
+            padding: 20px;
+        }
+        #status {
+            color: #fff;
+            font-size: 24px;
+            font-weight: bold;
+            margin-bottom: 20px;
+            text-align: center;
+        }
+        #board {
+            background: #2563eb;
+            padding: 15px;
+            border-radius: 15px;
+            display: grid;
+            grid-template-columns: repeat(7, 1fr);
+            gap: 8px;
+            box-shadow: 0 10px 40px rgba(0,0,0,0.3);
+        }
+        .cell {
+            width: 45px; height: 45px;
+            background: #1e40af;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+            transition: transform 0.1s;
+        }
+        .cell:active { transform: scale(0.95); }
+        .cell.red { background: #ef4444; box-shadow: inset 0 -3px 0 #dc2626; }
+        .cell.yellow { background: #fbbf24; box-shadow: inset 0 -3px 0 #d97706; }
+        .cell.win { animation: pulse 0.5s ease-in-out infinite alternate; }
+        @keyframes pulse { to { transform: scale(1.1); } }
+        #start-screen, #game-over {
+            position: fixed; inset: 0;
+            background: linear-gradient(135deg, #1a1a2e 0%, #16213e 100%);
+            display: flex; flex-direction: column;
+            align-items: center; justify-content: center;
+            z-index: 100;
+        }
+        #game-over { display: none; }
+        .title { font-size: 42px; font-weight: bold; color: #fff; margin-bottom: 10px; }
+        .subtitle { color: rgba(255,255,255,0.7); font-size: 16px; margin-bottom: 40px; }
+        .btn {
+            background: linear-gradient(135deg, #ef4444 0%, #dc2626 100%);
+            color: #fff; border: none;
+            padding: 16px 48px; font-size: 18px; font-weight: bold;
+            border-radius: 30px; cursor: pointer;
+        }
+        .result { font-size: 48px; font-weight: bold; margin: 20px 0; }
+        .result.red { color: #ef4444; }
+        .result.yellow { color: #fbbf24; }
+        .icon { font-size: 60px; margin-bottom: 20px; display: flex; gap: 10px; }
+        .hidden { display: none !important; }
+    </style>
+</head>
+<body>
+    <div id="game-container" class="hidden">
+        <div id="status">Your turn (Red)</div>
+        <div id="board"></div>
+    </div>
+    <div id="start-screen">
+        <div class="icon">🔴🟡</div>
+        <div class="title">Connect 4</div>
+        <div class="subtitle">Get 4 in a row to win!</div>
+        <button class="btn" id="start-btn">PLAY</button>
+    </div>
+    <div id="game-over">
+        <div class="result" id="result">You Win!</div>
+        <button class="btn" id="restart-btn">PLAY AGAIN</button>
+    </div>
+    <script src="game.js"></script>
+</body>
+</html>

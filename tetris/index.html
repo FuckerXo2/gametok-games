@@ -1,0 +1,118 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Tetris</title>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        html, body {
+            width: 100%; height: 100%;
+            background: linear-gradient(180deg, #0f0f23 0%, #1a1a3e 100%);
+            overflow: hidden;
+            touch-action: none;
+            user-select: none;
+            font-family: -apple-system, BlinkMacSystemFont, sans-serif;
+        }
+        #game-container {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            height: 100%;
+            padding: 10px;
+        }
+        #ui {
+            display: flex;
+            justify-content: space-between;
+            width: 100%;
+            max-width: 320px;
+            padding: 10px 0;
+            color: #fff;
+        }
+        .stat { text-align: center; }
+        .stat-label { font-size: 12px; opacity: 0.7; }
+        .stat-value { font-size: 24px; font-weight: bold; }
+        #game {
+            border: 3px solid #4a4a8a;
+            border-radius: 8px;
+            background: rgba(0,0,0,0.5);
+        }
+        #controls {
+            display: flex;
+            justify-content: space-between;
+            width: 100%;
+            max-width: 320px;
+            margin-top: 15px;
+            gap: 10px;
+        }
+        .ctrl-btn {
+            flex: 1;
+            height: 60px;
+            background: rgba(255,255,255,0.1);
+            border: 2px solid rgba(255,255,255,0.2);
+            border-radius: 12px;
+            color: #fff;
+            font-size: 24px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+        .ctrl-btn:active { background: rgba(255,255,255,0.25); }
+        #start-screen, #game-over {
+            position: fixed; inset: 0;
+            background: linear-gradient(180deg, #0f0f23 0%, #1a1a3e 100%);
+            display: flex; flex-direction: column;
+            align-items: center; justify-content: center;
+            z-index: 100;
+        }
+        #game-over { display: none; }
+        .title { font-size: 48px; font-weight: bold; color: #fff; margin-bottom: 10px; }
+        .subtitle { color: rgba(255,255,255,0.7); font-size: 16px; margin-bottom: 40px; }
+        .btn {
+            background: linear-gradient(135deg, #00d4aa 0%, #00a885 100%);
+            color: #fff; border: none;
+            padding: 16px 48px; font-size: 18px; font-weight: bold;
+            border-radius: 30px; cursor: pointer;
+        }
+        .final-score { font-size: 64px; font-weight: bold; color: #00d4aa; margin: 20px 0; }
+        .tetris-icon { font-size: 50px; margin-bottom: 20px; display: flex; gap: 5px; }
+        .block { width: 20px; height: 20px; border-radius: 4px; }
+        .hidden { display: none !important; }
+    </style>
+</head>
+<body>
+    <div id="game-container" class="hidden">
+        <div id="ui">
+            <div class="stat"><div class="stat-label">SCORE</div><div class="stat-value" id="score">0</div></div>
+            <div class="stat"><div class="stat-label">LEVEL</div><div class="stat-value" id="level">1</div></div>
+            <div class="stat"><div class="stat-label">LINES</div><div class="stat-value" id="lines">0</div></div>
+        </div>
+        <canvas id="game"></canvas>
+        <div id="controls">
+            <div class="ctrl-btn" id="btn-left">◀</div>
+            <div class="ctrl-btn" id="btn-rotate">↻</div>
+            <div class="ctrl-btn" id="btn-down">▼</div>
+            <div class="ctrl-btn" id="btn-right">▶</div>
+        </div>
+    </div>
+    <div id="start-screen">
+        <div class="tetris-icon">
+            <div class="block" style="background:#00f0f0"></div>
+            <div class="block" style="background:#f0f000"></div>
+            <div class="block" style="background:#a000f0"></div>
+            <div class="block" style="background:#f00000"></div>
+        </div>
+        <div class="title">TETRIS</div>
+        <div class="subtitle">Swipe or use buttons</div>
+        <button class="btn" id="start-btn">PLAY</button>
+    </div>
+    <div id="game-over">
+        <div class="title">Game Over</div>
+        <div class="final-score" id="final-score">0</div>
+        <div class="subtitle">points</div>
+        <button class="btn" id="restart-btn">PLAY AGAIN</button>
+    </div>
+    <script src="game.js"></script>
+</body>
+</html>
