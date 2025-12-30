@@ -78,29 +78,30 @@ function getPos(e) {
 }
 
 function updateTrail() {
-  var trail = document.getElementById('sliceTrail');
-  if (!trail) {
-    trail = document.createElement('div');
-    trail.id = 'sliceTrail';
-    trail.style.cssText = 'position:absolute;top:0;left:0;width:100%;height:100%;pointer-events:none;z-index:5;';
-    container.appendChild(trail);
+  var knife = document.getElementById('knife');
+  if (!knife) {
+    knife = document.createElement('img');
+    knife.id = 'knife';
+    knife.src = 'https://raw.githubusercontent.com/nicholasadamou/fruit-ninja/master/images/blade.png';
+    knife.style.cssText = 'position:absolute;width:60px;height:60px;pointer-events:none;z-index:100;transform:translate(-50%,-50%) rotate(-45deg);display:none;';
+    container.appendChild(knife);
   }
   
-  if (sliceTrail.length < 2) {
-    trail.innerHTML = '';
-    return;
+  if (isSlicing && sliceTrail.length > 0) {
+    var last = sliceTrail[sliceTrail.length - 1];
+    knife.style.left = last.x + 'px';
+    knife.style.top = last.y + 'px';
+    knife.style.display = 'block';
+    
+    // Rotate knife based on swipe direction
+    if (sliceTrail.length >= 2) {
+      var prev = sliceTrail[sliceTrail.length - 2];
+      var angle = Math.atan2(last.y - prev.y, last.x - prev.x) * 180 / Math.PI;
+      knife.style.transform = 'translate(-50%,-50%) rotate(' + (angle + 45) + 'deg)';
+    }
+  } else {
+    knife.style.display = 'none';
   }
-  
-  var svg = '<svg width="100%" height="100%" style="position:absolute;top:0;left:0;">';
-  svg += '<defs><filter id="glow"><feGaussianBlur stdDeviation="3" result="blur"/><feMerge><feMergeNode in="blur"/><feMergeNode in="SourceGraphic"/></feMerge></filter></defs>';
-  
-  for (var i = 1; i < sliceTrail.length; i++) {
-    var alpha = i / sliceTrail.length;
-    var width = 3 + alpha * 8;
-    svg += '<line x1="' + sliceTrail[i-1].x + '" y1="' + sliceTrail[i-1].y + '" x2="' + sliceTrail[i].x + '" y2="' + sliceTrail[i].y + '" stroke="rgba(255,255,255,' + (alpha * 0.8) + ')" stroke-width="' + width + '" stroke-linecap="round" filter="url(#glow)"/>';
-  }
-  svg += '</svg>';
-  trail.innerHTML = svg;
 }
 
 function startGame() {
