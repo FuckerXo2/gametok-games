@@ -1,723 +1,579 @@
-// Stack Ball 3D - Faithful Three.js Recreation
+// Stack Ball 3D - Polished Version
 (function() {
 'use strict';
 
-// ===== CONFIG (matching original Unity values) =====
+// ============================================
+// CONFIGURATION
+// ============================================
 const CONFIG = {
-  // Platform generation (from Generator.prefab)
-  platformCount: 50,              // Original: 140, reduced for web
-  platformHeightOffset: 0.4,      // _offsetHeight
-  platformRotationOffset: 2,      // _offestAngle (degrees)
+  // Platform settings
+  platformCount: 35,
+  platformGap: 0.6,
+  platformRadius: 2.0,
+  platformInnerRadius: 0.45,
+  platformThickness: 0.35,
+  segmentsPerPlatform: 8,
+  minSafeSegments: 3,
   
-  // Platform geometry (from CirclePlatform.prefab - segments positioned at radius ~1.49)
-  platformRadius: 1.6,            // Outer radius of wedge
-  platformInnerRadius: 0.35,      // Inner hole radius  
-  platformThickness: 0.25,        // Height/thickness of segment
-  segmentsPerPlatform: 8,         // 8 wedge segments
-  minSafeParts: 2,                // PLATFORM_SAFE_PARTS
-  segmentGap: 0.03,               // Small gap between segments
+  // Ball settings
+  ballRadius: 0.38,
+  gravity: 35,
+  smashSpeed: 14,
+  bounceSpeed: 11,
   
-  // Ball (from Ball.prefab)
-  ballRadius: 0.3,
-  gravity: 25,
-  jumpPower: 11,                  // _jumpPower
-  moveSpeed: 8,                   // _moveSpeed
+  // Camera
+  cameraDistance: 10,
+  cameraHeight: 5,
+  cameraSmooth: 0.12,
   
-  // Invincibility (from BallInvincibility)
-  platformsToEnableIndicator: 10,
-  secondsPerPlatform: 0.15,
-  secondsToEnableInvincible: 4,    // _secondsToEnableInvincible
-  invincibleSeconds: 3,            // _invincibleSeconds
-  
-  // Platform rotation speed (degrees per second) - from Generator.prefab _anglePerSecond
-  platformRotationSpeed: 55,
-  
-  // Camera (from CameraMover)
-  cameraTrackOffset: { x: 0, y: 3, z: -8.3 },
-  cameraTrackDelay: 0.25,
-  
-  // Audio
-  soundEnabled: true,
-  basePitch: 1.0,
-  pitchIncrement: 0.02,
-  maxPitch: 3.0,
-  pitchResetDelay: 3.0
+  // Rotation
+  rotationSpeed: 50,
 };
 
-// ===== STATE =====
+// ============================================
+// GAME STATE
+// ============================================
 let scene, camera, renderer;
 let ball, ballVelocity = 0;
-let platforms = [];
-let particles = [];
-let pole, finishPlatform;
-let platformsContainer; // Container that rotates all platforms
+let platforms = [], particles = [];
+let towerGroup, finishPlatform;
 
-let isPlaying = false;
-let isHolding = false;
 let gameState = 'menu'; // menu, playing, win, lose
-
-// Invincibility state
-let isInvincible = false;
-let destroyedPlatformCount = 0;
-let invincibleTimer = 0;
-let invincibleTimerRunning = false;
-
-// Score/Level
+let isHolding = false;
 let score = 0;
-let level = parseInt(localStorage.getItem('stackBallLevel')) || 1;
-let bestScore = parseInt(localStorage.getItem('stackBallBest')) || 0;
-let destroyedCount = 0;
+let level = parseInt(localStorage.getItem('stackball_level')) || 1;
+let highScore = parseInt(localStorage.getItem('stackball_high')) || 0;
+let destroyedPlatforms = 0;
+let combo = 0;
+let lastDestroyTime = 0;
 
-// Camera
 let cameraTargetY = 0;
-let cameraVelocity = 0;
+let shakeIntensity = 0;
 
-// Trail effect
-let trailPoints = [];
-let trailMesh = null;
-const TRAIL_LENGTH = 15;
-
-// Footprints
-let footprints = [];
-
-// Fire particles (invincibility)
-let fireParticles = [];
-
-// Audio
-let audioCtx = null;
-let currentPitch = 1.0;
-let pitchResetTimer = 0;
-
-let palette;
-let lastTime = 0;
-
-const palettes = [
-  { main: 0xff6b6b, gradient: [0xff6b6b, 0xfeca57], bg: 0x1a1a2e },
-  { main: 0x5f27cd, gradient: [0x5f27cd, 0x341f97], bg: 0x0c0c1e },
-  { main: 0x00d2d3, gradient: [0x00d2d3, 0x01a3a4], bg: 0x0a2e2e },
-  { main: 0xff9f43, gradient: [0xff9f43, 0xee5a24], bg: 0x2d1810 },
-  { main: 0x10ac84, gradient: [0x10ac84, 0x1dd1a1], bg: 0x0a2a1a },
-  { main: 0xe056fd, gradient: [0xe056fd, 0xbe2edd], bg: 0x2a1a2e },
+// Color palettes per level
+const PALETTES = [
+  { primary: 0xff6b6b, secondary: 0xfeca57, bg1: 0x1a1a2e, bg2: 0x16213e },
+  { primary: 0x667eea, secondary: 0x764ba2, bg1: 0x0f0c29, bg2: 0x302b63 },
+  { primary: 0x11998e, secondary: 0x38ef7d, bg1: 0x0f2027, bg2: 0x203a43 },
+  { primary: 0xf857a6, secondary: 0xff5858, bg1: 0x1f1c2c, bg2: 0x3a3a5c },
+  { primary: 0xf2994a, secondary: 0xf2c94c, bg1: 0x2c1810, bg2: 0x1a0f0a },
+  { primary: 0x00d2d3, secondary: 0x54a0ff, bg1: 0x0a1628, bg2: 0x1a2a4a },
 ];
 
-// ===== DOM =====
+let palette;
+
+// UI Elements
 const ui = {
   level: document.getElementById('level'),
   score: document.getElementById('score'),
   progress: document.getElementById('progress-fill'),
-  invBar: document.getElementById('invincible-container'),
-  invFill: document.getElementById('invincible-fill'),
   menu: document.getElementById('menu'),
   win: document.getElementById('win'),
   winLevel: document.getElementById('winLevel'),
   lose: document.getElementById('lose'),
   finalScore: document.getElementById('finalScore'),
-  bestScore: document.getElementById('bestScore')
+  bestScore: document.getElementById('bestScore'),
 };
 
-// ===== INIT =====
+// ============================================
+// AUDIO (Web Audio API)
+// ============================================
+let audioCtx;
+const sounds = {};
+
+function initAudio() {
+  audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+}
+
+function playSound(type) {
+  if (!audioCtx) return;
+  
+  const osc = audioCtx.createOscillator();
+  const gain = audioCtx.createGain();
+  osc.connect(gain);
+  gain.connect(audioCtx.destination);
+  
+  const now = audioCtx.currentTime;
+  
+  switch(type) {
+    case 'bounce':
+      osc.frequency.setValueAtTime(400, now);
+      osc.frequency.exponentialRampToValueAtTime(200, now + 0.1);
+      gain.gain.setValueAtTime(0.15, now);
+      gain.gain.exponentialRampToValueAtTime(0.01, now + 0.1);
+      osc.start(now);
+      osc.stop(now + 0.1);
+      break;
+      
+    case 'smash':
+      osc.type = 'sawtooth';
+      osc.frequency.setValueAtTime(150 + combo * 30, now);
+      osc.frequency.exponentialRampToValueAtTime(50, now + 0.15);
+      gain.gain.setValueAtTime(0.2, now);
+      gain.gain.exponentialRampToValueAtTime(0.01, now + 0.15);
+      osc.start(now);
+      osc.stop(now + 0.15);
+      break;
+      
+    case 'hit':
+      osc.type = 'square';
+      osc.frequency.setValueAtTime(100, now);
+      gain.gain.setValueAtTime(0.3, now);
+      gain.gain.exponentialRampToValueAtTime(0.01, now + 0.2);
+      osc.start(now);
+      osc.stop(now + 0.2);
+      break;
+      
+    case 'win':
+      [523, 659, 784, 1047].forEach((freq, i) => {
+        const o = audioCtx.createOscillator();
+        const g = audioCtx.createGain();
+        o.connect(g);
+        g.connect(audioCtx.destination);
+        o.frequency.value = freq;
+        g.gain.setValueAtTime(0.15, now + i * 0.1);
+        g.gain.exponentialRampToValueAtTime(0.01, now + i * 0.1 + 0.3);
+        o.start(now + i * 0.1);
+        o.stop(now + i * 0.1 + 0.3);
+      });
+      break;
+  }
+}
+
+// Haptic feedback
+function vibrate(pattern) {
+  if (navigator.vibrate) {
+    navigator.vibrate(pattern);
+  }
+}
+
+// ============================================
+// INITIALIZATION
+// ============================================
 function init() {
-  setupThreeJS();
-  setupAudio();
+  setupRenderer();
+  setupLights();
   setupInput();
   setupButtons();
   buildLevel();
-  lastTime = performance.now();
   animate();
 }
 
-function setupThreeJS() {
+function setupRenderer() {
   scene = new THREE.Scene();
-  camera = new THREE.PerspectiveCamera(60, window.innerWidth / window.innerHeight, 0.1, 1000);
   
-  renderer = new THREE.WebGLRenderer({ antialias: true });
+  camera = new THREE.PerspectiveCamera(50, window.innerWidth / window.innerHeight, 0.1, 100);
+  
+  renderer = new THREE.WebGLRenderer({ 
+    antialias: true,
+    powerPreference: 'high-performance',
+    alpha: false
+  });
   renderer.setSize(window.innerWidth, window.innerHeight);
   renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
   renderer.shadowMap.enabled = true;
-  document.getElementById('game-container').insertBefore(renderer.domElement, document.getElementById('ui'));
+  renderer.shadowMap.type = THREE.PCFSoftShadowMap;
+  renderer.toneMapping = THREE.ACESFilmicToneMapping;
+  renderer.toneMappingExposure = 1.1;
   
-  window.addEventListener('resize', () => {
-    camera.aspect = window.innerWidth / window.innerHeight;
-    camera.updateProjectionMatrix();
-    renderer.setSize(window.innerWidth, window.innerHeight);
-  });
+  document.getElementById('game-container').insertBefore(
+    renderer.domElement, 
+    document.getElementById('ui')
+  );
+  
+  window.addEventListener('resize', onResize);
 }
 
-function setupAudio() {
-  // Create audio context on first user interaction
-  const initAudio = () => {
-    if (!audioCtx) {
-      audioCtx = new (window.AudioContext || window.webkitAudioContext)();
-    }
-    window.removeEventListener('click', initAudio);
-    window.removeEventListener('touchstart', initAudio);
-  };
-  window.addEventListener('click', initAudio);
-  window.addEventListener('touchstart', initAudio);
-}
-
-function playSound(frequency, duration, type = 'square') {
-  if (!audioCtx || !CONFIG.soundEnabled) return;
-  
-  const oscillator = audioCtx.createOscillator();
-  const gainNode = audioCtx.createGain();
-  
-  oscillator.connect(gainNode);
-  gainNode.connect(audioCtx.destination);
-  
-  oscillator.frequency.value = frequency * currentPitch;
-  oscillator.type = type;
-  
-  gainNode.gain.setValueAtTime(0.15, audioCtx.currentTime);
-  gainNode.gain.exponentialRampToValueAtTime(0.01, audioCtx.currentTime + duration);
-  
-  oscillator.start(audioCtx.currentTime);
-  oscillator.stop(audioCtx.currentTime + duration);
-}
-
-function playBreakSound() {
-  playSound(200, 0.1, 'square');
-  playSound(150, 0.15, 'sawtooth');
-  
-  // Increase pitch like original FXHandler
-  currentPitch += CONFIG.pitchIncrement;
-  if (currentPitch >= CONFIG.maxPitch) {
-    currentPitch = CONFIG.basePitch;
-  }
-  pitchResetTimer = CONFIG.pitchResetDelay;
-}
-
-function playWinSound() {
-  currentPitch = 0.8;
-  playSound(523, 0.15, 'sine'); // C5
-  setTimeout(() => playSound(659, 0.15, 'sine'), 100); // E5
-  setTimeout(() => playSound(784, 0.3, 'sine'), 200); // G5
+function onResize() {
+  camera.aspect = window.innerWidth / window.innerHeight;
+  camera.updateProjectionMatrix();
+  renderer.setSize(window.innerWidth, window.innerHeight);
 }
 
 function setupLights() {
-  const ambient = new THREE.AmbientLight(0xffffff, 0.6);
-  scene.add(ambient);
+  // Ambient
+  scene.add(new THREE.AmbientLight(0xffffff, 0.5));
   
-  const dir = new THREE.DirectionalLight(0xffffff, 0.8);
-  dir.position.set(5, 10, 7);
-  dir.castShadow = true;
-  dir.shadow.mapSize.width = 2048;
-  dir.shadow.mapSize.height = 2048;
-  scene.add(dir);
+  // Main light with shadows
+  const mainLight = new THREE.DirectionalLight(0xffffff, 1.0);
+  mainLight.position.set(5, 20, 10);
+  mainLight.castShadow = true;
+  mainLight.shadow.mapSize.width = 1024;
+  mainLight.shadow.mapSize.height = 1024;
+  mainLight.shadow.camera.near = 1;
+  mainLight.shadow.camera.far = 50;
+  mainLight.shadow.camera.left = -15;
+  mainLight.shadow.camera.right = 15;
+  mainLight.shadow.camera.top = 15;
+  mainLight.shadow.camera.bottom = -30;
+  mainLight.shadow.bias = -0.001;
+  scene.add(mainLight);
   
-  const fill = new THREE.DirectionalLight(0xffffff, 0.3);
-  fill.position.set(-3, 5, -5);
-  scene.add(fill);
+  // Rim light
+  const rimLight = new THREE.DirectionalLight(0x6688ff, 0.4);
+  rimLight.position.set(-5, 5, -10);
+  scene.add(rimLight);
 }
+
 
 function setupInput() {
   const onDown = (e) => {
-    // Don't trigger on buttons
     if (e.target.tagName === 'BUTTON') return;
-    
-    // Prevent default to avoid double-firing and scrolling issues
     if (e.cancelable) e.preventDefault();
     
+    if (!audioCtx) initAudio();
+    
     isHolding = true;
-  };
-  
-  const onUp = (e) => {
-    isHolding = false;
-    // When releasing, try to resume invincibility countdown (like original)
-    if (!isInvincible && invincibleTimer > 0 && destroyedPlatformCount >= CONFIG.platformsToEnableIndicator) {
-      invincibleTimerRunning = true;
+    
+    if (gameState === 'menu') {
+      startGame();
     }
   };
   
-  // Use document instead of window for better mobile support
+  const onUp = () => { 
+    isHolding = false; 
+  };
+  
   document.addEventListener('mousedown', onDown);
   document.addEventListener('mouseup', onUp);
   document.addEventListener('touchstart', onDown, { passive: false });
   document.addEventListener('touchend', onUp, { passive: false });
-  
-  // Also handle touch cancel (when touch is interrupted)
-  document.addEventListener('touchcancel', onUp, { passive: false });
+  document.addEventListener('touchcancel', onUp);
 }
 
 function setupButtons() {
   document.getElementById('startBtn').onclick = () => {
-    gameState = 'playing';
-    isPlaying = true;
-    ui.menu.classList.add('hidden');
+    if (!audioCtx) initAudio();
+    startGame();
   };
   
   document.getElementById('nextBtn').onclick = () => {
     level++;
-    localStorage.setItem('stackBallLevel', level);
+    localStorage.setItem('stackball_level', level);
     ui.win.classList.add('hidden');
     buildLevel();
-    gameState = 'playing';
-    isPlaying = true;
+    startGame();
   };
   
   document.getElementById('retryBtn').onclick = () => {
     score = 0;
     ui.lose.classList.add('hidden');
     buildLevel();
-    gameState = 'playing';
-    isPlaying = true;
+    startGame();
   };
 }
 
-// ===== LEVEL BUILDING =====
+function startGame() {
+  gameState = 'playing';
+  ui.menu.classList.add('hidden');
+}
+
+// ============================================
+// LEVEL BUILDING
+// ============================================
 function buildLevel() {
-  // Clear scene
-  while (scene.children.length > 0) scene.remove(scene.children[0]);
+  // Clear scene (keep lights)
+  const lights = scene.children.filter(c => c.isLight);
+  scene.children = lights;
+  
   platforms = [];
   particles = [];
-  trailPoints = [];
-  footprints = [];
-  fireParticles = [];
+  destroyedPlatforms = 0;
+  combo = 0;
+  ballVelocity = 0;
   
-  if (trailMesh) {
-    scene.remove(trailMesh);
-    trailMesh = null;
-  }
+  // Select palette
+  palette = PALETTES[(level - 1) % PALETTES.length];
   
-  setupLights();
+  // Background gradient
+  const bgColor = new THREE.Color(palette.bg1).lerp(new THREE.Color(palette.bg2), 0.5);
+  scene.background = bgColor;
+  scene.fog = new THREE.Fog(bgColor, 20, 50);
   
-  palette = palettes[(level - 1) % palettes.length];
-  scene.background = new THREE.Color(palette.bg);
-  
-  // Reset state
-  destroyedCount = 0;
-  destroyedPlatformCount = 0;
-  isInvincible = false;
-  invincibleTimer = 0;
-  invincibleTimerRunning = false;
-  currentPitch = CONFIG.basePitch;
-  pitchResetTimer = 0;
+  // Create tower group (for rotation)
+  towerGroup = new THREE.Group();
+  scene.add(towerGroup);
   
   createPole();
   createPlatforms();
   createFinishPlatform();
   createBall();
-  createTrail();
   
-  // Camera: positioned behind (Z+), looking down at ~25 degrees
-  cameraTargetY = ball.position.y + CONFIG.cameraTrackOffset.y;
-  camera.position.set(0, cameraTargetY, 8.3);
-  camera.rotation.x = -0.44; // ~25 degrees looking down
+  // Position camera
+  cameraTargetY = ball.position.y + CONFIG.cameraHeight;
+  camera.position.set(0, cameraTargetY, CONFIG.cameraDistance);
+  camera.lookAt(0, ball.position.y, 0);
   
   updateUI();
-  updateProgress();
-  updateInvincibleUI();
 }
 
 function createPole() {
-  // Create a container for all platforms that will rotate
-  platformsContainer = new THREE.Group();
-  scene.add(platformsContainer);
+  const height = CONFIG.platformCount * CONFIG.platformGap + 8;
   
-  const stackHeight = CONFIG.platformCount * CONFIG.platformHeightOffset;
-  const poleHeight = stackHeight + 4;
-  const poleRadius = 0.25;
-  
-  const geo = new THREE.CylinderGeometry(poleRadius, poleRadius, poleHeight, 32);
-  const mat = new THREE.MeshStandardMaterial({ 
+  // Main pole
+  const poleGeo = new THREE.CylinderGeometry(0.3, 0.3, height, 24);
+  const poleMat = new THREE.MeshStandardMaterial({
     color: 0xcccccc,
-    metalness: 0.2, 
-    roughness: 0.8 
+    metalness: 0.7,
+    roughness: 0.2,
   });
-  pole = new THREE.Mesh(geo, mat);
-  pole.position.y = -stackHeight / 2;
+  const pole = new THREE.Mesh(poleGeo, poleMat);
+  pole.position.y = -height / 2 + 3;
   pole.castShadow = true;
   pole.receiveShadow = true;
-  platformsContainer.add(pole);
+  towerGroup.add(pole);
+  
+  // Top cap
+  const capGeo = new THREE.SphereGeometry(0.35, 16, 16);
+  const cap = new THREE.Mesh(capGeo, poleMat);
+  cap.position.y = 3;
+  towerGroup.add(cap);
 }
 
 function createPlatforms() {
-  let currentY = 0;
-  let currentRotation = 0;
+  let y = 0;
+  let rotation = 0;
   
-  // Group platforms with same danger count (like original)
-  let i = 0;
-  while (i < CONFIG.platformCount) {
-    const groupSize = Math.floor(Math.random() * 6) + 5; // 5-10 platforms per group
-    const maxDangerParts = Math.floor(Math.random() * (CONFIG.segmentsPerPlatform - CONFIG.minSafeParts));
+  for (let i = 0; i < CONFIG.platformCount; i++) {
+    y -= CONFIG.platformGap;
+    rotation += (Math.random() * 40 + 20) * Math.PI / 180;
     
-    for (let j = 0; j < groupSize && i < CONFIG.platformCount; j++, i++) {
-      currentY -= CONFIG.platformHeightOffset;
-      currentRotation += CONFIG.platformRotationOffset * Math.PI / 180;
-      
-      const t = i / CONFIG.platformCount;
-      const color = lerpColor(palette.gradient[0], palette.gradient[1], t);
-      
-      const platform = createPlatform(currentY, currentRotation, color, maxDangerParts, i);
-      platforms.push(platform);
-    }
+    // Color gradient through tower
+    const t = i / CONFIG.platformCount;
+    const color = lerpColor(palette.primary, palette.secondary, t);
+    
+    // More danger as you go down
+    const dangerChance = 0.12 + t * 0.28;
+    
+    const platform = createPlatform(y, rotation, color, dangerChance, i);
+    platforms.push(platform);
   }
 }
 
-function createPlatform(y, rotation, color, maxDangerParts, index) {
+function createPlatform(y, baseRotation, color, dangerChance, index) {
   const segments = [];
   const segmentAngle = (Math.PI * 2) / CONFIG.segmentsPerPlatform;
-  const gapAngle = CONFIG.segmentGap;
   
-  // Assign danger parts - matching original Unity logic
-  const dangerIndices = new Set();
+  // Determine which segments are dangerous
+  const dangerSet = new Set();
+  let safeCount = CONFIG.segmentsPerPlatform;
+  
   for (let i = 0; i < CONFIG.segmentsPerPlatform; i++) {
-    if (i <= maxDangerParts && Math.random() < 0.9) {
-      dangerIndices.add(i);
+    if (safeCount > CONFIG.minSafeSegments && Math.random() < dangerChance) {
+      dangerSet.add(i);
+      safeCount--;
     }
   }
   
   for (let i = 0; i < CONFIG.segmentsPerPlatform; i++) {
-    const isDanger = dangerIndices.has(i);
-    const centerAngle = rotation + i * segmentAngle;
-    const halfArc = (segmentAngle - gapAngle) / 2;
-    const startAngle = centerAngle - halfArc;
-    const arcLength = segmentAngle - gapAngle;
+    const isDanger = dangerSet.has(i);
+    const startAngle = baseRotation + i * segmentAngle + 0.02;
+    const arcLength = segmentAngle - 0.04;
     
-    const segColor = isDanger ? 0x111111 : color;
-    const seg = createSegment(startAngle, arcLength, segColor);
-    seg.position.y = y;
-    seg.userData = {
-      isDanger: isDanger,
-      startAngle: startAngle,
+    const segment = createSegment(startAngle, arcLength, isDanger ? 0x1a1a1a : color, isDanger);
+    segment.position.y = y;
+    segment.userData = {
+      isDanger,
+      startAngle,
       endAngle: startAngle + arcLength,
       platformIndex: index
     };
-    seg.castShadow = true;
-    seg.receiveShadow = true;
-    platformsContainer.add(seg);
-    segments.push(seg);
+    towerGroup.add(segment);
+    segments.push(segment);
   }
   
   return { y, segments, destroyed: false };
 }
 
-function createSegment(startAngle, arcLength, color) {
+function createSegment(startAngle, arcLength, color, isDanger) {
   const inner = CONFIG.platformInnerRadius;
   const outer = CONFIG.platformRadius;
   const thickness = CONFIG.platformThickness;
-  
-  const geometry = new THREE.BufferGeometry();
-  const vertices = [];
-  const indices = [];
   const steps = 12;
-  const halfThick = thickness / 2;
   
-  // Top face vertices
+  // Create shape
+  const shape = new THREE.Shape();
+  
   for (let i = 0; i <= steps; i++) {
     const a = startAngle + (i / steps) * arcLength;
-    const cos = Math.cos(a);
-    const sin = Math.sin(a);
-    vertices.push(cos * outer, halfThick, sin * outer);
-    vertices.push(cos * inner, halfThick, sin * inner);
+    const x = Math.cos(a) * outer;
+    const z = Math.sin(a) * outer;
+    if (i === 0) shape.moveTo(x, z);
+    else shape.lineTo(x, z);
   }
   
-  // Bottom face vertices
-  for (let i = 0; i <= steps; i++) {
+  for (let i = steps; i >= 0; i--) {
     const a = startAngle + (i / steps) * arcLength;
-    const cos = Math.cos(a);
-    const sin = Math.sin(a);
-    vertices.push(cos * outer, -halfThick, sin * outer);
-    vertices.push(cos * inner, -halfThick, sin * inner);
+    shape.lineTo(Math.cos(a) * inner, Math.sin(a) * inner);
   }
+  shape.closePath();
   
-  const topStart = 0;
-  const bottomStart = (steps + 1) * 2;
+  const geometry = new THREE.ExtrudeGeometry(shape, {
+    depth: thickness,
+    bevelEnabled: true,
+    bevelThickness: 0.04,
+    bevelSize: 0.04,
+    bevelSegments: 2
+  });
+  geometry.rotateX(-Math.PI / 2);
+  geometry.translate(0, thickness / 2, 0);
   
-  // Top face triangles
-  for (let i = 0; i < steps; i++) {
-    const o1 = topStart + i * 2;
-    const i1 = topStart + i * 2 + 1;
-    const o2 = topStart + (i + 1) * 2;
-    const i2 = topStart + (i + 1) * 2 + 1;
-    indices.push(o1, i1, o2);
-    indices.push(i1, i2, o2);
-  }
-  
-  // Bottom face triangles
-  for (let i = 0; i < steps; i++) {
-    const o1 = bottomStart + i * 2;
-    const i1 = bottomStart + i * 2 + 1;
-    const o2 = bottomStart + (i + 1) * 2;
-    const i2 = bottomStart + (i + 1) * 2 + 1;
-    indices.push(o1, o2, i1);
-    indices.push(i1, o2, i2);
-  }
-  
-  // Outer arc face
-  for (let i = 0; i < steps; i++) {
-    const to1 = topStart + i * 2;
-    const to2 = topStart + (i + 1) * 2;
-    const bo1 = bottomStart + i * 2;
-    const bo2 = bottomStart + (i + 1) * 2;
-    indices.push(to1, to2, bo1);
-    indices.push(bo1, to2, bo2);
-  }
-  
-  // Inner arc face
-  for (let i = 0; i < steps; i++) {
-    const ti1 = topStart + i * 2 + 1;
-    const ti2 = topStart + (i + 1) * 2 + 1;
-    const bi1 = bottomStart + i * 2 + 1;
-    const bi2 = bottomStart + (i + 1) * 2 + 1;
-    indices.push(ti1, bi1, ti2);
-    indices.push(bi1, bi2, ti2);
-  }
-  
-  // Side faces
-  const ts1o = topStart;
-  const ts1i = topStart + 1;
-  const bs1o = bottomStart;
-  const bs1i = bottomStart + 1;
-  indices.push(ts1o, bs1o, ts1i);
-  indices.push(ts1i, bs1o, bs1i);
-  
-  const te1o = topStart + steps * 2;
-  const te1i = topStart + steps * 2 + 1;
-  const be1o = bottomStart + steps * 2;
-  const be1i = bottomStart + steps * 2 + 1;
-  indices.push(te1o, te1i, be1o);
-  indices.push(te1i, be1i, be1o);
-  
-  geometry.setAttribute('position', new THREE.Float32BufferAttribute(vertices, 3));
-  geometry.setIndex(indices);
-  geometry.computeVertexNormals();
-  
-  const mat = new THREE.MeshStandardMaterial({ 
-    color, 
-    metalness: 0.1, 
-    roughness: 0.7,
-    side: THREE.DoubleSide
+  const material = new THREE.MeshStandardMaterial({
+    color,
+    metalness: isDanger ? 0.85 : 0.15,
+    roughness: isDanger ? 0.25 : 0.55,
   });
   
-  return new THREE.Mesh(geometry, mat);
+  const mesh = new THREE.Mesh(geometry, material);
+  mesh.castShadow = true;
+  mesh.receiveShadow = true;
+  
+  return mesh;
 }
 
 function createFinishPlatform() {
-  const y = -(CONFIG.platformCount * CONFIG.platformHeightOffset) - 1;
-  const geo = new THREE.CylinderGeometry(CONFIG.platformRadius, CONFIG.platformRadius, 0.8, 32);
+  const y = -(CONFIG.platformCount * CONFIG.platformGap) - 2;
+  
+  // Golden finish platform
+  const geo = new THREE.CylinderGeometry(CONFIG.platformRadius, CONFIG.platformRadius * 1.15, 1.2, 32);
   const mat = new THREE.MeshStandardMaterial({
     color: 0xffd700,
-    metalness: 0.6,
-    roughness: 0.3,
+    metalness: 0.8,
+    roughness: 0.15,
     emissive: 0xffd700,
     emissiveIntensity: 0.2
   });
   finishPlatform = new THREE.Mesh(geo, mat);
   finishPlatform.position.y = y;
   finishPlatform.receiveShadow = true;
-  platformsContainer.add(finishPlatform);
+  towerGroup.add(finishPlatform);
+  
+  // Trophy/star on top
+  const starGeo = new THREE.OctahedronGeometry(0.5, 0);
+  const starMat = new THREE.MeshStandardMaterial({
+    color: 0xffffff,
+    emissive: 0xffffcc,
+    emissiveIntensity: 0.6,
+    metalness: 0.9,
+    roughness: 0.1
+  });
+  const star = new THREE.Mesh(starGeo, starMat);
+  star.position.y = y + 1.2;
+  star.userData.isStar = true;
+  towerGroup.add(star);
 }
 
 function createBall() {
   const geo = new THREE.SphereGeometry(CONFIG.ballRadius, 32, 32);
   const mat = new THREE.MeshStandardMaterial({
-    color: palette.main,
-    metalness: 0.3,
-    roughness: 0.4
+    color: 0xffffff,
+    metalness: 0.15,
+    roughness: 0.25,
   });
+  
   ball = new THREE.Mesh(geo, mat);
-  ball.position.set(1.2, 1.5, 0);
+  ball.position.set(1.2, 2.5, 0);
   ball.castShadow = true;
-  ball.visible = true;
-  ballVelocity = 0;
   scene.add(ball);
-}
-
-function createTrail() {
-  trailPoints = [];
-  for (let i = 0; i < TRAIL_LENGTH; i++) {
-    trailPoints.push(ball.position.clone());
-  }
   
-  const geometry = new THREE.BufferGeometry();
-  const positions = new Float32Array(TRAIL_LENGTH * 3);
-  const colors = new Float32Array(TRAIL_LENGTH * 3);
-  
-  geometry.setAttribute('position', new THREE.BufferAttribute(positions, 3));
-  geometry.setAttribute('color', new THREE.BufferAttribute(colors, 3));
-  
-  const material = new THREE.LineBasicMaterial({
-    vertexColors: true,
+  // Glow ring around ball
+  const ringGeo = new THREE.TorusGeometry(CONFIG.ballRadius * 1.3, 0.025, 8, 32);
+  const ringMat = new THREE.MeshBasicMaterial({ 
+    color: palette.primary,
     transparent: true,
-    opacity: 0.8,
-    linewidth: 2
+    opacity: 0.7
   });
-  
-  trailMesh = new THREE.Line(geometry, material);
-  scene.add(trailMesh);
-}
-
-function updateTrail() {
-  if (!trailMesh || !ball) return;
-  
-  for (let i = TRAIL_LENGTH - 1; i > 0; i--) {
-    trailPoints[i].copy(trailPoints[i - 1]);
-  }
-  trailPoints[0].copy(ball.position);
-  
-  const positions = trailMesh.geometry.attributes.position.array;
-  const colors = trailMesh.geometry.attributes.color.array;
-  const trailColor = new THREE.Color(palette.main);
-  
-  for (let i = 0; i < TRAIL_LENGTH; i++) {
-    positions[i * 3] = trailPoints[i].x;
-    positions[i * 3 + 1] = trailPoints[i].y;
-    positions[i * 3 + 2] = trailPoints[i].z;
-    
-    const alpha = 1 - (i / TRAIL_LENGTH);
-    colors[i * 3] = trailColor.r * alpha;
-    colors[i * 3 + 1] = trailColor.g * alpha;
-    colors[i * 3 + 2] = trailColor.b * alpha;
-  }
-  
-  trailMesh.geometry.attributes.position.needsUpdate = true;
-  trailMesh.geometry.attributes.color.needsUpdate = true;
-}
-
-function createFootprint(position) {
-  const geo = new THREE.CircleGeometry(CONFIG.ballRadius * 0.8, 16);
-  const mat = new THREE.MeshBasicMaterial({
-    color: palette.main,
-    transparent: true,
-    opacity: 0.6,
-    side: THREE.DoubleSide
-  });
-  const footprint = new THREE.Mesh(geo, mat);
-  footprint.position.copy(position);
-  footprint.position.y += 0.01;
-  footprint.rotation.x = -Math.PI / 2;
-  footprint.userData.life = 2.0;
-  platformsContainer.add(footprint);
-  footprints.push(footprint);
-}
-
-function updateFootprints(dt) {
-  for (let i = footprints.length - 1; i >= 0; i--) {
-    const fp = footprints[i];
-    fp.userData.life -= dt;
-    fp.material.opacity = Math.max(0, fp.userData.life / 2.0) * 0.6;
-    
-    if (fp.userData.life <= 0) {
-      platformsContainer.remove(fp);
-      footprints.splice(i, 1);
-    }
-  }
-}
-
-function updateFireParticles(dt) {
-  if (isInvincible && ball && Math.random() < 0.3) {
-    const geo = new THREE.SphereGeometry(0.05 + Math.random() * 0.05, 8, 8);
-    const mat = new THREE.MeshBasicMaterial({
-      color: Math.random() < 0.5 ? 0xff4400 : 0xffaa00,
-      transparent: true,
-      opacity: 1
-    });
-    const particle = new THREE.Mesh(geo, mat);
-    particle.position.copy(ball.position);
-    particle.position.x += (Math.random() - 0.5) * 0.3;
-    particle.position.z += (Math.random() - 0.5) * 0.3;
-    particle.userData = {
-      velocity: new THREE.Vector3(
-        (Math.random() - 0.5) * 2,
-        2 + Math.random() * 2,
-        (Math.random() - 0.5) * 2
-      ),
-      life: 0.5 + Math.random() * 0.3
-    };
-    scene.add(particle);
-    fireParticles.push(particle);
-  }
-  
-  for (let i = fireParticles.length - 1; i >= 0; i--) {
-    const p = fireParticles[i];
-    p.position.add(p.userData.velocity.clone().multiplyScalar(dt));
-    p.userData.velocity.y -= 5 * dt;
-    p.userData.life -= dt;
-    p.material.opacity = p.userData.life / 0.8;
-    p.scale.multiplyScalar(0.97);
-    
-    if (p.userData.life <= 0) {
-      scene.remove(p);
-      fireParticles.splice(i, 1);
-    }
-  }
+  const ring = new THREE.Mesh(ringGeo, ringMat);
+  ring.rotation.x = Math.PI / 2;
+  ball.add(ring);
 }
 
 
-// ===== GAME LOOP =====
-function animate(currentTime) {
+// ============================================
+// GAME LOOP
+// ============================================
+let lastTime = performance.now();
+
+function animate(currentTime = performance.now()) {
   requestAnimationFrame(animate);
   
-  const dt = Math.min((currentTime - lastTime) / 1000, 0.05) || 0.016;
+  const dt = Math.min((currentTime - lastTime) / 1000, 0.05);
   lastTime = currentTime;
   
-  if (isPlaying) {
+  if (gameState === 'playing') {
     updateBall(dt);
     checkCollisions();
-    updateInvincibleTimer(dt);
-    updateTrail();
-    updateFireParticles(dt);
   }
   
-  // Rotate platforms continuously (like Rotator.cs)
-  if (platformsContainer) {
-    platformsContainer.rotation.y += (CONFIG.platformRotationSpeed * Math.PI / 180) * dt;
+  // Rotate tower
+  if (towerGroup) {
+    towerGroup.rotation.y += CONFIG.rotationSpeed * Math.PI / 180 * dt;
   }
+  
+  // Animate star
+  towerGroup?.children.forEach(child => {
+    if (child.userData?.isStar) {
+      child.rotation.y += dt * 2.5;
+      child.rotation.x = Math.sin(currentTime * 0.002) * 0.3;
+    }
+  });
   
   updateParticles(dt);
-  updateFootprints(dt);
   updateCamera(dt);
   
-  // Pitch reset timer (like original FXHandler)
-  if (pitchResetTimer > 0) {
-    pitchResetTimer -= dt;
-    if (pitchResetTimer <= 0) {
-      currentPitch = CONFIG.basePitch;
-    }
-  }
+  // Decay shake
+  shakeIntensity *= 0.9;
   
   renderer.render(scene, camera);
 }
 
 function updateBall(dt) {
   if (isHolding) {
-    ballVelocity = -CONFIG.moveSpeed;
+    // Smashing down
+    ballVelocity = -CONFIG.smashSpeed;
+    
+    // Squash effect
+    ball.scale.x = THREE.MathUtils.lerp(ball.scale.x, 1.15, 0.3);
+    ball.scale.y = THREE.MathUtils.lerp(ball.scale.y, 0.8, 0.3);
+    ball.scale.z = THREE.MathUtils.lerp(ball.scale.z, 1.15, 0.3);
   } else {
+    // Gravity
     ballVelocity -= CONFIG.gravity * dt;
+    
+    // Return to normal shape
+    ball.scale.x = THREE.MathUtils.lerp(ball.scale.x, 1, 0.15);
+    ball.scale.y = THREE.MathUtils.lerp(ball.scale.y, 1, 0.15);
+    ball.scale.z = THREE.MathUtils.lerp(ball.scale.z, 1, 0.15);
   }
   
   ball.position.y += ballVelocity * dt;
   
-  // Invincible visual effect
-  if (isInvincible) {
-    ball.material.emissive.setHex(0xff0000);
-    ball.material.emissiveIntensity = 0.5 + Math.sin(performance.now() * 0.01) * 0.3;
-  } else {
-    ball.material.emissive.setHex(0x000000);
-    ball.material.emissiveIntensity = 0;
-  }
+  // Roll animation
+  ball.rotation.z += ballVelocity * dt * 1.5;
 }
 
+// ============================================
+// COLLISION DETECTION
+// ============================================
 function checkCollisions() {
   const ballBottom = ball.position.y - CONFIG.ballRadius;
   const ballX = ball.position.x;
   const ballZ = ball.position.z;
   const distFromCenter = Math.sqrt(ballX * ballX + ballZ * ballZ);
   
+  // Get ball angle in world space, then convert to tower local space
   let ballAngle = Math.atan2(ballZ, ballX);
   if (ballAngle < 0) ballAngle += Math.PI * 2;
   
-  const containerRotation = platformsContainer ? platformsContainer.rotation.y : 0;
-  let localBallAngle = ballAngle - containerRotation;
-  
-  while (localBallAngle < 0) localBallAngle += Math.PI * 2;
-  while (localBallAngle >= Math.PI * 2) localBallAngle -= Math.PI * 2;
+  let localAngle = ballAngle - towerGroup.rotation.y;
+  while (localAngle < 0) localAngle += Math.PI * 2;
+  while (localAngle >= Math.PI * 2) localAngle -= Math.PI * 2;
   
   // Check finish platform
-  const finishTop = finishPlatform.position.y + 0.4;
+  const finishTop = finishPlatform.position.y + 0.6;
   if (ballBottom <= finishTop && ballVelocity < 0) {
-    bounce(finishTop + CONFIG.ballRadius);
+    ball.position.y = finishTop + CONFIG.ballRadius;
+    ballVelocity = CONFIG.bounceSpeed * 0.5;
     winGame();
     return;
   }
@@ -729,13 +585,18 @@ function checkCollisions() {
     const platTop = platform.y + CONFIG.platformThickness / 2;
     const platBottom = platform.y - CONFIG.platformThickness / 2;
     
+    // Check if ball is at platform height
     if (ballBottom <= platTop && ballBottom > platBottom - 0.2) {
-      if (distFromCenter >= CONFIG.platformInnerRadius && distFromCenter <= CONFIG.platformRadius) {
+      // Check if ball is over platform (not hole)
+      if (distFromCenter >= CONFIG.platformInnerRadius - 0.1 && 
+          distFromCenter <= CONFIG.platformRadius + 0.1) {
+        
+        // Find which segment
         for (const seg of platform.segments) {
           if (!seg.visible) continue;
           
-          if (isAngleInSegment(localBallAngle, seg.userData.startAngle, seg.userData.endAngle)) {
-            handleCollision(seg, platform, platTop);
+          if (isAngleInRange(localAngle, seg.userData.startAngle, seg.userData.endAngle)) {
+            handlePlatformHit(seg, platform, platTop);
             return;
           }
         }
@@ -744,272 +605,324 @@ function checkCollisions() {
   }
 }
 
-function isAngleInSegment(angle, startAngle, endAngle) {
+function isAngleInRange(angle, start, end) {
   const twoPi = Math.PI * 2;
   angle = ((angle % twoPi) + twoPi) % twoPi;
-  startAngle = ((startAngle % twoPi) + twoPi) % twoPi;
-  endAngle = ((endAngle % twoPi) + twoPi) % twoPi;
+  start = ((start % twoPi) + twoPi) % twoPi;
+  end = ((end % twoPi) + twoPi) % twoPi;
   
-  if (startAngle <= endAngle) {
-    return angle >= startAngle && angle <= endAngle;
-  } else {
-    return angle >= startAngle || angle <= endAngle;
+  if (start <= end) {
+    return angle >= start && angle <= end;
   }
+  return angle >= start || angle <= end;
 }
 
-function handleCollision(segment, platform, platformTop) {
+function handlePlatformHit(segment, platform, platformTop) {
   if (isHolding) {
-    if (segment.userData.isDanger === true && !isInvincible) {
+    // Smashing
+    if (segment.userData.isDanger) {
+      // Hit black segment - game over
       loseGame();
-      return;
+    } else {
+      // Destroy platform
+      destroyPlatform(platform);
     }
-    destroyPlatform(platform);
   } else if (ballVelocity < 0) {
+    // Bouncing
     bounce(platformTop + CONFIG.ballRadius);
+    combo = 0;
   }
 }
 
 function bounce(newY) {
-  const footprintPos = new THREE.Vector3(ball.position.x, newY - CONFIG.ballRadius, ball.position.z);
-  const localPos = platformsContainer.worldToLocal(footprintPos.clone());
-  createFootprint(localPos);
-  
   ball.position.y = newY;
-  ballVelocity = CONFIG.jumpPower;
+  ballVelocity = CONFIG.bounceSpeed;
+  
+  // Stretch effect
+  ball.scale.set(0.85, 1.25, 0.85);
+  
+  playSound('bounce');
+  vibrate(10);
+  
+  // Small bounce particles
+  for (let i = 0; i < 4; i++) {
+    createSparkle(ball.position.clone(), 0xffffff, 0.5);
+  }
 }
 
+// ============================================
+// DESTRUCTION
+// ============================================
 function destroyPlatform(platform) {
   if (platform.destroyed) return;
   platform.destroyed = true;
-  destroyedCount++;
+  destroyedPlatforms++;
   
-  playBreakSound();
-  
-  for (const seg of platform.segments) {
-    if (!seg.visible) continue;
-    throwSegment(seg, platform.y);
+  // Combo system
+  const now = performance.now();
+  if (now - lastDestroyTime < 400) {
+    combo++;
+  } else {
+    combo = 1;
   }
+  lastDestroyTime = now;
   
-  score += isInvincible ? 2 : 1;
-  updateUI();
-  updateProgress();
+  // Score with combo multiplier
+  const points = combo;
+  score += points;
   
-  // Invincibility logic
-  if (!isInvincible) {
-    destroyedPlatformCount++;
-    
-    if (destroyedPlatformCount >= CONFIG.platformsToEnableIndicator) {
-      invincibleTimerRunning = false;
-      invincibleTimer += CONFIG.secondsPerPlatform;
-      
-      if (invincibleTimer >= CONFIG.secondsToEnableInvincible) {
-        activateInvincible();
-      }
-      updateInvincibleUI();
+  // Effects
+  playSound('smash');
+  vibrate(combo > 3 ? [20, 10, 20] : 15);
+  shakeIntensity = Math.min(0.15 + combo * 0.03, 0.4);
+  
+  // Destroy all segments
+  for (const seg of platform.segments) {
+    if (seg.visible) {
+      explodeSegment(seg, platform.y);
     }
   }
+  
+  updateUI();
 }
 
-function throwSegment(seg, platformY) {
-  seg.visible = false;
+function explodeSegment(segment, platformY) {
+  segment.visible = false;
   
-  const angle = (seg.userData.startAngle + seg.userData.endAngle) / 2;
-  const x = Math.cos(angle) * 1.5;
-  const z = Math.sin(angle) * 1.5;
-  const pos = new THREE.Vector3(x, platformY, z);
-  const color = seg.material.color.getHex();
+  // Calculate world position
+  const angle = (segment.userData.startAngle + segment.userData.endAngle) / 2;
+  const radius = (CONFIG.platformInnerRadius + CONFIG.platformRadius) / 2;
+  const worldAngle = angle + towerGroup.rotation.y;
   
-  const throwX = x > 0 ? 8 : -8;
-  const throwY = platformY + 13;
+  const pos = new THREE.Vector3(
+    Math.cos(worldAngle) * radius,
+    platformY,
+    Math.sin(worldAngle) * radius
+  );
   
-  for (let i = 0; i < 3; i++) {
-    createDebris(pos.clone(), color, new THREE.Vector3(throwX, throwY, z));
+  const color = segment.material.color.getHex();
+  
+  // Debris chunks
+  for (let i = 0; i < 5; i++) {
+    createDebris(pos.clone(), color);
+  }
+  
+  // Sparkles
+  for (let i = 0; i < 10; i++) {
+    createSparkle(pos.clone(), color, 1);
   }
 }
 
-function createDebris(pos, color, throwTarget) {
-  const size = 0.15 + Math.random() * 0.1;
+// ============================================
+// PARTICLES
+// ============================================
+function createDebris(pos, color) {
+  const size = 0.08 + Math.random() * 0.12;
   const geo = new THREE.BoxGeometry(size, size, size);
-  const mat = new THREE.MeshStandardMaterial({ color });
+  const mat = new THREE.MeshStandardMaterial({ 
+    color,
+    metalness: 0.3,
+    roughness: 0.6
+  });
   const mesh = new THREE.Mesh(geo, mat);
   
   mesh.position.copy(pos);
-  mesh.position.x += (Math.random() - 0.5);
-  mesh.position.z += (Math.random() - 0.5);
+  mesh.position.x += (Math.random() - 0.5) * 0.4;
+  mesh.position.z += (Math.random() - 0.5) * 0.4;
   
-  const dir = throwTarget.clone().sub(pos).normalize();
-  const speed = 8 + Math.random() * 4;
+  const velocity = new THREE.Vector3(
+    (Math.random() - 0.5) * 6,
+    4 + Math.random() * 4,
+    (Math.random() - 0.5) * 6
+  );
   
+  const rotSpeed = new THREE.Vector3(
+    (Math.random() - 0.5) * 12,
+    (Math.random() - 0.5) * 12,
+    (Math.random() - 0.5) * 12
+  );
+  
+  mesh.castShadow = true;
   scene.add(mesh);
+  
   particles.push({
     mesh,
-    velocity: dir.multiplyScalar(speed),
-    rotSpeed: new THREE.Vector3(
-      (Math.random() - 0.5) * 10,
-      (Math.random() - 0.5) * 10,
-      (Math.random() - 0.5) * 10
-    ),
-    life: 1.5
+    velocity,
+    rotSpeed,
+    life: 1.2 + Math.random() * 0.5,
+    type: 'debris'
+  });
+}
+
+function createSparkle(pos, color, scale = 1) {
+  const geo = new THREE.SphereGeometry(0.035 * scale, 6, 6);
+  const mat = new THREE.MeshBasicMaterial({
+    color,
+    transparent: true,
+    opacity: 1
+  });
+  const mesh = new THREE.Mesh(geo, mat);
+  
+  mesh.position.copy(pos);
+  mesh.position.x += (Math.random() - 0.5) * 0.3;
+  mesh.position.z += (Math.random() - 0.5) * 0.3;
+  
+  const velocity = new THREE.Vector3(
+    (Math.random() - 0.5) * 3 * scale,
+    Math.random() * 2.5 * scale + 1,
+    (Math.random() - 0.5) * 3 * scale
+  );
+  
+  scene.add(mesh);
+  
+  particles.push({
+    mesh,
+    velocity,
+    life: 0.4 + Math.random() * 0.2,
+    type: 'sparkle'
   });
 }
 
 function updateParticles(dt) {
   for (let i = particles.length - 1; i >= 0; i--) {
     const p = particles[i];
+    
+    // Gravity
     p.velocity.y -= CONFIG.gravity * dt * 0.5;
+    
+    // Move
     p.mesh.position.add(p.velocity.clone().multiplyScalar(dt));
-    p.mesh.rotation.x += p.rotSpeed.x * dt;
-    p.mesh.rotation.y += p.rotSpeed.y * dt;
-    p.mesh.rotation.z += p.rotSpeed.z * dt;
+    
+    // Rotate debris
+    if (p.rotSpeed) {
+      p.mesh.rotation.x += p.rotSpeed.x * dt;
+      p.mesh.rotation.y += p.rotSpeed.y * dt;
+      p.mesh.rotation.z += p.rotSpeed.z * dt;
+    }
+    
     p.life -= dt;
     
+    // Fade sparkles
+    if (p.type === 'sparkle') {
+      p.mesh.material.opacity = Math.max(0, p.life * 2.5);
+      p.mesh.scale.multiplyScalar(0.96);
+    }
+    
+    // Remove dead particles
     if (p.life <= 0) {
       scene.remove(p.mesh);
+      p.mesh.geometry.dispose();
+      p.mesh.material.dispose();
       particles.splice(i, 1);
     }
   }
 }
 
-// ===== INVINCIBILITY =====
-function updateInvincibleTimer(dt) {
-  if (isInvincible) {
-    invincibleTimer -= dt;
-    updateInvincibleUI();
-    
-    if (invincibleTimer <= 0) {
-      deactivateInvincible();
-    }
-  } else if (invincibleTimerRunning && invincibleTimer > 0) {
-    invincibleTimer -= dt;
-    updateInvincibleUI();
-    
-    if (invincibleTimer <= 0) {
-      resetInvincibleProgress();
-    }
-  }
-}
-
-function activateInvincible() {
-  isInvincible = true;
-  invincibleTimer = CONFIG.invincibleSeconds;
-  invincibleTimerRunning = false;
-  ui.invFill.classList.add('active');
-  updateInvincibleUI();
-}
-
-function deactivateInvincible() {
-  isInvincible = false;
-  resetInvincibleProgress();
-  ui.invFill.classList.remove('active');
-}
-
-function resetInvincibleProgress() {
-  destroyedPlatformCount = 0;
-  invincibleTimer = 0;
-  invincibleTimerRunning = false;
-  updateInvincibleUI();
-}
-
-function updateInvincibleUI() {
-  const show = destroyedPlatformCount >= CONFIG.platformsToEnableIndicator || isInvincible;
-  ui.invBar.classList.toggle('show', show);
-  
-  let fill;
-  if (isInvincible) {
-    fill = invincibleTimer / CONFIG.invincibleSeconds;
-  } else {
-    fill = invincibleTimer / CONFIG.secondsToEnableInvincible;
-  }
-  ui.invFill.style.width = `${Math.max(0, fill) * 100}%`;
-}
-
-// ===== CAMERA =====
+// ============================================
+// CAMERA
+// ============================================
 function updateCamera(dt) {
   if (!ball) return;
   
-  const tempTargetY = ball.position.y + CONFIG.cameraTrackOffset.y;
+  const targetY = ball.position.y + CONFIG.cameraHeight;
   
-  if (isHolding && tempTargetY < cameraTargetY) {
-    cameraTargetY = tempTargetY;
+  // Only follow downward
+  if (targetY < cameraTargetY) {
+    cameraTargetY = targetY;
   }
   
-  // Smooth damp
-  const smoothTime = CONFIG.cameraTrackDelay;
-  const omega = 2 / smoothTime;
-  const x = omega * dt;
-  const exp = 1 / (1 + x + 0.48 * x * x + 0.235 * x * x * x);
-  const delta = camera.position.y - cameraTargetY;
-  const temp = (cameraVelocity + omega * delta) * dt;
-  cameraVelocity = (cameraVelocity - omega * temp) * exp;
-  camera.position.y = cameraTargetY + (delta + temp) * exp;
+  // Smooth follow
+  camera.position.y += (cameraTargetY - camera.position.y) * CONFIG.cameraSmooth;
   
-  camera.position.x = 0;
-  camera.position.z = 8.3;
+  // Screen shake
+  camera.position.x = (Math.random() - 0.5) * shakeIntensity;
+  camera.position.z = CONFIG.cameraDistance + (Math.random() - 0.5) * shakeIntensity;
+  
+  camera.lookAt(0, camera.position.y - CONFIG.cameraHeight, 0);
 }
 
-// ===== GAME STATES =====
+// ============================================
+// GAME STATES
+// ============================================
 function winGame() {
   gameState = 'win';
-  isPlaying = false;
   isHolding = false;
-  saveBestScore();
-  playWinSound();
   
-  ui.winLevel.textContent = `Level ${level} Cleared!`;
-  ui.win.classList.remove('hidden');
+  playSound('win');
+  vibrate([50, 30, 50, 30, 100]);
+  
+  saveHighScore();
+  
+  // Victory particles
+  for (let i = 0; i < 40; i++) {
+    setTimeout(() => {
+      if (ball) {
+        createSparkle(
+          new THREE.Vector3(
+            ball.position.x + (Math.random() - 0.5) * 2,
+            ball.position.y + Math.random() * 2,
+            ball.position.z + (Math.random() - 0.5) * 2
+          ),
+          Math.random() < 0.5 ? 0xffd700 : 0xffffff,
+          1.5
+        );
+      }
+    }, i * 40);
+  }
+  
+  ui.winLevel.textContent = `Level ${level} Complete!`;
+  setTimeout(() => ui.win.classList.remove('hidden'), 500);
 }
 
 function loseGame() {
   gameState = 'lose';
-  isPlaying = false;
   isHolding = false;
-  saveBestScore();
   
-  ui.finalScore.textContent = score;
-  ui.bestScore.textContent = bestScore;
-  ui.lose.classList.remove('hidden');
+  playSound('hit');
+  vibrate([100, 50, 100]);
+  shakeIntensity = 0.5;
+  
+  saveHighScore();
   
   // Explode ball
-  for (let i = 0; i < 20; i++) {
-    createDebris(
-      ball.position.clone(),
-      palette.main,
-      new THREE.Vector3(
-        (Math.random() - 0.5) * 10,
-        ball.position.y + 5,
-        (Math.random() - 0.5) * 10
-      )
-    );
+  for (let i = 0; i < 30; i++) {
+    createDebris(ball.position.clone(), palette.primary);
   }
   ball.visible = false;
+  
+  ui.finalScore.textContent = score;
+  ui.bestScore.textContent = highScore;
+  setTimeout(() => ui.lose.classList.remove('hidden'), 300);
 }
 
-function saveBestScore() {
-  if (score > bestScore) {
-    bestScore = score;
-    localStorage.setItem('stackBallBest', bestScore);
+function saveHighScore() {
+  if (score > highScore) {
+    highScore = score;
+    localStorage.setItem('stackball_high', highScore);
   }
 }
 
-// ===== UI =====
+// ============================================
+// UI
+// ============================================
 function updateUI() {
   ui.level.textContent = `Level ${level}`;
   ui.score.textContent = score;
+  
+  const progress = (destroyedPlatforms / CONFIG.platformCount) * 100;
+  ui.progress.style.width = `${progress}%`;
 }
 
-function updateProgress() {
-  const pct = (destroyedCount / CONFIG.platformCount) * 100;
-  ui.progress.style.width = `${pct}%`;
-}
-
-// ===== UTILS =====
+// ============================================
+// UTILITIES
+// ============================================
 function lerpColor(a, b, t) {
   const c1 = new THREE.Color(a);
   const c2 = new THREE.Color(b);
   return c1.lerp(c2, t).getHex();
 }
 
-// Start
+// Start the game
 init();
 
 })();
