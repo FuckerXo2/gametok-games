@@ -17,14 +17,20 @@ var splats = [];
 var fruitId = 0;
 
 var fruitImages = [
-  'https://raw.githubusercontent.com/Saumya-07/Fruit-Slicer/master/images/1.png',
-  'https://raw.githubusercontent.com/Saumya-07/Fruit-Slicer/master/images/2.png',
-  'https://raw.githubusercontent.com/Saumya-07/Fruit-Slicer/master/images/3.png',
-  'https://raw.githubusercontent.com/Saumya-07/Fruit-Slicer/master/images/4.png',
-  'https://raw.githubusercontent.com/Saumya-07/Fruit-Slicer/master/images/5.png',
+  'Banana.png',
+  'Orange.png',
+  'GreenApple.png',
+  'Watermelon.png',
 ];
 
-var juiceColors = ['#ff6b6b', '#ffa502', '#ffd32a', '#ff4757', '#8e44ad'];
+var slicedImages = [
+  'BananaSliced.png',
+  'OrangeSliced.png',
+  'GreenAppleSliced.png',
+  'WatermelonSliced.png',
+];
+
+var juiceColors = ['#ffe135', '#ffa502', '#7ed321', '#ff6b6b'];
 
 var bombImage = 'bomb.png';
 
@@ -280,44 +286,39 @@ function sliceFruit(index) {
   // Juice splat
   createSplat(f.x + 35, f.y + 35, juiceColors[f.colorIndex]);
   
-  // Create two halves that fly apart
-  createHalf(f, -1); // left half
-  createHalf(f, 1);  // right half
+  // Show sliced image and create two halves
+  var slicedSrc = slicedImages[f.colorIndex];
+  createSlicedHalf(f.x, f.y, slicedSrc, -1);
+  createSlicedHalf(f.x, f.y, slicedSrc, 1);
   
   // Remove original fruit
   if (f.el && f.el.parentNode) f.el.parentNode.removeChild(f.el);
   fruits.splice(index, 1);
 }
 
-function createHalf(f, dir) {
-  var half = document.createElement('div');
-  half.style.cssText = 'position:absolute;width:35px;height:70px;overflow:hidden;pointer-events:none;z-index:10;';
-  half.style.left = (f.x + (dir > 0 ? 35 : 0)) + 'px';
-  half.style.top = f.y + 'px';
+function createSlicedHalf(startX, startY, slicedSrc, dir) {
+  var half = document.createElement('img');
+  half.src = slicedSrc;
+  half.style.cssText = 'position:absolute;width:50px;height:50px;pointer-events:none;z-index:10;';
+  half.style.left = (startX + 10) + 'px';
+  half.style.top = startY + 'px';
   
-  var img = document.createElement('img');
-  img.src = f.el.src;
-  img.style.cssText = 'width:70px;height:70px;position:absolute;';
-  img.style.left = (dir > 0 ? '-35px' : '0') + 'px';
-  
-  half.appendChild(img);
   container.appendChild(half);
   
-  // Animate the half flying away
-  var vx = dir * (4 + Math.random() * 3);
-  var vy = -5 - Math.random() * 3;
+  var vx = dir * (5 + Math.random() * 3);
+  var vy = -6 - Math.random() * 4;
   var rotation = 0;
-  var rotSpeed = dir * (10 + Math.random() * 10);
-  var x = f.x + (dir > 0 ? 35 : 0);
-  var y = f.y;
+  var rotSpeed = dir * (15 + Math.random() * 10);
+  var x = startX + 10;
+  var y = startY;
   var alpha = 1;
   
   var animInterval = setInterval(function() {
-    vy += 0.6;
+    vy += 0.5;
     x += vx;
     y += vy;
     rotation += rotSpeed;
-    alpha -= 0.03;
+    alpha -= 0.025;
     
     half.style.left = x + 'px';
     half.style.top = y + 'px';
