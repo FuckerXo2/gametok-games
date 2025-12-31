@@ -1,0 +1,62 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Doodle Jump</title>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        html, body {
+            width: 100%; height: 100%;
+            background: #f5e6d3;
+            overflow: hidden;
+            touch-action: none;
+            user-select: none;
+            font-family: -apple-system, BlinkMacSystemFont, sans-serif;
+        }
+        #game { display: block; }
+        #ui {
+            position: fixed;
+            top: 20px; left: 20px;
+            z-index: 10;
+        }
+        .score { color: #333; font-size: 28px; font-weight: bold; }
+        #start-screen, #game-over {
+            position: fixed; inset: 0;
+            background: #f5e6d3;
+            display: flex; flex-direction: column;
+            align-items: center; justify-content: center;
+            z-index: 100;
+        }
+        #game-over { display: none; }
+        .title { font-size: 42px; font-weight: bold; color: #4a7c59; margin-bottom: 10px; }
+        .subtitle { color: #666; font-size: 16px; margin-bottom: 40px; }
+        .btn {
+            background: linear-gradient(135deg, #4a7c59 0%, #3d6b4a 100%);
+            color: #fff; border: none;
+            padding: 16px 48px; font-size: 18px; font-weight: bold;
+            border-radius: 30px; cursor: pointer;
+        }
+        .final-score { font-size: 64px; font-weight: bold; color: #4a7c59; margin: 20px 0; }
+        .icon { font-size: 60px; margin-bottom: 20px; }
+        .hidden { display: none !important; }
+    </style>
+</head>
+<body>
+    <canvas id="game"></canvas>
+    <div id="ui" class="hidden"><div class="score" id="score">0</div></div>
+    <div id="start-screen">
+        <div class="icon">🐸</div>
+        <div class="title">Doodle Jump</div>
+        <div class="subtitle">Tilt or drag to move!</div>
+        <button class="btn" id="start-btn">PLAY</button>
+    </div>
+    <div id="game-over">
+        <div class="title">Game Over</div>
+        <div class="final-score" id="final-score">0</div>
+        <div class="subtitle">height</div>
+        <button class="btn" id="restart-btn">PLAY AGAIN</button>
+    </div>
+    <script src="game.js"></script>
+</body>
+</html>
