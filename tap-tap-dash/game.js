@@ -1,4 +1,4 @@
-// Tap Tap Dash - Tap to change direction
+// Tap Tap Dash - Tap to turn at corners
 (function() {
     'use strict';
 
@@ -13,7 +13,7 @@
 
     const TILE_SIZE = 60;
     const PLAYER_SIZE = 20;
-    const SPEED = 5;
+    const SPEED = 4;
 
     function resize() {
         width = canvas.width = window.innerWidth;
@@ -33,25 +33,34 @@
 
     function generatePath() {
         path = [];
-        let x = Math.floor(width / 2 / TILE_SIZE);
+        const centerX = Math.floor(width / 2 / TILE_SIZE);
+        let x = centerX;
         let y = 0;
-        let dir = 'up'; // up, left, right
         
-        for (let i = 0; i < 200; i++) {
-            path.push({ x, y, dir });
-            
-            if (dir === 'up') {
+        // Start with a straight section going up
+        for (let i = 0; i < 5; i++) {
+            path.push({ x, y: y - i });
+        }
+        y = -4;
+        
+        // Generate zigzag path
+        for (let i = 0; i < 50; i++) {
+            // Go up for random amount
+            const upCount = 2 + Math.floor(Math.random() * 4);
+            for (let j = 0; j < upCount; j++) {
                 y--;
-                // Randomly turn
-                if (Math.random() < 0.3 && i > 5) {
-                    dir = Math.random() < 0.5 ? 'left' : 'right';
-                }
-            } else if (dir === 'left') {
-                x--;
-                if (Math.random() < 0.4 || x < 2) dir = 'up';
-            } else if (dir === 'right') {
-                x++;
-                if (Math.random() < 0.4 || x > Math.floor(width / TILE_SIZE) - 2) dir = 'up';
+                path.push({ x, y });
+            }
+            
+            // Turn left or right
+            const goLeft = Math.random() < 0.5;
+            const sideCount = 2 + Math.floor(Math.random() * 3);
+            
+            for (let j = 0; j < sideCount; j++) {
+                x += goLeft ? -1 : 1;
+                // Keep in bounds
+                x = Math.max(1, Math.min(Math.floor(width / TILE_SIZE) - 2, x));
+                path.push({ x, y });
             }
         }
     }
@@ -62,11 +71,12 @@
         player = {
             x: path[0].x * TILE_SIZE + TILE_SIZE / 2,
             y: path[0].y * TILE_SIZE + TILE_SIZE / 2,
-            dir: 'up' // up, left, right
+            dir: 'up', // up, left, right
+            nextDir: null
         };
         
         score = 0;
-        cameraY = 0;
+        cameraY = player.y - height * 0.7;
         gameState = 'playing';
         
         document.getElementById('start-screen').classList.add('hidden');
@@ -82,32 +92,42 @@
         const tap = () => {
             if (gameState !== 'playing') return;
             
-            // Change direction
+            // Toggle between up and sideways
             if (player.dir === 'up') {
-                // Check which way to turn based on path
-                const currentTile = getCurrentTile();
-                if (currentTile && currentTile.dir !== 'up') {
-                    player.dir = currentTile.dir;
-                } else {
-                    // Default turn right, then left
-                    player.dir = player.dir === 'up' ? 'right' : 'up';
+                // Look ahead to see which way the path goes
+                const nextTurn = findNextTurn();
+                if (nextTurn === 'left') {
+                    player.dir = 'left';
+                } else if (nextTurn === 'right') {
+                    player.dir = 'right';
                 }
             } else {
                 player.dir = 'up';
             }
         };
         
-        document.addEventListener('touchstart', tap, { passive: true });
+        document.addEventListener('touchstart', (e) => {
+            e.preventDefault();
+            tap();
+        }, { passive: false });
         document.addEventListener('mousedown', tap);
         document.addEventListener('keydown', (e) => {
             if (e.code === 'Space') tap();
         });
     }
 
-    function getCurrentTile() {
+    function findNextTurn() {
         const tileX = Math.floor(player.x / TILE_SIZE);
         const tileY = Math.floor(player.y / TILE_SIZE);
-        return path.find(p => p.x === tileX && p.y === tileY);
+        
+        // Look at nearby path tiles to determine turn direction
+        const hasLeft = path.some(p => p.x === tileX - 1 && Math.abs(p.y - tileY) <= 1);
+        const hasRight = path.some(p => p.x === tileX + 1 && Math.abs(p.y - tileY) <= 1);
+        
+        if (hasLeft && !hasRight) return 'left';
+        if (hasRight && !hasLeft) return 'right';
+        if (hasLeft) return 'left'; // Default to left if both
+        return 'right';
     }
 
     function isOnPath(x, y) {
@@ -130,28 +150,34 @@
 
     function update(dt) {
         // Move player
+        const moveAmount = SPEED * dt;
+        
         if (player.dir === 'up') {
-            player.y -= SPEED * dt;
+            player.y -= moveAmount;
         } else if (player.dir === 'left') {
-            player.x -= SPEED * dt;
+            player.x -= moveAmount;
         } else if (player.dir === 'right') {
-            player.x += SPEED * dt;
+            player.x += moveAmount;
         }
         
-        // Update camera
+        // Update camera smoothly
         const targetCameraY = player.y - height * 0.7;
         cameraY += (targetCameraY - cameraY) * 0.1;
         
-        // Update score
-        score = Math.max(score, Math.floor(-player.y / TILE_SIZE));
-        updateUI();
-        
-        // Check if on path
-        if (!isOnPath(player.x, player.y)) {
-            gameOver();
+        // Update score based on progress
+        const newScore = Math.max(0, Math.floor(-player.y / TILE_SIZE));
+        if (newScore > score) {
+            score = newScore;
+            updateUI();
         }
         
-        // Check bounds
+        // Check if still on path
+        if (!isOnPath(player.x, player.y)) {
+            gameOver();
+            return;
+        }
+        
+        // Check screen bounds
         if (player.x < 0 || player.x > width) {
             gameOver();
         }
@@ -180,42 +206,59 @@
         ctx.save();
         ctx.translate(0, -cameraY);
         
-        // Draw path
+        // Draw path tiles
         for (let tile of path) {
             const screenY = tile.y * TILE_SIZE - cameraY;
-            if (screenY < -TILE_SIZE || screenY > height + TILE_SIZE) continue;
+            if (screenY < -TILE_SIZE * 2 || screenY > height + TILE_SIZE * 2) continue;
             
+            // Main tile
             ctx.fillStyle = '#9b59b6';
-            ctx.fillRect(tile.x * TILE_SIZE, tile.y * TILE_SIZE, TILE_SIZE, TILE_SIZE);
+            ctx.fillRect(
+                tile.x * TILE_SIZE + 2, 
+                tile.y * TILE_SIZE + 2, 
+                TILE_SIZE - 4, 
+                TILE_SIZE - 4
+            );
             
-            // Tile border
-            ctx.strokeStyle = '#8e44ad';
-            ctx.lineWidth = 2;
-            ctx.strokeRect(tile.x * TILE_SIZE, tile.y * TILE_SIZE, TILE_SIZE, TILE_SIZE);
+            // Highlight
+            ctx.fillStyle = 'rgba(255,255,255,0.1)';
+            ctx.fillRect(
+                tile.x * TILE_SIZE + 4, 
+                tile.y * TILE_SIZE + 4, 
+                TILE_SIZE - 8, 
+                10
+            );
         }
         
         // Draw player
         ctx.fillStyle = '#fff';
         ctx.shadowColor = '#fff';
-        ctx.shadowBlur = 15;
+        ctx.shadowBlur = 20;
         ctx.beginPath();
         ctx.arc(player.x, player.y, PLAYER_SIZE / 2, 0, Math.PI * 2);
         ctx.fill();
         ctx.shadowBlur = 0;
         
         // Direction indicator
-        ctx.fillStyle = '#333';
-        let indicatorX = player.x;
-        let indicatorY = player.y;
-        if (player.dir === 'up') indicatorY -= 5;
-        else if (player.dir === 'left') indicatorX -= 5;
-        else if (player.dir === 'right') indicatorX += 5;
+        ctx.fillStyle = '#9b59b6';
+        let dx = 0, dy = 0;
+        if (player.dir === 'up') dy = -6;
+        else if (player.dir === 'left') dx = -6;
+        else if (player.dir === 'right') dx = 6;
         
         ctx.beginPath();
-        ctx.arc(indicatorX, indicatorY, 4, 0, Math.PI * 2);
+        ctx.arc(player.x + dx, player.y + dy, 4, 0, Math.PI * 2);
         ctx.fill();
         
         ctx.restore();
+        
+        // Draw tap hint
+        if (score < 3) {
+            ctx.fillStyle = 'rgba(255,255,255,0.5)';
+            ctx.font = '16px Arial';
+            ctx.textAlign = 'center';
+            ctx.fillText('TAP to turn at corners', width / 2, height - 50);
+        }
     }
 
     window.addEventListener('load', init);
