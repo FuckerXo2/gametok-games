@@ -1,0 +1,45 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+    <title>Aim Trainer</title>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        html, body { width: 100%; height: 100%; overflow: hidden; touch-action: manipulation; }
+        body { font-family: 'Segoe UI', sans-serif; background: #1a1a2e; }
+        .overlay { position: fixed; top: 0; left: 0; width: 100%; height: 100%; display: flex; flex-direction: column; justify-content: center; align-items: center; background: rgba(0,0,0,0.9); z-index: 10; }
+        .hidden { display: none !important; }
+        h1 { font-size: 42px; color: #fff; margin-bottom: 10px; }
+        .subtitle { color: #aaa; font-size: 18px; margin-bottom: 30px; }
+        .btn { background: linear-gradient(135deg, #e74c3c, #c0392b); color: #fff; border: none; padding: 15px 50px; font-size: 20px; border-radius: 30px; cursor: pointer; }
+        #game-area { width: 100%; height: 100%; position: relative; }
+        #ui { position: fixed; top: 20px; left: 20px; right: 20px; z-index: 5; display: flex; justify-content: space-between; color: #fff; font-size: 18px; }
+        .target { position: absolute; border-radius: 50%; cursor: pointer; transform: translate(-50%, -50%); }
+        .target-outer { background: #e74c3c; }
+        .target-middle { background: #fff; position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); border-radius: 50%; }
+        .target-inner { background: #e74c3c; position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); border-radius: 50%; }
+        #final-score { font-size: 64px; color: #e74c3c; margin: 20px 0; }
+        #stats { color: #aaa; margin-bottom: 20px; }
+    </style>
+</head>
+<body>
+    <div id="ui" class="hidden">
+        <div>Hits: <span id="hits">0</span>/30</div>
+        <div>Time: <span id="time">0.0</span>s</div>
+    </div>
+    <div id="game-area" class="hidden"></div>
+    <div id="start-screen" class="overlay">
+        <h1>🎯 Aim Trainer</h1>
+        <p class="subtitle">Tap 30 targets as fast as you can!</p>
+        <button id="start-btn" class="btn">TAP TO START</button>
+    </div>
+    <div id="game-over" class="overlay hidden">
+        <h1>COMPLETE!</h1>
+        <div id="final-score">0.0s</div>
+        <div id="stats"></div>
+        <button id="restart-btn" class="btn">TRY AGAIN</button>
+    </div>
+    <script src="game.js"></script>
+</body>
+</html>

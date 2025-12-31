@@ -1,0 +1,53 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+    <title>Simon Says</title>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        html, body { width: 100%; height: 100%; overflow: hidden; touch-action: manipulation; }
+        body { font-family: 'Segoe UI', sans-serif; background: #1a1a2e; }
+        .overlay { position: fixed; top: 0; left: 0; width: 100%; height: 100%; display: flex; flex-direction: column; justify-content: center; align-items: center; background: rgba(0,0,0,0.9); z-index: 10; }
+        .hidden { display: none !important; }
+        h1 { font-size: 42px; color: #fff; margin-bottom: 10px; }
+        .subtitle { color: #aaa; font-size: 18px; margin-bottom: 30px; }
+        .btn { background: linear-gradient(135deg, #9b59b6, #8e44ad); color: #fff; border: none; padding: 15px 50px; font-size: 20px; border-radius: 30px; cursor: pointer; }
+        #game-area { display: flex; flex-direction: column; justify-content: center; align-items: center; height: 100%; }
+        #status { color: #fff; font-size: 24px; margin-bottom: 30px; }
+        #simon { display: grid; grid-template-columns: repeat(2, 1fr); gap: 10px; border-radius: 50%; overflow: hidden; padding: 20px; }
+        .pad { width: 130px; height: 130px; border-radius: 20px; cursor: pointer; transition: filter 0.1s, transform 0.1s; }
+        .pad:active, .pad.active { filter: brightness(1.5); transform: scale(0.95); }
+        .pad.green { background: #2ecc71; border-top-left-radius: 100%; }
+        .pad.red { background: #e74c3c; border-top-right-radius: 100%; }
+        .pad.yellow { background: #f1c40f; border-bottom-left-radius: 100%; }
+        .pad.blue { background: #3498db; border-bottom-right-radius: 100%; }
+        #level { color: #fff; font-size: 20px; margin-top: 30px; }
+        #final-score { font-size: 64px; color: #9b59b6; margin: 20px 0; }
+    </style>
+</head>
+<body>
+    <div id="game-area" class="hidden">
+        <div id="status">Watch the pattern...</div>
+        <div id="simon">
+            <div class="pad green" data-color="green"></div>
+            <div class="pad red" data-color="red"></div>
+            <div class="pad yellow" data-color="yellow"></div>
+            <div class="pad blue" data-color="blue"></div>
+        </div>
+        <div id="level">Level: 1</div>
+    </div>
+    <div id="start-screen" class="overlay">
+        <h1>🎵 Simon Says</h1>
+        <p class="subtitle">Repeat the color pattern!</p>
+        <button id="start-btn" class="btn">TAP TO PLAY</button>
+    </div>
+    <div id="game-over" class="overlay hidden">
+        <h1>GAME OVER</h1>
+        <div id="final-score">0</div>
+        <p style="color:#aaa;margin-bottom:20px;">levels completed</p>
+        <button id="restart-btn" class="btn">PLAY AGAIN</button>
+    </div>
+    <script src="game.js"></script>
+</body>
+</html>

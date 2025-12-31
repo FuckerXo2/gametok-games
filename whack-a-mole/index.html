@@ -1,0 +1,48 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+    <title>Whack-a-Mole</title>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        html, body { width: 100%; height: 100%; overflow: hidden; touch-action: manipulation; }
+        body { font-family: 'Segoe UI', sans-serif; background: linear-gradient(180deg, #87ceeb 0%, #98d977 100%); }
+        .overlay { position: fixed; top: 0; left: 0; width: 100%; height: 100%; display: flex; flex-direction: column; justify-content: center; align-items: center; background: rgba(0,0,0,0.85); z-index: 10; }
+        .hidden { display: none !important; }
+        h1 { font-size: 42px; color: #fff; margin-bottom: 10px; }
+        .subtitle { color: #aaa; font-size: 18px; margin-bottom: 30px; }
+        .btn { background: linear-gradient(135deg, #8b4513, #654321); color: #fff; border: none; padding: 15px 50px; font-size: 20px; border-radius: 30px; cursor: pointer; }
+        #ui { position: fixed; top: 20px; left: 20px; right: 20px; z-index: 5; display: flex; justify-content: space-between; font-size: 20px; color: #333; font-weight: bold; }
+        #game-area { display: flex; justify-content: center; align-items: center; height: 100%; padding: 80px 20px 20px; }
+        #grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 15px; }
+        .hole { width: 100px; height: 100px; background: #654321; border-radius: 50%; position: relative; overflow: hidden; border: 5px solid #4a3728; }
+        .mole { position: absolute; bottom: -60px; left: 50%; transform: translateX(-50%); width: 70px; height: 70px; background: #8b4513; border-radius: 50% 50% 40% 40%; transition: bottom 0.1s; cursor: pointer; }
+        .mole.up { bottom: 10px; }
+        .mole::before { content: ''; position: absolute; top: 15px; left: 15px; width: 12px; height: 12px; background: #000; border-radius: 50%; box-shadow: 28px 0 #000; }
+        .mole::after { content: ''; position: absolute; top: 35px; left: 50%; transform: translateX(-50%); width: 15px; height: 10px; background: #d2691e; border-radius: 50%; }
+        .mole.hit { background: #ff6b6b; }
+        #final-score { font-size: 64px; color: #8b4513; margin: 20px 0; }
+    </style>
+</head>
+<body>
+    <div id="ui" class="hidden">
+        <div>Score: <span id="score">0</span></div>
+        <div>Time: <span id="time">30</span>s</div>
+    </div>
+    <div id="game-area" class="hidden">
+        <div id="grid"></div>
+    </div>
+    <div id="start-screen" class="overlay">
+        <h1>🔨 Whack-a-Mole</h1>
+        <p class="subtitle">Tap the moles before they hide!</p>
+        <button id="start-btn" class="btn">TAP TO PLAY</button>
+    </div>
+    <div id="game-over" class="overlay hidden">
+        <h1>TIME'S UP!</h1>
+        <div id="final-score">0</div>
+        <button id="restart-btn" class="btn">PLAY AGAIN</button>
+    </div>
+    <script src="game.js"></script>
+</body>
+</html>

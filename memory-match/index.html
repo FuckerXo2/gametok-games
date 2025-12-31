@@ -1,0 +1,47 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+    <title>Memory Match</title>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        html, body { width: 100%; height: 100%; overflow: hidden; touch-action: manipulation; }
+        body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); }
+        .overlay { position: fixed; top: 0; left: 0; width: 100%; height: 100%; display: flex; flex-direction: column; justify-content: center; align-items: center; background: rgba(0,0,0,0.85); z-index: 10; }
+        .hidden { display: none !important; }
+        h1 { font-size: 42px; color: #fff; margin-bottom: 10px; }
+        .subtitle { color: #aaa; font-size: 18px; margin-bottom: 30px; }
+        .btn { background: linear-gradient(135deg, #667eea, #764ba2); color: #fff; border: none; padding: 15px 50px; font-size: 20px; border-radius: 30px; cursor: pointer; }
+        #ui { position: fixed; top: 20px; left: 20px; right: 20px; z-index: 5; color: #fff; font-size: 18px; display: flex; justify-content: space-between; }
+        #game-container { display: flex; justify-content: center; align-items: center; height: 100%; padding: 80px 20px 20px; }
+        #grid { display: grid; gap: 10px; }
+        .card { background: #fff; border-radius: 10px; display: flex; justify-content: center; align-items: center; font-size: 32px; cursor: pointer; transition: transform 0.3s; }
+        .card.flipped { background: #667eea; transform: rotateY(180deg); }
+        .card.matched { background: #2ecc71; }
+        #final-score { font-size: 64px; color: #667eea; margin: 20px 0; }
+    </style>
+</head>
+<body>
+    <div id="ui" class="hidden">
+        <div>Moves: <span id="moves">0</span></div>
+        <div>Pairs: <span id="pairs">0</span>/<span id="total-pairs">8</span></div>
+        <div>Time: <span id="time">0</span>s</div>
+    </div>
+    <div id="game-container" class="hidden">
+        <div id="grid"></div>
+    </div>
+    <div id="start-screen" class="overlay">
+        <h1>🧠 Memory Match</h1>
+        <p class="subtitle">Find all matching pairs!</p>
+        <button id="start-btn" class="btn">TAP TO PLAY</button>
+    </div>
+    <div id="game-over" class="overlay hidden">
+        <h1>🎉 YOU WIN!</h1>
+        <div id="final-score">0</div>
+        <p style="color:#aaa;margin-bottom:20px;">moves</p>
+        <button id="restart-btn" class="btn">PLAY AGAIN</button>
+    </div>
+    <script src="game.js"></script>
+</body>
+</html>
