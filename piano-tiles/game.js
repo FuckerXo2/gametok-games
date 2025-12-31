@@ -1,4 +1,4 @@
-// Piano Tiles - Tap the black tiles
+// Piano Tiles - Tap black tiles as they scroll DOWN
 (function() {
     'use strict';
 
@@ -8,18 +8,18 @@
     let width, height, tileW, tileH;
     let tiles = [];
     let score = 0;
-    let speed = 4;
+    let speed = 5;
     let gameState = 'start';
     let lastTime = 0;
 
     const COLS = 4;
-    const ROWS = 5;
+    const VISIBLE_ROWS = 4;
 
     function resize() {
         width = canvas.width = window.innerWidth;
         height = canvas.height = window.innerHeight;
         tileW = width / COLS;
-        tileH = height / ROWS;
+        tileH = height / VISIBLE_ROWS;
     }
 
     function init() {
@@ -37,13 +37,13 @@
 
     function startGame() {
         score = 0;
-        speed = 4;
+        speed = 5;
         tiles = [];
         gameState = 'playing';
         
-        // Create initial tiles
-        for (let i = 0; i < ROWS + 1; i++) {
-            addRow(-i * tileH);
+        // Create initial rows - tiles start ABOVE screen and move DOWN
+        for (let i = 0; i < VISIBLE_ROWS + 2; i++) {
+            addRow(-tileH * (i + 1));
         }
         
         document.getElementById('start-screen').classList.add('hidden');
@@ -73,32 +73,33 @@
     }
 
     function update(dt) {
-        // Move tiles down
+        // Move tiles DOWN
         for (let tile of tiles) {
             tile.y += speed * dt;
         }
         
-        // Check if black tile passed bottom without being tapped
+        // Check if untapped black tile went past bottom - game over
         for (let tile of tiles) {
-            if (!tile.tapped && tile.y > height - tileH) {
+            if (!tile.tapped && tile.y > height) {
                 gameOver();
                 return;
             }
         }
         
-        // Remove tiles that are off screen and add new ones
-        while (tiles.length > 0 && tiles[0].y > height) {
+        // Remove tiles that are fully off screen at bottom
+        while (tiles.length > 0 && tiles[0].y > height + tileH) {
             tiles.shift();
         }
         
-        while (tiles.length < ROWS + 2) {
-            const lastY = tiles.length > 0 ? tiles[tiles.length - 1].y : 0;
-            addRow(lastY - tileH);
+        // Add new tiles at top
+        while (tiles.length < VISIBLE_ROWS + 3) {
+            const topTile = tiles.reduce((min, t) => t.y < min.y ? t : min, tiles[0]);
+            addRow(topTile.y - tileH);
         }
         
-        // Increase speed gradually
-        speed = 4 + score * 0.05;
-        if (speed > 15) speed = 15;
+        // Increase speed
+        speed = 5 + score * 0.08;
+        if (speed > 20) speed = 20;
     }
 
     function handleTap(e) {
@@ -111,21 +112,25 @@
         
         const col = Math.floor(x / tileW);
         
-        // Find the lowest untapped tile
-        let tapped = false;
+        // Find which tile was tapped (check from bottom to top - closest to tap point)
+        let tappedTile = null;
         for (let tile of tiles) {
             if (tile.tapped) continue;
             if (y >= tile.y && y < tile.y + tileH) {
-                if (col === tile.blackCol) {
-                    tile.tapped = true;
-                    score++;
-                    updateScore();
-                    tapped = true;
-                } else {
-                    // Tapped white tile
-                    gameOver();
-                }
+                tappedTile = tile;
                 break;
+            }
+        }
+        
+        if (tappedTile) {
+            if (col === tappedTile.blackCol) {
+                // Correct tap
+                tappedTile.tapped = true;
+                score++;
+                updateScore();
+            } else {
+                // Tapped white tile
+                gameOver();
             }
         }
     }
@@ -146,7 +151,7 @@
     }
 
     function draw() {
-        // Background
+        // Dark background
         ctx.fillStyle = '#1a1a2e';
         ctx.fillRect(0, 0, width, height);
         
@@ -156,28 +161,32 @@
                 const x = col * tileW;
                 const y = tile.y;
                 
+                // Skip if off screen
+                if (y + tileH < 0 || y > height) continue;
+                
                 if (col === tile.blackCol && !tile.tapped) {
-                    // Black tile with gradient
-                    const grad = ctx.createLinearGradient(x, y, x, y + tileH);
-                    grad.addColorStop(0, '#2d2d44');
-                    grad.addColorStop(1, '#1a1a2e');
-                    ctx.fillStyle = grad;
+                    // Black tile
+                    ctx.fillStyle = '#1a1a2e';
+                    ctx.fillRect(x + 2, y + 2, tileW - 4, tileH - 4);
+                    
+                    // Inner darker
+                    ctx.fillStyle = '#0d0d1a';
+                    ctx.fillRect(x + 6, y + 6, tileW - 12, tileH - 12);
                 } else if (col === tile.blackCol && tile.tapped) {
-                    // Tapped tile - gray
-                    ctx.fillStyle = '#4a4a6a';
+                    // Tapped - gray
+                    ctx.fillStyle = '#3a3a5a';
+                    ctx.fillRect(x + 2, y + 2, tileW - 4, tileH - 4);
                 } else {
                     // White tile
-                    ctx.fillStyle = '#f0f0f5';
+                    ctx.fillStyle = '#f5f5f5';
+                    ctx.fillRect(x + 2, y + 2, tileW - 4, tileH - 4);
                 }
-                
-                ctx.fillRect(x + 1, y + 1, tileW - 2, tileH - 2);
             }
         }
         
-        // Draw grid lines
+        // Grid lines
         ctx.strokeStyle = '#333';
         ctx.lineWidth = 2;
-        
         for (let i = 1; i < COLS; i++) {
             ctx.beginPath();
             ctx.moveTo(i * tileW, 0);

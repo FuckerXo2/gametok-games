@@ -1,0 +1,121 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Block Blast</title>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        html, body {
+            width: 100%; height: 100%;
+            background: linear-gradient(180deg, #1a1a2e 0%, #16213e 100%);
+            overflow: hidden;
+            touch-action: none;
+            user-select: none;
+            font-family: -apple-system, BlinkMacSystemFont, sans-serif;
+        }
+        #game-container {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: flex-start;
+            height: 100%;
+            padding: 20px;
+            padding-top: 60px;
+        }
+        #score-display {
+            color: #fff;
+            font-size: 32px;
+            font-weight: bold;
+            margin-bottom: 20px;
+        }
+        #board {
+            background: rgba(0,0,0,0.3);
+            border-radius: 12px;
+            padding: 8px;
+            display: grid;
+            grid-template-columns: repeat(8, 1fr);
+            gap: 3px;
+        }
+        .cell {
+            width: 38px; height: 38px;
+            background: rgba(255,255,255,0.1);
+            border-radius: 6px;
+        }
+        .cell.filled { background: #667eea; }
+        .cell.preview { background: rgba(102, 126, 234, 0.4); }
+        .cell.invalid { background: rgba(255, 100, 100, 0.4); }
+        #pieces-container {
+            display: flex;
+            justify-content: center;
+            gap: 15px;
+            margin-top: 25px;
+            min-height: 100px;
+        }
+        .piece-holder {
+            background: rgba(255,255,255,0.05);
+            border-radius: 10px;
+            padding: 10px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            min-width: 80px;
+            min-height: 80px;
+        }
+        .piece {
+            display: grid;
+            gap: 2px;
+        }
+        .piece-cell {
+            width: 18px; height: 18px;
+            border-radius: 3px;
+        }
+        .piece-cell.filled { background: #667eea; }
+        .dragging { opacity: 0.5; }
+        #start-screen, #game-over {
+            position: fixed; inset: 0;
+            background: linear-gradient(180deg, #1a1a2e 0%, #16213e 100%);
+            display: flex; flex-direction: column;
+            align-items: center; justify-content: center;
+            z-index: 100;
+        }
+        #game-over { display: none; }
+        .title { font-size: 42px; font-weight: bold; color: #667eea; margin-bottom: 10px; }
+        .subtitle { color: rgba(255,255,255,0.7); font-size: 16px; margin-bottom: 40px; }
+        .btn {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: #fff; border: none;
+            padding: 16px 48px; font-size: 18px; font-weight: bold;
+            border-radius: 30px; cursor: pointer;
+        }
+        .final-score { font-size: 64px; font-weight: bold; color: #667eea; margin: 20px 0; }
+        .icon { font-size: 50px; margin-bottom: 20px; display: flex; gap: 5px; }
+        .icon-block { width: 25px; height: 25px; border-radius: 5px; }
+        .hidden { display: none !important; }
+    </style>
+</head>
+<body>
+    <div id="game-container" class="hidden">
+        <div id="score-display">0</div>
+        <div id="board"></div>
+        <div id="pieces-container"></div>
+    </div>
+    <div id="start-screen">
+        <div class="icon">
+            <div class="icon-block" style="background:#667eea"></div>
+            <div class="icon-block" style="background:#764ba2"></div>
+            <div class="icon-block" style="background:#667eea"></div>
+        </div>
+        <div class="title">Block Blast</div>
+        <div class="subtitle">Drag blocks to fill lines!</div>
+        <button class="btn" id="start-btn">PLAY</button>
+    </div>
+    <div id="game-over">
+        <div class="title">Game Over</div>
+        <div class="final-score" id="final-score">0</div>
+        <div class="subtitle">points</div>
+        <button class="btn" id="restart-btn">PLAY AGAIN</button>
+    </div>
+    <script src="game.js"></script>
+</body>
+</html>

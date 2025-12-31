@@ -1,4 +1,4 @@
-// Crossy Road - Hop across traffic
+// Crossy Road - Hop across traffic (fixed camera, isometric style)
 (function() {
     'use strict';
 
@@ -6,12 +6,13 @@
     const ctx = canvas.getContext('2d');
     
     let width, height;
-    let player, lanes, score, cameraY;
+    let player, lanes, score, highestRow;
     let gameState = 'start';
     let lastTime = 0;
+    let scrollOffset = 0;
 
     const TILE = 50;
-    const PLAYER_SIZE = 40;
+    const COLS = 9;
 
     function resize() {
         width = canvas.width = window.innerWidth;
@@ -21,7 +22,6 @@
     function init() {
         resize();
         window.addEventListener('resize', resize);
-        
         setupControls();
         
         document.getElementById('start-btn').addEventListener('click', startGame);
@@ -31,22 +31,25 @@
     }
 
     function startGame() {
+        const startCol = Math.floor(COLS / 2);
         player = {
-            x: Math.floor(width / TILE / 2) * TILE + TILE / 2,
-            y: height - TILE * 2,
-            targetX: 0,
+            col: startCol,
+            row: 0,
+            x: startCol * TILE + TILE / 2,
+            y: 0,
+            targetX: startCol * TILE + TILE / 2,
             targetY: 0,
-            moving: false
+            moving: false,
+            onLog: null
         };
-        player.targetX = player.x;
-        player.targetY = player.y;
         
         score = 0;
-        cameraY = 0;
+        highestRow = 0;
+        scrollOffset = 0;
         lanes = [];
         
-        // Generate initial lanes
-        for (let i = -5; i < 20; i++) {
+        // Generate lanes
+        for (let i = -2; i < 30; i++) {
             generateLane(i);
         }
         
@@ -61,35 +64,36 @@
         requestAnimationFrame(gameLoop);
     }
 
-    function generateLane(index) {
-        const types = ['grass', 'road', 'road', 'water', 'grass'];
-        const type = types[Math.abs(index) % types.length];
+    function generateLane(rowIndex) {
+        let type = 'grass';
+        if (rowIndex > 0) {
+            const pattern = rowIndex % 5;
+            if (pattern === 1 || pattern === 2) type = 'road';
+            else if (pattern === 3) type = 'water';
+            else type = 'grass';
+        }
         
-        const lane = {
-            y: -index * TILE,
-            type: type,
-            obstacles: []
-        };
+        const lane = { row: rowIndex, type: type, obstacles: [] };
         
         if (type === 'road') {
-            const speed = (1 + Math.random() * 2) * (Math.random() > 0.5 ? 1 : -1);
-            const count = 2 + Math.floor(Math.random() * 2);
-            for (let i = 0; i < count; i++) {
+            const speed = (1 + Math.random() * 1.5) * (rowIndex % 2 === 0 ? 1 : -1);
+            const carCount = 2 + Math.floor(Math.random() * 2);
+            for (let i = 0; i < carCount; i++) {
                 lane.obstacles.push({
-                    x: Math.random() * width,
+                    x: Math.random() * width * 1.5 - width * 0.25,
                     speed: speed,
-                    width: 60 + Math.random() * 40,
-                    color: ['#e74c3c', '#3498db', '#f39c12', '#9b59b6'][Math.floor(Math.random() * 4)]
+                    width: 45 + Math.random() * 25,
+                    color: ['#e74c3c', '#3498db', '#f1c40f', '#9b59b6', '#1abc9c'][Math.floor(Math.random() * 5)]
                 });
             }
         } else if (type === 'water') {
-            const speed = (1 + Math.random()) * (Math.random() > 0.5 ? 1 : -1);
-            const count = 2 + Math.floor(Math.random() * 2);
-            for (let i = 0; i < count; i++) {
+            const speed = (0.8 + Math.random()) * (rowIndex % 2 === 0 ? 1 : -1);
+            const logCount = 2 + Math.floor(Math.random() * 2);
+            for (let i = 0; i < logCount; i++) {
                 lane.obstacles.push({
-                    x: Math.random() * width,
+                    x: Math.random() * width * 1.5 - width * 0.25,
                     speed: speed,
-                    width: 80 + Math.random() * 60,
+                    width: 80 + Math.random() * 50,
                     isLog: true
                 });
             }
@@ -102,6 +106,7 @@
         let startX, startY, startTime;
         
         document.addEventListener('touchstart', (e) => {
+            if (e.target.closest('.btn')) return;
             startX = e.touches[0].clientX;
             startY = e.touches[0].clientY;
             startTime = Date.now();
@@ -109,49 +114,50 @@
         
         document.addEventListener('touchend', (e) => {
             if (gameState !== 'playing' || player.moving) return;
+            if (e.target.closest('.btn')) return;
             
             const dx = e.changedTouches[0].clientX - startX;
             const dy = e.changedTouches[0].clientY - startY;
             const dt = Date.now() - startTime;
             
-            if (dt < 200 && Math.abs(dx) < 30 && Math.abs(dy) < 30) {
-                // Tap - move forward
-                move(0, -1);
-            } else if (Math.abs(dx) > Math.abs(dy) && Math.abs(dx) > 30) {
-                // Horizontal swipe
-                move(dx > 0 ? 1 : -1, 0);
-            } else if (dy > 30) {
-                // Swipe down - move back
-                move(0, 1);
-            } else if (dy < -30) {
-                // Swipe up - move forward
-                move(0, -1);
+            // Tap = forward, swipe = direction
+            if (dt < 250 && Math.abs(dx) < 30 && Math.abs(dy) < 30) {
+                move(0, 1); // Forward
+            } else if (Math.abs(dx) > Math.abs(dy)) {
+                if (Math.abs(dx) > 20) move(dx > 0 ? 1 : -1, 0);
+            } else {
+                if (dy < -20) move(0, 1); // Swipe up = forward
+                else if (dy > 20) move(0, -1); // Swipe down = back
             }
         });
         
         document.addEventListener('keydown', (e) => {
             if (gameState !== 'playing' || player.moving) return;
-            if (e.key === 'ArrowUp') move(0, -1);
-            if (e.key === 'ArrowDown') move(0, 1);
-            if (e.key === 'ArrowLeft') move(-1, 0);
-            if (e.key === 'ArrowRight') move(1, 0);
+            if (e.key === 'ArrowUp' || e.key === 'w') move(0, 1);
+            if (e.key === 'ArrowDown' || e.key === 's') move(0, -1);
+            if (e.key === 'ArrowLeft' || e.key === 'a') move(-1, 0);
+            if (e.key === 'ArrowRight' || e.key === 'd') move(1, 0);
         });
     }
 
     function move(dx, dy) {
-        const newX = player.x + dx * TILE;
-        const newY = player.y + dy * TILE;
+        const newCol = player.col + dx;
+        const newRow = player.row + dy;
         
-        // Bounds check
-        if (newX < TILE / 2 || newX > width - TILE / 2) return;
+        // Bounds
+        if (newCol < 0 || newCol >= COLS) return;
+        if (newRow < 0) return;
         
-        player.targetX = newX;
-        player.targetY = newY;
+        player.col = newCol;
+        player.row = newRow;
+        player.targetX = newCol * TILE + TILE / 2;
         player.moving = true;
+        player.onLog = null;
         
-        // Update score when moving forward
-        if (dy < 0) {
-            score++;
+        // Update score
+        if (newRow > highestRow) {
+            highestRow = newRow;
+            score = highestRow;
             document.getElementById('score').textContent = score;
         }
     }
@@ -169,58 +175,63 @@
     }
 
     function update(dt) {
+        // Smooth scroll to keep player in view
+        const targetScroll = Math.max(0, (player.row - 4) * TILE);
+        scrollOffset += (targetScroll - scrollOffset) * 0.08;
+        
         // Move player towards target
         if (player.moving) {
             const dx = player.targetX - player.x;
-            const dy = player.targetY - player.y;
-            const speed = 8;
+            const speed = 12;
             
-            if (Math.abs(dx) < speed && Math.abs(dy) < speed) {
+            if (Math.abs(dx) < speed) {
                 player.x = player.targetX;
-                player.y = player.targetY;
                 player.moving = false;
             } else {
                 player.x += Math.sign(dx) * speed;
-                player.y += Math.sign(dy) * speed;
             }
         }
         
-        // Camera follows player
-        const targetCameraY = player.y - height * 0.6;
-        cameraY += (targetCameraY - cameraY) * 0.1;
+        // Update player Y based on row
+        player.y = player.row * TILE;
+        player.targetY = player.y;
         
         // Update obstacles
         for (let lane of lanes) {
             for (let obs of lane.obstacles) {
                 obs.x += obs.speed * dt;
                 
-                // Wrap around
+                // Wrap
                 if (obs.speed > 0 && obs.x > width + obs.width) {
-                    obs.x = -obs.width;
+                    obs.x = -obs.width - Math.random() * 100;
                 } else if (obs.speed < 0 && obs.x < -obs.width) {
-                    obs.x = width + obs.width;
+                    obs.x = width + Math.random() * 100;
                 }
             }
         }
         
-        // Generate new lanes
-        const topLane = Math.floor((cameraY - height) / TILE);
-        while (lanes.length < -topLane + 25) {
-            generateLane(-lanes.length);
-        }
-        
         // Check collisions
         checkCollisions();
+        
+        // Generate more lanes if needed
+        while (lanes[lanes.length - 1].row < player.row + 20) {
+            generateLane(lanes[lanes.length - 1].row + 1);
+        }
     }
 
     function checkCollisions() {
-        const playerLane = lanes.find(l => Math.abs(l.y - player.y + cameraY) < TILE / 2);
+        const playerLane = lanes.find(l => l.row === player.row);
         if (!playerLane) return;
+        
+        const playerLeft = player.x - 15;
+        const playerRight = player.x + 15;
         
         if (playerLane.type === 'road') {
             for (let obs of playerLane.obstacles) {
-                if (player.x > obs.x - obs.width / 2 - PLAYER_SIZE / 2 &&
-                    player.x < obs.x + obs.width / 2 + PLAYER_SIZE / 2) {
+                const carLeft = obs.x - obs.width / 2;
+                const carRight = obs.x + obs.width / 2;
+                
+                if (playerRight > carLeft && playerLeft < carRight) {
                     gameOver();
                     return;
                 }
@@ -228,13 +239,18 @@
         } else if (playerLane.type === 'water') {
             let onLog = false;
             for (let obs of playerLane.obstacles) {
-                if (player.x > obs.x - obs.width / 2 + 5 &&
-                    player.x < obs.x + obs.width / 2 - 5) {
+                const logLeft = obs.x - obs.width / 2 + 10;
+                const logRight = obs.x + obs.width / 2 - 10;
+                
+                if (playerRight > logLeft && playerLeft < logRight) {
                     onLog = true;
                     // Move with log
                     if (!player.moving) {
-                        player.x += obs.speed * 0.5;
+                        player.x += obs.speed * 0.6;
                         player.targetX = player.x;
+                        // Update col based on position
+                        player.col = Math.round((player.x - TILE / 2) / TILE);
+                        player.col = Math.max(0, Math.min(COLS - 1, player.col));
                     }
                     break;
                 }
@@ -244,8 +260,8 @@
             }
         }
         
-        // Off screen
-        if (player.y - cameraY > height + TILE) {
+        // Off screen sides
+        if (player.x < 0 || player.x > COLS * TILE) {
             gameOver();
         }
     }
@@ -262,117 +278,151 @@
     }
 
     function draw() {
-        ctx.fillStyle = '#4a7c59';
+        // Sky
+        ctx.fillStyle = '#87ceeb';
         ctx.fillRect(0, 0, width, height);
         
-        // Draw lanes
-        for (let lane of lanes) {
-            const screenY = lane.y + cameraY;
-            if (screenY < -TILE || screenY > height + TILE) continue;
+        // Center the game board
+        const boardWidth = COLS * TILE;
+        const offsetX = (width - boardWidth) / 2;
+        
+        ctx.save();
+        ctx.translate(offsetX, 0);
+        
+        // Draw lanes from back to front
+        const sortedLanes = [...lanes].sort((a, b) => b.row - a.row);
+        
+        for (let lane of sortedLanes) {
+            const screenY = height - (lane.row * TILE - scrollOffset) - TILE;
+            
+            if (screenY < -TILE * 2 || screenY > height + TILE) continue;
             
             // Lane background
             if (lane.type === 'grass') {
-                ctx.fillStyle = '#4a7c59';
+                ctx.fillStyle = lane.row % 2 === 0 ? '#7ec850' : '#8fd460';
             } else if (lane.type === 'road') {
-                ctx.fillStyle = '#333';
+                ctx.fillStyle = '#555';
             } else if (lane.type === 'water') {
-                ctx.fillStyle = '#3498db';
+                ctx.fillStyle = '#4a90d9';
             }
-            ctx.fillRect(0, screenY - TILE / 2, width, TILE);
+            ctx.fillRect(0, screenY, boardWidth, TILE);
             
             // Road markings
             if (lane.type === 'road') {
                 ctx.strokeStyle = '#fff';
-                ctx.setLineDash([20, 20]);
+                ctx.setLineDash([15, 15]);
                 ctx.beginPath();
-                ctx.moveTo(0, screenY);
-                ctx.lineTo(width, screenY);
+                ctx.moveTo(0, screenY + TILE / 2);
+                ctx.lineTo(boardWidth, screenY + TILE / 2);
                 ctx.stroke();
                 ctx.setLineDash([]);
-            }
-            
-            // Water waves
-            if (lane.type === 'water') {
-                ctx.fillStyle = 'rgba(255,255,255,0.1)';
-                for (let x = 0; x < width; x += 30) {
-                    ctx.beginPath();
-                    ctx.arc(x + Math.sin(Date.now() / 500 + x) * 5, screenY, 8, 0, Math.PI);
-                    ctx.fill();
-                }
             }
             
             // Obstacles
             for (let obs of lane.obstacles) {
                 if (obs.isLog) {
                     // Log
-                    ctx.fillStyle = '#8b4513';
+                    ctx.fillStyle = '#8b5a2b';
+                    const logY = screenY + 8;
                     ctx.beginPath();
-                    ctx.roundRect(obs.x - obs.width / 2, screenY - 20, obs.width, 40, 10);
+                    ctx.roundRect(obs.x - obs.width / 2, logY, obs.width, TILE - 16, 8);
                     ctx.fill();
                     
-                    // Log texture
-                    ctx.fillStyle = '#6b3510';
+                    // Log rings
+                    ctx.fillStyle = '#6b4423';
                     ctx.beginPath();
-                    ctx.arc(obs.x - obs.width / 4, screenY, 8, 0, Math.PI * 2);
-                    ctx.arc(obs.x + obs.width / 4, screenY, 6, 0, Math.PI * 2);
+                    ctx.arc(obs.x - obs.width / 4, logY + (TILE - 16) / 2, 6, 0, Math.PI * 2);
+                    ctx.arc(obs.x + obs.width / 4, logY + (TILE - 16) / 2, 5, 0, Math.PI * 2);
                     ctx.fill();
                 } else {
                     // Car
+                    const carY = screenY + 5;
+                    const carH = TILE - 10;
+                    
                     ctx.fillStyle = obs.color;
                     ctx.beginPath();
-                    ctx.roundRect(obs.x - obs.width / 2, screenY - 18, obs.width, 36, 8);
+                    ctx.roundRect(obs.x - obs.width / 2, carY, obs.width, carH, 6);
                     ctx.fill();
                     
                     // Windows
                     ctx.fillStyle = '#87ceeb';
-                    const winX = obs.speed > 0 ? obs.x + obs.width / 4 : obs.x - obs.width / 4;
-                    ctx.fillRect(winX - 10, screenY - 12, 20, 24);
+                    const winOffset = obs.speed > 0 ? obs.width * 0.2 : -obs.width * 0.2;
+                    ctx.fillRect(obs.x + winOffset - 8, carY + 5, 16, carH - 10);
                     
                     // Wheels
-                    ctx.fillStyle = '#222';
+                    ctx.fillStyle = '#333';
                     ctx.beginPath();
-                    ctx.arc(obs.x - obs.width / 3, screenY + 15, 8, 0, Math.PI * 2);
-                    ctx.arc(obs.x + obs.width / 3, screenY + 15, 8, 0, Math.PI * 2);
+                    ctx.arc(obs.x - obs.width / 3, carY + carH, 6, 0, Math.PI * 2);
+                    ctx.arc(obs.x + obs.width / 3, carY + carH, 6, 0, Math.PI * 2);
                     ctx.fill();
                 }
             }
         }
         
         // Draw player (chicken)
-        const px = player.x;
-        const py = player.y + cameraY;
+        const playerScreenY = height - (player.y - scrollOffset) - TILE;
+        drawChicken(player.x, playerScreenY + TILE / 2);
+        
+        ctx.restore();
+    }
+
+    function drawChicken(x, y) {
+        // Shadow
+        ctx.fillStyle = 'rgba(0,0,0,0.2)';
+        ctx.beginPath();
+        ctx.ellipse(x, y + 15, 15, 6, 0, 0, Math.PI * 2);
+        ctx.fill();
         
         // Body
         ctx.fillStyle = '#fff';
         ctx.beginPath();
-        ctx.ellipse(px, py, PLAYER_SIZE / 2.5, PLAYER_SIZE / 2, 0, 0, Math.PI * 2);
+        ctx.ellipse(x, y, 14, 16, 0, 0, Math.PI * 2);
+        ctx.fill();
+        
+        // Wing
+        ctx.fillStyle = '#eee';
+        ctx.beginPath();
+        ctx.ellipse(x - 5, y + 2, 8, 10, -0.2, 0, Math.PI * 2);
         ctx.fill();
         
         // Head
+        ctx.fillStyle = '#fff';
         ctx.beginPath();
-        ctx.arc(px, py - PLAYER_SIZE / 3, PLAYER_SIZE / 4, 0, Math.PI * 2);
+        ctx.arc(x, y - 14, 10, 0, Math.PI * 2);
         ctx.fill();
         
         // Beak
         ctx.fillStyle = '#f39c12';
         ctx.beginPath();
-        ctx.moveTo(px, py - PLAYER_SIZE / 3);
-        ctx.lineTo(px + 10, py - PLAYER_SIZE / 3 + 3);
-        ctx.lineTo(px, py - PLAYER_SIZE / 3 + 6);
+        ctx.moveTo(x + 8, y - 14);
+        ctx.lineTo(x + 16, y - 12);
+        ctx.lineTo(x + 8, y - 10);
+        ctx.closePath();
         ctx.fill();
         
         // Comb
         ctx.fillStyle = '#e74c3c';
         ctx.beginPath();
-        ctx.arc(px - 3, py - PLAYER_SIZE / 2, 5, 0, Math.PI * 2);
-        ctx.arc(px + 3, py - PLAYER_SIZE / 2 - 2, 4, 0, Math.PI * 2);
+        ctx.arc(x - 2, y - 22, 4, 0, Math.PI * 2);
+        ctx.arc(x + 3, y - 24, 3, 0, Math.PI * 2);
+        ctx.arc(x - 6, y - 21, 3, 0, Math.PI * 2);
         ctx.fill();
         
         // Eye
         ctx.fillStyle = '#000';
         ctx.beginPath();
-        ctx.arc(px + 3, py - PLAYER_SIZE / 3 - 2, 3, 0, Math.PI * 2);
+        ctx.arc(x + 4, y - 16, 3, 0, Math.PI * 2);
         ctx.fill();
+        
+        ctx.fillStyle = '#fff';
+        ctx.beginPath();
+        ctx.arc(x + 5, y - 17, 1, 0, Math.PI * 2);
+        ctx.fill();
+        
+        // Feet
+        ctx.fillStyle = '#f39c12';
+        ctx.fillRect(x - 6, y + 12, 3, 6);
+        ctx.fillRect(x + 3, y + 12, 3, 6);
     }
 
     window.addEventListener('load', init);
