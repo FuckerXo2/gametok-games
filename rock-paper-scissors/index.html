@@ -1,0 +1,193 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+  <title>Rock Paper Scissors</title>
+  <style>
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+      background: linear-gradient(135deg, #1a1a2e 0%, #16213e 50%, #0f3460 100%);
+      min-height: 100vh;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      overflow: hidden;
+      touch-action: manipulation;
+    }
+    .game-container {
+      width: 100%;
+      max-width: 400px;
+      padding: 20px;
+      text-align: center;
+    }
+    .score-board {
+      display: flex;
+      justify-content: space-around;
+      margin-bottom: 30px;
+      background: rgba(255,255,255,0.1);
+      border-radius: 16px;
+      padding: 16px;
+    }
+    .score-item {
+      text-align: center;
+    }
+    .score-label {
+      font-size: 12px;
+      color: rgba(255,255,255,0.6);
+      text-transform: uppercase;
+      letter-spacing: 1px;
+      margin-bottom: 4px;
+    }
+    .score-value {
+      font-size: 32px;
+      font-weight: 800;
+      color: #fff;
+    }
+    .player-score { color: #4ECDC4; }
+    .cpu-score { color: #FF6B6B; }
+    .battle-area {
+      display: flex;
+      justify-content: space-around;
+      align-items: center;
+      margin-bottom: 30px;
+      min-height: 180px;
+    }
+    .fighter {
+      text-align: center;
+    }
+    .fighter-label {
+      font-size: 11px;
+      color: rgba(255,255,255,0.5);
+      text-transform: uppercase;
+      letter-spacing: 1px;
+      margin-bottom: 8px;
+    }
+    .fighter-choice {
+      font-size: 80px;
+      line-height: 1;
+      transition: transform 0.1s;
+    }
+    .fighter-choice.shake {
+      animation: shake 0.5s ease-in-out;
+    }
+    @keyframes shake {
+      0%, 100% { transform: translateY(0); }
+      25% { transform: translateY(-20px); }
+      50% { transform: translateY(0); }
+      75% { transform: translateY(-10px); }
+    }
+    .vs {
+      font-size: 24px;
+      font-weight: 800;
+      color: rgba(255,255,255,0.3);
+    }
+    .message {
+      font-size: 20px;
+      font-weight: 700;
+      color: #fff;
+      margin-bottom: 30px;
+      min-height: 30px;
+    }
+    .message.win { color: #4ECDC4; }
+    .message.lose { color: #FF6B6B; }
+    .message.draw { color: #FFC107; }
+    .choices {
+      display: flex;
+      justify-content: center;
+      gap: 16px;
+    }
+    .choice-btn {
+      width: 90px;
+      height: 90px;
+      border-radius: 20px;
+      border: none;
+      background: rgba(255,255,255,0.1);
+      cursor: pointer;
+      transition: all 0.2s;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      gap: 4px;
+    }
+    .choice-btn:hover {
+      background: rgba(255,255,255,0.2);
+      transform: scale(1.05);
+    }
+    .choice-btn:active {
+      transform: scale(0.95);
+    }
+    .choice-btn.disabled {
+      opacity: 0.5;
+      pointer-events: none;
+    }
+    .choice-emoji {
+      font-size: 36px;
+    }
+    .choice-label {
+      font-size: 10px;
+      color: rgba(255,255,255,0.7);
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+    }
+    .streak {
+      margin-top: 20px;
+      font-size: 14px;
+      color: rgba(255,255,255,0.5);
+    }
+    .streak span {
+      color: #FFC107;
+      font-weight: 700;
+    }
+  </style>
+</head>
+<body>
+  <div class="game-container">
+    <div class="score-board">
+      <div class="score-item">
+        <div class="score-label">You</div>
+        <div class="score-value player-score" id="playerScore">0</div>
+      </div>
+      <div class="score-item">
+        <div class="score-label">CPU</div>
+        <div class="score-value cpu-score" id="cpuScore">0</div>
+      </div>
+    </div>
+
+    <div class="battle-area">
+      <div class="fighter">
+        <div class="fighter-label">You</div>
+        <div class="fighter-choice" id="playerChoice">❓</div>
+      </div>
+      <div class="vs">VS</div>
+      <div class="fighter">
+        <div class="fighter-label">CPU</div>
+        <div class="fighter-choice" id="cpuChoice">❓</div>
+      </div>
+    </div>
+
+    <div class="message" id="message">Choose your weapon!</div>
+
+    <div class="choices">
+      <button class="choice-btn" data-choice="rock">
+        <span class="choice-emoji">🪨</span>
+        <span class="choice-label">Rock</span>
+      </button>
+      <button class="choice-btn" data-choice="paper">
+        <span class="choice-emoji">📄</span>
+        <span class="choice-label">Paper</span>
+      </button>
+      <button class="choice-btn" data-choice="scissors">
+        <span class="choice-emoji">✂️</span>
+        <span class="choice-label">Scissors</span>
+      </button>
+    </div>
+
+    <div class="streak">Win Streak: <span id="streak">0</span> 🔥</div>
+  </div>
+
+  <script src="game.js"></script>
+</body>
+</html>
