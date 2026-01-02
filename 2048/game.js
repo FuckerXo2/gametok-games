@@ -121,6 +121,10 @@
         }
     }
 
+    // Pause/Resume for React Native (2048 doesn't need pause but adding for consistency)
+    window.gamePause = function() {};
+    window.gameResume = function() {};
+
     function restart() {
         score = 0;
         document.getElementById('game-over').style.display = 'none';

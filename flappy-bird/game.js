@@ -150,6 +150,21 @@
         }
     }
 
+    // Pause/Resume for React Native
+    window.gamePause = function() {
+        if (gameState === 'playing') {
+            gameState = 'paused';
+        }
+    };
+    
+    window.gameResume = function() {
+        if (gameState === 'paused') {
+            gameState = 'playing';
+            lastTime = performance.now();
+            requestAnimationFrame(gameLoop);
+        }
+    };
+
     function draw() {
         // Sky gradient
         const skyGrad = ctx.createLinearGradient(0, 0, 0, height);

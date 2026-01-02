@@ -358,6 +358,20 @@
         }
     }
 
+    // Pause/Resume for React Native
+    window.gamePause = function() {
+        if (gameState === 'playing') {
+            gameState = 'paused';
+        }
+    };
+    
+    window.gameResume = function() {
+        if (gameState === 'paused') {
+            gameState = 'playing';
+            requestAnimationFrame(gameLoop);
+        }
+    };
+
     function draw() {
         ctx.fillStyle = '#000';
         ctx.fillRect(0, 0, WIDTH, HEIGHT);

@@ -203,6 +203,21 @@
         }
     }
 
+    // Pause/Resume for React Native
+    window.gamePause = function() {
+        if (gameState === 'playing') {
+            gameState = 'paused';
+        }
+    };
+    
+    window.gameResume = function() {
+        if (gameState === 'paused') {
+            gameState = 'playing';
+            lastTime = performance.now();
+            requestAnimationFrame(gameLoop);
+        }
+    };
+
     function updateUI() {
         document.getElementById('score').textContent = score;
         document.getElementById('level').textContent = level;
