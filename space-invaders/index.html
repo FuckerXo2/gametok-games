@@ -2,12 +2,94 @@
 <html>
 <head lang="en">
     <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <title>Space Invaders</title>
     <link rel="stylesheet" href="assets/css/style.css">
     <script data-main="assets/javascript/main" src="assets/javascript/lib/require.js"></script>
+    <style>
+        .touch-controls {
+            position: fixed;
+            bottom: 20px;
+            left: 0;
+            right: 0;
+            display: flex;
+            justify-content: space-between;
+            padding: 0 20px;
+            z-index: 100;
+            pointer-events: none;
+        }
+        .control-group {
+            display: flex;
+            gap: 10px;
+            pointer-events: auto;
+        }
+        .touch-btn {
+            width: 60px;
+            height: 60px;
+            border-radius: 50%;
+            background: rgba(0,255,0,0.2);
+            border: 2px solid rgba(0,255,0,0.5);
+            color: #0f0;
+            font-size: 24px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            user-select: none;
+            -webkit-user-select: none;
+        }
+        .touch-btn:active {
+            background: rgba(0,255,0,0.4);
+        }
+        .fire-btn {
+            width: 80px;
+            height: 80px;
+        }
+        @media (min-width: 768px) {
+            .touch-controls { display: none; }
+        }
+    </style>
 </head>
 <body>
     <div id="game">
     </div>
+    <div class="touch-controls">
+        <div class="control-group">
+            <div class="touch-btn" id="touch-left">◀</div>
+            <div class="touch-btn" id="touch-right">▶</div>
+        </div>
+        <div class="control-group">
+            <div class="touch-btn fire-btn" id="touch-fire">●</div>
+        </div>
+    </div>
+    <script>
+        // Touch controls for mobile
+        document.addEventListener('DOMContentLoaded', function() {
+            function simulateKey(keyCode, type) {
+                var event = new KeyboardEvent(type, {
+                    keyCode: keyCode,
+                    which: keyCode,
+                    bubbles: true
+                });
+                document.dispatchEvent(event);
+            }
+            
+            function setupTouch(id, keyCode) {
+                var el = document.getElementById(id);
+                if (!el) return;
+                el.addEventListener('touchstart', function(e) {
+                    e.preventDefault();
+                    simulateKey(keyCode, 'keydown');
+                });
+                el.addEventListener('touchend', function(e) {
+                    e.preventDefault();
+                    simulateKey(keyCode, 'keyup');
+                });
+            }
+            
+            setupTouch('touch-left', 37);
+            setupTouch('touch-right', 39);
+            setupTouch('touch-fire', 32);
+        });
+    </script>
 </body>
 </html>

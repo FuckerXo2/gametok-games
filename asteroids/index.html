@@ -1,32 +1,129 @@
+<!DOCTYPE html>
 <html>
   <head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Asteroids</title>
     <script src="jquery-1.4.1.min.js"></script>
     <script src="vector_battle_regular.typeface.js"></script>
     <script src="ipad.js"></script>
     <script src="game.js"></script>
     <style>
-	  body {background-color: #000;}
-      #canvas { border:1px solid black; top:0px; left:0px; background-color: #fff;}
-      .button { position:absolute; border:1px solid black; }
-      #left-controls { position:absolute; left:1px; bottom:0px; display:none; }
-      #right-controls { position:absolute; right:1px; bottom:0px; display:none; }
-      #up { width:200px; height:100px; bottom:100px;}
-      #left { width:100px; height:100px; bottom:0px;}
-      #right { width:100px; height:100px; bottom:0px; left:100px; }
-      #space { width:200px; height:200px; bottom:0px; right:0px; }
+      * { margin: 0; padding: 0; box-sizing: border-box; }
+      html, body { 
+        width: 100%; 
+        height: 100%; 
+        overflow: hidden; 
+        background-color: #000;
+        touch-action: none;
+      }
+      #game-container { 
+        width: 100%; 
+        height: 100%; 
+        display: flex; 
+        justify-content: center; 
+        align-items: center;
+        position: relative;
+      }
+      #canvas { 
+        width: 100%; 
+        height: 100%; 
+        background-color: #000;
+        display: block;
+      }
+      /* Mobile touch controls */
+      .touch-controls {
+        position: fixed;
+        bottom: 20px;
+        left: 0;
+        right: 0;
+        display: flex;
+        justify-content: space-between;
+        padding: 0 20px;
+        z-index: 100;
+        pointer-events: none;
+      }
+      .control-group {
+        display: flex;
+        gap: 10px;
+        pointer-events: auto;
+      }
+      .touch-btn {
+        width: 60px;
+        height: 60px;
+        border-radius: 50%;
+        background: rgba(255,255,255,0.2);
+        border: 2px solid rgba(255,255,255,0.5);
+        color: white;
+        font-size: 24px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        user-select: none;
+        -webkit-user-select: none;
+      }
+      .touch-btn:active {
+        background: rgba(255,255,255,0.4);
+      }
+      .fire-btn {
+        width: 80px;
+        height: 80px;
+        background: rgba(255,0,0,0.3);
+        border-color: rgba(255,0,0,0.6);
+      }
+      @media (min-width: 768px) {
+        .touch-controls { display: none; }
+      }
     </style>
   </head>
   <body>
-    <div id="game-container" align="center">
-      <canvas id="canvas" width="780" height="540"></canvas>
-      <div id="left-controls">
-        <div id="up" class='button'>THRUST</div>
-        <div id="left" class='button'>LEFT</div>
-        <div id="right" class='button'>RIGHT</div>
+    <div id="game-container">
+      <canvas id="canvas"></canvas>
+    </div>
+    <div class="touch-controls">
+      <div class="control-group">
+        <div class="touch-btn" id="touch-left">◀</div>
+        <div class="touch-btn" id="touch-up">▲</div>
+        <div class="touch-btn" id="touch-right">▶</div>
       </div>
-      <div id="right-controls">
-        <div id="space" class='button'>FIRE</div>
+      <div class="control-group">
+        <div class="touch-btn fire-btn" id="touch-fire">●</div>
       </div>
     </div>
+    <script>
+      // Resize canvas to fill screen
+      function resizeCanvas() {
+        var canvas = document.getElementById('canvas');
+        canvas.width = window.innerWidth;
+        canvas.height = window.innerHeight;
+      }
+      window.addEventListener('resize', resizeCanvas);
+      resizeCanvas();
+      
+      // Touch controls
+      function setupTouchControl(id, keyCode) {
+        var el = document.getElementById(id);
+        if (!el) return;
+        
+        el.addEventListener('touchstart', function(e) {
+          e.preventDefault();
+          KEY_STATUS.keyDown = true;
+          KEY_STATUS[KEY_CODES[keyCode]] = true;
+        });
+        el.addEventListener('touchend', function(e) {
+          e.preventDefault();
+          KEY_STATUS.keyDown = false;
+          KEY_STATUS[KEY_CODES[keyCode]] = false;
+        });
+      }
+      
+      // Wait for game to load
+      setTimeout(function() {
+        setupTouchControl('touch-left', 37);  // left arrow
+        setupTouchControl('touch-up', 38);    // up arrow (thrust)
+        setupTouchControl('touch-right', 39); // right arrow
+        setupTouchControl('touch-fire', 32);  // space (fire)
+      }, 500);
+    </script>
   </body>
 </html>
