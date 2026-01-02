@@ -222,6 +222,10 @@
         document.getElementById('score').textContent = score;
         document.getElementById('level').textContent = level;
         document.getElementById('lines').textContent = lines;
+        // Report score to React Native for multiplayer
+        if (window.ReactNativeWebView) {
+            window.ReactNativeWebView.postMessage(JSON.stringify({ type: 'score', score: score }));
+        }
     }
 
     function draw() {

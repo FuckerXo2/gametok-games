@@ -532,6 +532,10 @@
 
     function updateUI() {
         document.querySelector('.score').textContent = score;
+        // Report score to React Native for multiplayer
+        if (window.ReactNativeWebView) {
+            window.ReactNativeWebView.postMessage(JSON.stringify({ type: 'score', score: score }));
+        }
         
         const livesEl = document.querySelector('.lives');
         livesEl.innerHTML = '';

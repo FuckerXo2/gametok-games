@@ -53,6 +53,10 @@
             }
         }
         document.getElementById('score').textContent = score;
+        // Report score to React Native for multiplayer
+        if (window.ReactNativeWebView) {
+            window.ReactNativeWebView.postMessage(JSON.stringify({ type: 'score', score: score }));
+        }
     }
 
     function slide(row) {
