@@ -1,0 +1,34 @@
+{
+  "labels": {
+    "instructions": "Click the cards to reveal <strong>{{requiredMatches}}</strong> matches",
+    "stats": "You've found all matches in <strong>{{clicks}}</strong> clicks with <strong>{{sucessPercent}}%</strong> efficiency",
+    "victory": "You Win !"
+  },
+  "cardDimensions": {
+    "unit": "px",
+    "gutter": 10,
+    "height": 80,
+    "width": 80
+  },
+  "lvls": {
+    "easy": {
+      "rows": 3,
+      "cols": 4,
+      "requiredMatches": 2,
+      "keptRevealed": 1
+    },
+    "medium": {
+      "rows": 4,
+      "cols": 7,
+      "requiredMatches": 2,
+      "keptRevealed": 0
+    },
+    "hard": {
+      "rows": 6,
+      "cols": 6,
+      "requiredMatches": 3,
+      "keptRevealed": 2,
+      "panicMode": true
+    }
+  }
+}
