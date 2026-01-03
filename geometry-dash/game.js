@@ -10,9 +10,9 @@
     let gameState = 'start';
     let lastTime = 0;
     let distance = 0;
-    let levelLength = 3000;
     let speed = 6;
     let groundY;
+    let nextObstacleX = 400;
 
     const GRAVITY = 0.8;
     const JUMP_FORCE = -15;
@@ -42,43 +42,47 @@
             onGround: true
         };
         
-        obstacles = generateLevel();
+        obstacles = [];
         particles = [];
         distance = 0;
+        speed = 6;
+        nextObstacleX = 400;
+        
+        // Generate initial obstacles
+        generateMoreObstacles();
         
         gameState = 'playing';
 
         document.getElementById('ui').classList.remove('hidden');
-        document.getElementById('progress').classList.remove('hidden');
+        document.getElementById('progress').classList.add('hidden'); // Hide progress bar - endless mode
         updateUI();
         
         lastTime = performance.now();
         requestAnimationFrame(gameLoop);
     }
 
-    function generateLevel() {
-        const obs = [];
-        let x = 400;
-        
-        while (x < levelLength) {
+    function generateMoreObstacles() {
+        // Generate obstacles ahead of the player
+        while (nextObstacleX < distance + width + 500) {
             const type = Math.random();
             
             if (type < 0.5) {
                 // Spike
-                obs.push({ type: 'spike', x: x, y: groundY, width: 40, height: 40 });
+                obstacles.push({ type: 'spike', x: nextObstacleX, y: groundY, width: 40, height: 40 });
             } else if (type < 0.75) {
                 // Block
-                obs.push({ type: 'block', x: x, y: groundY - 50, width: 50, height: 50 });
+                obstacles.push({ type: 'block', x: nextObstacleX, y: groundY - 50, width: 50, height: 50 });
             } else {
                 // Double spike
-                obs.push({ type: 'spike', x: x, y: groundY, width: 40, height: 40 });
-                obs.push({ type: 'spike', x: x + 45, y: groundY, width: 40, height: 40 });
+                obstacles.push({ type: 'spike', x: nextObstacleX, y: groundY, width: 40, height: 40 });
+                obstacles.push({ type: 'spike', x: nextObstacleX + 45, y: groundY, width: 40, height: 40 });
             }
             
-            x += 200 + Math.random() * 200;
+            nextObstacleX += 200 + Math.random() * 200;
         }
         
-        return obs;
+        // Remove obstacles that are far behind
+        obstacles = obstacles.filter(obs => obs.x > distance - 200);
     }
 
     function setupControls() {
@@ -112,6 +116,13 @@
     function update(dt) {
         // Move world
         distance += speed * dt;
+        
+        // Gradually increase speed
+        speed = 6 + Math.floor(distance / 500) * 0.5;
+        if (speed > 15) speed = 15;
+        
+        // Generate more obstacles as we go
+        generateMoreObstacles();
         
         // Apply gravity
         player.vy += GRAVITY * dt;
@@ -179,10 +190,9 @@
         }
         particles = particles.filter(p => p.life > 0);
         
-        // Check win
-        if (distance >= levelLength) {
-            win();
-            return;
+        // Limit particles to prevent memory issues
+        if (particles.length > 100) {
+            particles = particles.slice(-100);
         }
         
         updateUI();
@@ -203,34 +213,19 @@
             });
         }
         
-        const percent = Math.floor((distance / levelLength) * 100);
-        document.getElementById('final-score').textContent = percent + '%';
+        const score = Math.floor(distance / 10);
+        document.getElementById('final-score').textContent = score;
         
         document.getElementById('ui').classList.add('hidden');
-        document.getElementById('progress').classList.add('hidden');
         
         if (window.ReactNativeWebView) {
-            window.ReactNativeWebView.postMessage(JSON.stringify({ type: 'gameOver', score: percent }));
-        }
-    }
-
-    function win() {
-        gameState = 'gameover';
-        document.getElementById('game-over').querySelector('h1').textContent = 'LEVEL COMPLETE!';
-        document.getElementById('final-score').textContent = '100%';
-        
-        document.getElementById('ui').classList.add('hidden');
-        document.getElementById('progress').classList.add('hidden');
-        
-        if (window.ReactNativeWebView) {
-            window.ReactNativeWebView.postMessage(JSON.stringify({ type: 'gameOver', score: 100 }));
+            window.ReactNativeWebView.postMessage(JSON.stringify({ type: 'gameOver', score: score }));
         }
     }
 
     function updateUI() {
-        const percent = Math.floor((distance / levelLength) * 100);
-        document.getElementById('score').textContent = percent;
-        document.getElementById('progress-bar').style.width = percent + '%';
+        const score = Math.floor(distance / 10);
+        document.getElementById('score').textContent = score;
     }
 
     function draw() {
