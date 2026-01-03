@@ -83,10 +83,14 @@
         ball.x += ball.vx * dt;
         ball.y += ball.vy * dt;
         
-        // Top/bottom bounce
-        if (ball.y < 0 || ball.y > height - BALL_SIZE) {
-            ball.vy *= -1;
-            ball.y = ball.y < 0 ? 0 : height - BALL_SIZE;
+        // Top/bottom bounce - clamp ball within bounds
+        if (ball.y <= 0) {
+            ball.vy = Math.abs(ball.vy);
+            ball.y = 0;
+        }
+        if (ball.y >= height - BALL_SIZE) {
+            ball.vy = -Math.abs(ball.vy);
+            ball.y = height - BALL_SIZE;
         }
         
         // AI movement
@@ -99,39 +103,39 @@
         ai.y = Math.max(0, Math.min(height - PADDLE_HEIGHT, ai.y));
         
         // Player paddle collision (left side)
-        if (ball.x < 30 + PADDLE_WIDTH &&
+        if (ball.x <= 30 + PADDLE_WIDTH &&
             ball.y + BALL_SIZE > player.y &&
             ball.y < player.y + PADDLE_HEIGHT &&
             ball.vx < 0) {
             ball.vx = Math.abs(ball.vx) * 1.05;
             ball.vy += (ball.y - player.y - PADDLE_HEIGHT/2) * 0.1;
-            ball.x = 30 + PADDLE_WIDTH;
+            ball.x = 30 + PADDLE_WIDTH + 1;
         }
         
         // AI paddle collision (right side)
-        if (ball.x + BALL_SIZE > width - 30 - PADDLE_WIDTH &&
+        if (ball.x + BALL_SIZE >= width - 30 - PADDLE_WIDTH &&
             ball.y + BALL_SIZE > ai.y &&
             ball.y < ai.y + PADDLE_HEIGHT &&
             ball.vx > 0) {
             ball.vx = -Math.abs(ball.vx) * 1.05;
             ball.vy += (ball.y - ai.y - PADDLE_HEIGHT/2) * 0.1;
-            ball.x = width - 30 - PADDLE_WIDTH - BALL_SIZE;
+            ball.x = width - 30 - PADDLE_WIDTH - BALL_SIZE - 1;
         }
         
         // Scoring
-        if (ball.x < 0) {
+        if (ball.x < -BALL_SIZE) {
             aiScore++;
             checkWin();
             resetBall();
         }
-        if (ball.x > width) {
+        if (ball.x > width + BALL_SIZE) {
             playerScore++;
             checkWin();
             resetBall();
         }
         
         // Cap ball speed
-        const maxSpeed = 15;
+        const maxSpeed = 12;
         ball.vx = Math.max(-maxSpeed, Math.min(maxSpeed, ball.vx));
         ball.vy = Math.max(-maxSpeed, Math.min(maxSpeed, ball.vy));
     }
