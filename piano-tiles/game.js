@@ -15,6 +15,97 @@
     const COLS = 4;
     const VISIBLE_ROWS = 4;
 
+    // Audio context for piano sounds
+    let audioCtx = null;
+    
+    // Piano note frequencies (C major scale + some extras)
+    const NOTES = [
+        261.63, // C4
+        293.66, // D4
+        329.63, // E4
+        349.23, // F4
+        392.00, // G4
+        440.00, // A4
+        493.88, // B4
+        523.25, // C5
+    ];
+    
+    function initAudio() {
+        if (!audioCtx) {
+            audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+        }
+        if (audioCtx.state === 'suspended') {
+            audioCtx.resume();
+        }
+    }
+    
+    function playNote(col) {
+        if (!audioCtx) return;
+        
+        try {
+            const oscillator = audioCtx.createOscillator();
+            const gainNode = audioCtx.createGain();
+            
+            // Pick a note based on column and add some randomness
+            const noteIndex = (col + Math.floor(score / 4)) % NOTES.length;
+            oscillator.frequency.value = NOTES[noteIndex];
+            oscillator.type = 'sine';
+            
+            // Add a second oscillator for richer sound
+            const oscillator2 = audioCtx.createOscillator();
+            oscillator2.frequency.value = NOTES[noteIndex] * 2; // Octave higher
+            oscillator2.type = 'sine';
+            
+            const gainNode2 = audioCtx.createGain();
+            gainNode2.gain.value = 0.15; // Quieter overtone
+            
+            oscillator.connect(gainNode);
+            oscillator2.connect(gainNode2);
+            gainNode.connect(audioCtx.destination);
+            gainNode2.connect(audioCtx.destination);
+            
+            // Piano-like envelope
+            const now = audioCtx.currentTime;
+            gainNode.gain.setValueAtTime(0, now);
+            gainNode.gain.linearRampToValueAtTime(0.4, now + 0.01); // Quick attack
+            gainNode.gain.exponentialRampToValueAtTime(0.01, now + 0.5); // Decay
+            
+            gainNode2.gain.setValueAtTime(0, now);
+            gainNode2.gain.linearRampToValueAtTime(0.15, now + 0.01);
+            gainNode2.gain.exponentialRampToValueAtTime(0.01, now + 0.3);
+            
+            oscillator.start(now);
+            oscillator2.start(now);
+            oscillator.stop(now + 0.5);
+            oscillator2.stop(now + 0.3);
+        } catch (e) {
+            // Audio failed, continue silently
+        }
+    }
+    
+    function playGameOverSound() {
+        if (!audioCtx) return;
+        
+        try {
+            const oscillator = audioCtx.createOscillator();
+            const gainNode = audioCtx.createGain();
+            
+            oscillator.frequency.value = 150;
+            oscillator.type = 'sawtooth';
+            
+            oscillator.connect(gainNode);
+            gainNode.connect(audioCtx.destination);
+            
+            const now = audioCtx.currentTime;
+            gainNode.gain.setValueAtTime(0.3, now);
+            oscillator.frequency.linearRampToValueAtTime(80, now + 0.3);
+            gainNode.gain.linearRampToValueAtTime(0, now + 0.3);
+            
+            oscillator.start(now);
+            oscillator.stop(now + 0.3);
+        } catch (e) {}
+    }
+
     function resize() {
         width = canvas.width = window.innerWidth;
         height = canvas.height = window.innerHeight;
@@ -34,6 +125,7 @@
     }
 
     function startGame() {
+        initAudio();
         score = 0;
         speed = 5;
         tiles = [];
@@ -122,6 +214,7 @@
             if (col === tappedTile.blackCol) {
                 // Correct tap
                 tappedTile.tapped = true;
+                playNote(col);
                 score++;
                 updateScore();
             } else {
@@ -133,6 +226,7 @@
 
     function gameOver() {
         gameState = 'gameover';
+        playGameOverSound();
         document.getElementById('final-score').textContent = score;
         
         document.getElementById('ui').classList.add('hidden');
