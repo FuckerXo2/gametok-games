@@ -27,7 +27,46 @@
         document.getElementById('start-btn').addEventListener('click', startGame);
         document.getElementById('restart-btn').addEventListener('click', startGame);
         
+        // Expose startGame globally so app can trigger it
+        window.startGame = startGame;
+        
+        // Draw idle preview
+        drawIdlePreview();
+    }
+    
+    function drawIdlePreview() {
+        // Initialize preview state
+        ball = {
+            x: width / 2,
+            y: height - 150,
+            vx: 0,
+            vy: 0,
+            rotation: 0,
+            flying: false,
+            scored: false
+        };
+        
+        hoop = {
+            x: width / 2,
+            y: 250,
+            width: 80,
+            rimWidth: 10
+        };
+        
         draw();
+        
+        // Animate ball bobbing
+        let bobTime = 0;
+        function animateIdle() {
+            if (gameState === 'aiming' || gameState === 'flying') return;
+            
+            bobTime += 0.04;
+            ball.y = height - 150 + Math.sin(bobTime) * 10;
+            ball.rotation = Math.sin(bobTime * 0.7) * 0.2;
+            draw();
+            requestAnimationFrame(animateIdle);
+        }
+        animateIdle();
     }
 
     function startGame() {

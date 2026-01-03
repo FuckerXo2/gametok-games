@@ -50,6 +50,25 @@
         paddle = { x: width / 2, y: height - 50 };
         ball = { x: width / 2, y: height - 100, vx: 0, vy: 0, speed: 6 };
         drawPreview();
+        
+        // Animate idle preview
+        let bobTime = 0;
+        function animateIdle() {
+            if (gameState === 'playing') return;
+            
+            bobTime += 0.04;
+            
+            // Ball bobs up and down
+            ball.y = height - 100 + Math.sin(bobTime) * 15;
+            ball.x = width / 2 + Math.sin(bobTime * 0.5) * 30;
+            
+            // Paddle follows ball slightly
+            paddle.x = width / 2 + Math.sin(bobTime * 0.5) * 20;
+            
+            draw();
+            requestAnimationFrame(animateIdle);
+        }
+        animateIdle();
     }
     
     function drawPreview() {

@@ -34,6 +34,61 @@
     function init() {
         document.getElementById('start-btn').addEventListener('click', startGame);
         document.getElementById('restart-btn').addEventListener('click', startGame);
+        
+        // Expose startGame globally so app can trigger it
+        window.startGame = startGame;
+        
+        // Draw idle preview
+        drawIdlePreview();
+    }
+    
+    function drawIdlePreview() {
+        // Create a preview board
+        const boardEl = document.getElementById('board');
+        boardEl.innerHTML = '';
+        
+        // Preview pattern
+        const previewPattern = [
+            [1, 1, 0, 0, 0, 0, 1, 1],
+            [1, 0, 0, 1, 1, 0, 0, 1],
+            [0, 0, 1, 1, 1, 1, 0, 0],
+            [0, 1, 1, 0, 0, 1, 1, 0],
+            [0, 1, 1, 0, 0, 1, 1, 0],
+            [0, 0, 1, 1, 1, 1, 0, 0],
+            [1, 0, 0, 1, 1, 0, 0, 1],
+            [1, 1, 0, 0, 0, 0, 1, 1]
+        ];
+        
+        for (let row = 0; row < SIZE; row++) {
+            for (let col = 0; col < SIZE; col++) {
+                const cell = document.createElement('div');
+                cell.className = 'cell';
+                if (previewPattern[row][col]) {
+                    cell.classList.add('filled');
+                    cell.style.background = COLORS[(row + col) % COLORS.length];
+                }
+                boardEl.appendChild(cell);
+            }
+        }
+        
+        document.getElementById('game-container').classList.remove('hidden');
+        document.getElementById('start-screen').classList.remove('hidden');
+        
+        // Animate cells with pulse
+        let pulseTime = 0;
+        function animateIdle() {
+            if (document.getElementById('start-screen').classList.contains('hidden')) return;
+            
+            pulseTime += 0.03;
+            const cells = boardEl.querySelectorAll('.cell.filled');
+            cells.forEach((cell, i) => {
+                const offset = i * 0.2;
+                const scale = 1 + Math.sin(pulseTime + offset) * 0.05;
+                cell.style.transform = `scale(${scale})`;
+            });
+            requestAnimationFrame(animateIdle);
+        }
+        animateIdle();
     }
 
     function startGame() {

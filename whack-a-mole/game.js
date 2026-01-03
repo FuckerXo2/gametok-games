@@ -33,6 +33,44 @@
 
         // Expose startGame globally so app can trigger it
         window.startGame = startGame;
+        
+        // Draw idle preview
+        drawIdlePreview();
+    }
+    
+    function drawIdlePreview() {
+        // Show game area
+        document.getElementById('game-area').classList.remove('hidden');
+        
+        // Animate moles popping up
+        let animTime = 0;
+        let currentMole = 0;
+        
+        function animateIdle() {
+            if (gameActive) return;
+            
+            animTime++;
+            
+            // Pop up a mole every 40 frames
+            if (animTime % 50 === 0) {
+                // Hide previous mole
+                moles.forEach(m => m.classList.remove('up'));
+                
+                // Show new mole
+                currentMole = (currentMole + 1) % moles.length;
+                moles[currentMole].classList.add('up');
+                
+                // Hide after delay
+                setTimeout(() => {
+                    if (!gameActive) {
+                        moles[currentMole].classList.remove('up');
+                    }
+                }, 800);
+            }
+            
+            requestAnimationFrame(animateIdle);
+        }
+        animateIdle();
     }
 
     function startGame() {

@@ -27,6 +27,54 @@
 
         // Expose startGame globally so app can trigger it
         window.startGame = startGame;
+        
+        // Draw idle preview
+        drawIdlePreview();
+    }
+    
+    function drawIdlePreview() {
+        // Initialize preview path
+        generatePath();
+        
+        player = {
+            x: path[0].x * TILE_SIZE + TILE_SIZE / 2,
+            y: path[0].y * TILE_SIZE + TILE_SIZE / 2,
+            dir: 'up',
+            nextDir: null
+        };
+        
+        cameraY = player.y - height * 0.7;
+        
+        draw();
+        
+        // Animate player pulsing
+        let pulseTime = 0;
+        function animateIdle() {
+            if (gameState === 'playing') return;
+            
+            pulseTime += 0.04;
+            
+            // Redraw
+            draw();
+            
+            // Draw pulsing player overlay
+            ctx.save();
+            ctx.translate(0, -cameraY);
+            
+            const scale = 1 + Math.sin(pulseTime) * 0.15;
+            ctx.fillStyle = '#fff';
+            ctx.shadowColor = '#fff';
+            ctx.shadowBlur = 20 + Math.sin(pulseTime) * 10;
+            ctx.beginPath();
+            ctx.arc(player.x, player.y, (PLAYER_SIZE / 2) * scale, 0, Math.PI * 2);
+            ctx.fill();
+            ctx.shadowBlur = 0;
+            
+            ctx.restore();
+            
+            requestAnimationFrame(animateIdle);
+        }
+        animateIdle();
     }
 
     function generatePath() {

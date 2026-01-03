@@ -8,11 +8,57 @@
 
     function init() {
         createBoard();
+        setupControls();
+        
+        // Expose startGame globally so app can trigger it
+        window.startGame = startGame;
+        
+        // Draw idle preview
+        drawIdlePreview();
+    }
+    
+    function startGame() {
+        score = 0;
+        document.getElementById('game-over').style.display = 'none';
+        createBoard();
         addTile();
         addTile();
         render();
-        setupControls();
-
+    }
+    
+    function drawIdlePreview() {
+        // Set up a nice preview board state
+        board = [
+            [2, 4, 8, 16],
+            [0, 2, 4, 8],
+            [0, 0, 2, 4],
+            [0, 0, 0, 2]
+        ];
+        render();
+        
+        // Animate tiles with subtle pulse
+        let pulseTime = 0;
+        function animateIdle() {
+            if (document.getElementById('game-over').style.display === 'flex') return;
+            // Check if game has started (tiles are being added)
+            const cells = document.querySelectorAll('.cell');
+            let hasHighTile = false;
+            cells.forEach(cell => {
+                const val = parseInt(cell.getAttribute('data-value'));
+                if (val > 16) hasHighTile = true;
+            });
+            if (hasHighTile) return; // Game has started
+            
+            pulseTime += 0.03;
+            const scale = 1 + Math.sin(pulseTime) * 0.02;
+            cells.forEach((cell, i) => {
+                if (cell.getAttribute('data-value') !== '0') {
+                    cell.style.transform = `scale(${scale})`;
+                }
+            });
+            requestAnimationFrame(animateIdle);
+        }
+        animateIdle();
     }
 
     function createBoard() {

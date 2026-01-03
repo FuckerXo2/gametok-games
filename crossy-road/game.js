@@ -26,6 +26,84 @@
 
         // Expose startGame globally so app can trigger it
         window.startGame = startGame;
+        
+        // Draw idle preview
+        drawIdlePreview();
+    }
+    
+    function drawIdlePreview() {
+        // Initialize preview state
+        const startCol = Math.floor(COLS / 2);
+        player = {
+            col: startCol,
+            row: 0,
+            x: startCol * TILE + TILE / 2,
+            y: 0,
+            targetX: startCol * TILE + TILE / 2,
+            targetY: 0,
+            moving: false,
+            onLog: null
+        };
+        
+        scrollOffset = 0;
+        lanes = [];
+        
+        // Generate preview lanes
+        for (let i = -2; i < 10; i++) {
+            let type = 'grass';
+            if (i > 0) {
+                const pattern = i % 5;
+                if (pattern === 1 || pattern === 2) type = 'road';
+                else if (pattern === 3) type = 'water';
+                else type = 'grass';
+            }
+            
+            const lane = { row: i, type: type, obstacles: [] };
+            
+            if (type === 'road') {
+                lane.obstacles.push({
+                    x: width * 0.3,
+                    speed: 0,
+                    width: 60,
+                    color: '#e74c3c'
+                });
+            } else if (type === 'water') {
+                lane.obstacles.push({
+                    x: width * 0.5,
+                    speed: 0,
+                    width: 100,
+                    isLog: true
+                });
+            }
+            
+            lanes.push(lane);
+        }
+        
+        draw();
+        
+        // Animate chicken bobbing
+        let bobTime = 0;
+        function animateIdle() {
+            if (gameState === 'playing') return;
+            
+            bobTime += 0.05;
+            // Subtle chicken bob
+            draw();
+            
+            // Draw chicken with bob effect
+            const boardWidth = COLS * TILE;
+            const offsetX = (width - boardWidth) / 2;
+            const playerScreenY = height - (player.y - scrollOffset) - TILE;
+            
+            ctx.save();
+            ctx.translate(offsetX, 0);
+            const bobOffset = Math.sin(bobTime) * 3;
+            drawChicken(player.x, playerScreenY + TILE / 2 + bobOffset);
+            ctx.restore();
+            
+            requestAnimationFrame(animateIdle);
+        }
+        animateIdle();
     }
 
     function startGame() {

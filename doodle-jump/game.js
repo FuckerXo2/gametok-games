@@ -29,6 +29,46 @@
 
         // Expose startGame globally so app can trigger it
         window.startGame = startGame;
+        
+        // Draw idle preview
+        drawIdlePreview();
+    }
+    
+    function drawIdlePreview() {
+        // Initialize preview state
+        player = {
+            x: width / 2,
+            y: height - 200,
+            vx: 0,
+            vy: 0,
+            facingRight: true
+        };
+        
+        platforms = [];
+        // Create preview platforms
+        for (let i = 0; i < 6; i++) {
+            platforms.push({
+                x: 50 + Math.random() * (width - PLATFORM_WIDTH - 100),
+                y: height - 100 - i * 80,
+                type: i % 3 === 0 ? 'moving' : 'normal',
+                vx: 0
+            });
+        }
+        
+        draw();
+        
+        // Animate player bobbing
+        let bobTime = 0;
+        function animateIdle() {
+            if (gameState === 'playing') return;
+            
+            bobTime += 0.04;
+            player.y = height - 200 + Math.sin(bobTime) * 10;
+            player.facingRight = Math.sin(bobTime * 0.3) > 0;
+            draw();
+            requestAnimationFrame(animateIdle);
+        }
+        animateIdle();
     }
 
     function startGame() {

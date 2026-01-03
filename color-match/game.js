@@ -36,6 +36,64 @@
 
         // Expose startGame globally so app can trigger it
         window.startGame = startGame;
+        
+        // Draw idle preview
+        drawIdlePreview();
+    }
+    
+    function drawIdlePreview() {
+        // Set up preview state
+        currentWord = 'BLUE';
+        currentWordColor = '#e74c3c'; // Show BLUE in red color
+        correctColor = COLORS.find(c => c.name === 'BLUE');
+        
+        setupButtons();
+        draw();
+        
+        // Animate with subtle effects
+        let pulseTime = 0;
+        function animateIdle() {
+            if (gameState === 'playing') return;
+            
+            pulseTime += 0.03;
+            
+            // Pulse the word
+            ctx.fillStyle = '#1a1a2e';
+            ctx.fillRect(0, 0, width, height);
+            
+            // Instructions
+            ctx.fillStyle = '#888';
+            ctx.font = '16px Arial';
+            ctx.textAlign = 'center';
+            ctx.fillText('Tap the color that matches the WORD', width / 2, 100);
+            
+            // Word with pulse effect
+            const scale = 1 + Math.sin(pulseTime) * 0.05;
+            ctx.save();
+            ctx.translate(width / 2, height / 3);
+            ctx.scale(scale, scale);
+            ctx.fillStyle = currentWordColor;
+            ctx.font = 'bold 64px Arial';
+            ctx.shadowColor = currentWordColor;
+            ctx.shadowBlur = 20 + Math.sin(pulseTime) * 10;
+            ctx.fillText(currentWord, 0, 0);
+            ctx.shadowBlur = 0;
+            ctx.restore();
+            
+            // Color buttons
+            for (let btn of colorButtons) {
+                ctx.fillStyle = btn.color.hex;
+                ctx.shadowColor = btn.color.hex;
+                ctx.shadowBlur = 10;
+                ctx.beginPath();
+                ctx.roundRect(btn.x, btn.y, btn.size, btn.size, 15);
+                ctx.fill();
+                ctx.shadowBlur = 0;
+            }
+            
+            requestAnimationFrame(animateIdle);
+        }
+        animateIdle();
     }
 
     function setupButtons() {

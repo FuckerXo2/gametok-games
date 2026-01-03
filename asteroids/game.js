@@ -1194,6 +1194,11 @@ $(function () {
 
   mainLoop();
 
+  // Expose startGame globally for app integration
+  window.startGame = function() {
+    window.gameStart = true;
+  };
+
   $(window).keydown(function (e) {
     switch (KEY_CODES[e.keyCode]) {
       case 'f': // show framerate

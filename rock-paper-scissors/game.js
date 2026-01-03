@@ -121,3 +121,50 @@ choiceBtns.forEach(btn => {
 document.addEventListener('touchend', (e) => {
   e.preventDefault();
 }, { passive: false });
+
+// Expose startGame globally
+window.startGame = function() {
+  playerScore = 0;
+  cpuScore = 0;
+  streak = 0;
+  playerScoreEl.textContent = '0';
+  cpuScoreEl.textContent = '0';
+  streakEl.textContent = '0';
+  messageEl.textContent = 'Choose your move!';
+  messageEl.className = 'message';
+  playerChoiceEl.textContent = '❓';
+  cpuChoiceEl.textContent = '❓';
+};
+
+// Draw idle preview
+function drawIdlePreview() {
+  // Animate the choice displays
+  const emojis = ['🪨', '📄', '✂️'];
+  let emojiIndex = 0;
+  let animTime = 0;
+  
+  function animateIdle() {
+    if (isPlaying) return;
+    
+    animTime++;
+    
+    // Cycle through emojis every 40 frames
+    if (animTime % 40 === 0) {
+      emojiIndex = (emojiIndex + 1) % emojis.length;
+      playerChoiceEl.textContent = emojis[emojiIndex];
+      cpuChoiceEl.textContent = emojis[(emojiIndex + 1) % emojis.length];
+    }
+    
+    // Pulse effect on buttons
+    const scale = 1 + Math.sin(animTime * 0.05) * 0.03;
+    choiceBtns.forEach(btn => {
+      btn.style.transform = `scale(${scale})`;
+    });
+    
+    requestAnimationFrame(animateIdle);
+  }
+  animateIdle();
+}
+
+// Initialize preview on load
+document.addEventListener('DOMContentLoaded', drawIdlePreview);

@@ -19,6 +19,62 @@
         
         // Expose startGame globally so app can trigger it
         window.startGame = startGame;
+        
+        // Draw idle preview
+        drawIdlePreview();
+    }
+    
+    function drawIdlePreview() {
+        const grid = document.getElementById('grid');
+        const container = document.getElementById('game-container');
+        
+        // Pick preview emojis
+        const previewEmojis = ['🎮', '🎯', '🎨', '🎭', '🎸', '🏀', '🎮', '🎯', '🎨', '🎭', '🎸', '🏀', '⚽', '🎾', '🏈', '🎱'];
+        
+        // Calculate grid size
+        const cols = 4;
+        const rows = 4;
+        const cardSize = Math.min((window.innerWidth - 60) / cols, (window.innerHeight - 150) / rows, 100);
+        
+        grid.style.gridTemplateColumns = `repeat(${cols}, ${cardSize}px)`;
+        grid.innerHTML = '';
+        
+        // Create preview cards (some flipped to show emojis)
+        for (let i = 0; i < 16; i++) {
+            const card = document.createElement('div');
+            card.className = 'card';
+            card.style.width = cardSize + 'px';
+            card.style.height = cardSize + 'px';
+            
+            // Show some cards flipped
+            if (i === 2 || i === 5 || i === 10 || i === 13) {
+                card.classList.add('flipped');
+                card.textContent = previewEmojis[i];
+            } else {
+                card.textContent = '?';
+            }
+            
+            grid.appendChild(card);
+        }
+        
+        container.classList.remove('hidden');
+        document.getElementById('start-screen').classList.remove('hidden');
+        
+        // Animate cards with pulse
+        let pulseTime = 0;
+        function animateIdle() {
+            if (document.getElementById('start-screen').classList.contains('hidden')) return;
+            
+            pulseTime += 0.03;
+            const cards = grid.querySelectorAll('.card');
+            cards.forEach((card, i) => {
+                const offset = i * 0.2;
+                const scale = 1 + Math.sin(pulseTime + offset) * 0.03;
+                card.style.transform = `scale(${scale})`;
+            });
+            requestAnimationFrame(animateIdle);
+        }
+        animateIdle();
     }
 
     function startGame() {

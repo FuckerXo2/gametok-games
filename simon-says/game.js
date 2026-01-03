@@ -26,6 +26,39 @@
         
         // Expose startGame globally so app can trigger it
         window.startGame = startGame;
+        
+        // Draw idle preview
+        drawIdlePreview();
+    }
+    
+    function drawIdlePreview() {
+        // Show game area with animated pads
+        document.getElementById('game-area').classList.remove('hidden');
+        document.getElementById('start-screen').classList.remove('hidden');
+        document.getElementById('level').textContent = 'Level: --';
+        document.getElementById('status').textContent = 'Watch the pattern!';
+        
+        // Animate pads lighting up in sequence
+        let padIndex = 0;
+        let animTime = 0;
+        
+        function animateIdle() {
+            if (document.getElementById('start-screen').classList.contains('hidden')) return;
+            
+            animTime++;
+            
+            // Flash a pad every 30 frames
+            if (animTime % 40 === 0) {
+                const color = COLORS[padIndex % COLORS.length];
+                const pad = pads[color];
+                pad.classList.add('active');
+                setTimeout(() => pad.classList.remove('active'), 300);
+                padIndex++;
+            }
+            
+            requestAnimationFrame(animateIdle);
+        }
+        animateIdle();
     }
 
     function startGame() {

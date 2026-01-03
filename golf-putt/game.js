@@ -31,6 +31,41 @@
 
         // Expose startGame globally so app can trigger it
         window.startGame = startGame;
+        
+        // Draw idle preview
+        drawIdlePreview();
+    }
+    
+    function drawIdlePreview() {
+        // Initialize preview state
+        ball = {
+            x: width / 2,
+            y: height - 150,
+            vx: 0,
+            vy: 0
+        };
+        
+        hole = {
+            x: width / 2,
+            y: height * 0.25
+        };
+        
+        obstacles = [];
+        
+        draw();
+        
+        // Animate ball with subtle movement
+        let bobTime = 0;
+        function animateIdle() {
+            if (gameState === 'aiming' || gameState === 'rolling') return;
+            
+            bobTime += 0.03;
+            ball.x = width / 2 + Math.sin(bobTime * 0.5) * 5;
+            ball.y = height - 150 + Math.sin(bobTime) * 5;
+            draw();
+            requestAnimationFrame(animateIdle);
+        }
+        animateIdle();
     }
 
     function startGame() {

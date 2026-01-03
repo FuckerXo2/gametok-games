@@ -33,6 +33,73 @@
 
         // Expose startGame globally so app can trigger it
         window.startGame = startGame;
+        
+        // Draw idle preview
+        drawIdlePreview();
+    }
+    
+    function drawIdlePreview() {
+        // Initialize preview state
+        player = createSnake(WORLD_SIZE / 2, WORLD_SIZE / 2, '#4ecca3', 15);
+        
+        bots = [];
+        // Add a few preview bots
+        const botPositions = [
+            { x: WORLD_SIZE / 2 + 200, y: WORLD_SIZE / 2 - 100 },
+            { x: WORLD_SIZE / 2 - 150, y: WORLD_SIZE / 2 + 150 }
+        ];
+        const colors = ['#ff6b6b', '#48dbfb'];
+        botPositions.forEach((pos, i) => {
+            bots.push(createSnake(pos.x, pos.y, colors[i], 8 + i * 3));
+        });
+        
+        food = [];
+        for (let i = 0; i < 50; i++) {
+            food.push({
+                x: WORLD_SIZE / 2 - 300 + Math.random() * 600,
+                y: WORLD_SIZE / 2 - 300 + Math.random() * 600,
+                color: `hsl(${Math.random() * 360}, 70%, 60%)`,
+                size: FOOD_SIZE + Math.random() * 4
+            });
+        }
+        
+        camera = { x: player.segments[0].x, y: player.segments[0].y };
+        
+        draw();
+        drawMinimap();
+        
+        // Animate snake moving in circle
+        let animTime = 0;
+        function animateIdle() {
+            if (gameState === 'playing') return;
+            
+            animTime += 0.02;
+            
+            // Move player snake in a circle
+            player.angle = animTime;
+            const head = player.segments[0];
+            const newHead = {
+                x: WORLD_SIZE / 2 + Math.cos(animTime) * 100,
+                y: WORLD_SIZE / 2 + Math.sin(animTime) * 100
+            };
+            
+            // Update body to follow
+            for (let i = player.segments.length - 1; i > 0; i--) {
+                const prev = player.segments[i - 1];
+                const curr = player.segments[i];
+                curr.x += (prev.x - curr.x) * 0.3;
+                curr.y += (prev.y - curr.y) * 0.3;
+            }
+            player.segments[0] = newHead;
+            
+            camera.x = newHead.x;
+            camera.y = newHead.y;
+            
+            draw();
+            drawMinimap();
+            requestAnimationFrame(animateIdle);
+        }
+        animateIdle();
     }
 
     function startGame() {

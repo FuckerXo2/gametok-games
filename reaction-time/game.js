@@ -24,6 +24,46 @@
         
         // Expose startGame globally so app can trigger it
         window.startGame = startGame;
+        
+        // Draw idle preview
+        drawIdlePreview();
+    }
+    
+    function drawIdlePreview() {
+        // Show preview screen with pulsing effect
+        screen.classList.remove('hidden');
+        screen.className = 'ready'; // Green color
+        message.textContent = 'Test Your Reflexes!';
+        timeDisplay.classList.add('hidden');
+        roundInfo.textContent = 'Tap to start';
+        
+        // Animate between colors
+        let colorTime = 0;
+        const colors = ['waiting', 'ready'];
+        let colorIndex = 0;
+        
+        function animateIdle() {
+            if (state === 'waiting' || state === 'ready' || state === 'result') {
+                // Game has started
+                return;
+            }
+            
+            colorTime += 0.02;
+            
+            // Pulse effect
+            const scale = 1 + Math.sin(colorTime * 2) * 0.02;
+            screen.style.transform = `scale(${scale})`;
+            
+            // Change color periodically
+            if (Math.floor(colorTime) % 3 === 0 && Math.floor(colorTime) !== Math.floor(colorTime - 0.02)) {
+                colorIndex = (colorIndex + 1) % colors.length;
+                screen.className = colors[colorIndex];
+                message.textContent = colorIndex === 0 ? 'Wait for green...' : 'TAP NOW!';
+            }
+            
+            requestAnimationFrame(animateIdle);
+        }
+        animateIdle();
     }
 
     function startGame() {

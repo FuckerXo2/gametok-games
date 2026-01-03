@@ -13,6 +13,55 @@
 
         // Expose startGame globally so app can trigger it
         window.startGame = startGame;
+        
+        // Draw idle preview
+        drawIdlePreview();
+    }
+    
+    function drawIdlePreview() {
+        // Create preview board
+        const boardEl = document.getElementById('board');
+        boardEl.innerHTML = '';
+        
+        // Preview pattern - partial game state
+        const previewBoard = [
+            [null, null, null, null, null, null, null],
+            [null, null, null, null, null, null, null],
+            [null, null, null, 'yellow', null, null, null],
+            [null, null, 'red', 'red', null, null, null],
+            [null, 'yellow', 'red', 'yellow', 'yellow', null, null],
+            ['red', 'yellow', 'red', 'red', 'yellow', 'red', null]
+        ];
+        
+        for (let row = 0; row < ROWS; row++) {
+            for (let col = 0; col < COLS; col++) {
+                const cell = document.createElement('div');
+                cell.className = 'cell';
+                if (previewBoard[row][col]) {
+                    cell.classList.add(previewBoard[row][col]);
+                }
+                boardEl.appendChild(cell);
+            }
+        }
+        
+        document.getElementById('game-container').classList.remove('hidden');
+        document.getElementById('status').textContent = 'Tap to play!';
+        
+        // Animate pieces with subtle pulse
+        let pulseTime = 0;
+        function animateIdle() {
+            if (gameOver === false && board.some(row => row.some(cell => cell !== null))) return;
+            
+            pulseTime += 0.03;
+            const cells = boardEl.querySelectorAll('.cell.red, .cell.yellow');
+            cells.forEach((cell, i) => {
+                const offset = i * 0.3;
+                const scale = 1 + Math.sin(pulseTime + offset) * 0.05;
+                cell.style.transform = `scale(${scale})`;
+            });
+            requestAnimationFrame(animateIdle);
+        }
+        animateIdle();
     }
 
     function startGame() {

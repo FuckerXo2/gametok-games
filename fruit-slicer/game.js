@@ -42,6 +42,52 @@ var sliceTrail = [];
 // Expose startGame globally
 window.startGame = startGame;
 
+// Draw idle preview on load
+document.addEventListener('DOMContentLoaded', drawIdlePreview);
+
+function drawIdlePreview() {
+    // Show preview fruits
+    const previewFruits = [];
+    
+    for (let i = 0; i < 4; i++) {
+        const el = document.createElement('img');
+        el.className = 'fruit preview-fruit';
+        el.src = fruitImages[i % fruitImages.length];
+        el.style.cssText = 'position:absolute;width:70px;height:70px;pointer-events:none;z-index:10;';
+        
+        const x = 80 + i * (container.offsetWidth - 160) / 3;
+        const y = container.offsetHeight * 0.4 + (i % 2) * 80;
+        
+        el.style.left = x + 'px';
+        el.style.top = y + 'px';
+        el.dataset.baseY = y;
+        el.dataset.index = i;
+        
+        container.appendChild(el);
+        previewFruits.push(el);
+    }
+    
+    // Animate fruits floating
+    let floatTime = 0;
+    function animateIdle() {
+        if (playing) {
+            previewFruits.forEach(f => f.remove());
+            return;
+        }
+        
+        floatTime += 0.03;
+        previewFruits.forEach((fruit, i) => {
+            const baseY = parseFloat(fruit.dataset.baseY);
+            const offset = i * 0.8;
+            fruit.style.top = (baseY + Math.sin(floatTime + offset) * 20) + 'px';
+            const rotation = Math.sin(floatTime * 0.5 + offset) * 15;
+            fruit.style.transform = `rotate(${rotation}deg)`;
+        });
+        requestAnimationFrame(animateIdle);
+    }
+    animateIdle();
+}
+
 // Swipe detection
 container.ontouchstart = container.onmousedown = function(e) {
   if (e.target.tagName === 'BUTTON') return;

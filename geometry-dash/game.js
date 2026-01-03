@@ -31,6 +31,64 @@
 
         // Expose startGame globally so app can trigger it
         window.startGame = startGame;
+        
+        // Draw idle preview
+        drawIdlePreview();
+    }
+    
+    function drawIdlePreview() {
+        // Initialize preview state
+        groundY = height - 100;
+        player = {
+            x: 100,
+            y: groundY - PLAYER_SIZE,
+            vy: 0,
+            rotation: 0,
+            onGround: true
+        };
+        
+        obstacles = [];
+        particles = [];
+        distance = 0;
+        
+        // Add some preview obstacles
+        obstacles.push({ type: 'spike', x: 300, y: groundY, width: 40, height: 40 });
+        obstacles.push({ type: 'spike', x: 500, y: groundY, width: 40, height: 40 });
+        obstacles.push({ type: 'block', x: 700, y: groundY - 50, width: 50, height: 50 });
+        
+        draw();
+        
+        // Animate player with subtle effects
+        let pulseTime = 0;
+        function animateIdle() {
+            if (gameState === 'playing') return;
+            
+            pulseTime += 0.04;
+            
+            // Redraw with pulsing player
+            draw();
+            
+            // Draw pulsing player overlay
+            ctx.save();
+            ctx.translate(player.x + PLAYER_SIZE/2, player.y + PLAYER_SIZE/2);
+            
+            const scale = 1 + Math.sin(pulseTime) * 0.05;
+            ctx.scale(scale, scale);
+            
+            ctx.fillStyle = '#00d4ff';
+            ctx.shadowColor = '#00d4ff';
+            ctx.shadowBlur = 20 + Math.sin(pulseTime) * 10;
+            ctx.fillRect(-PLAYER_SIZE/2, -PLAYER_SIZE/2, PLAYER_SIZE, PLAYER_SIZE);
+            
+            ctx.fillStyle = '#0099cc';
+            ctx.fillRect(-PLAYER_SIZE/4, -PLAYER_SIZE/4, PLAYER_SIZE/2, PLAYER_SIZE/2);
+            
+            ctx.shadowBlur = 0;
+            ctx.restore();
+            
+            requestAnimationFrame(animateIdle);
+        }
+        animateIdle();
     }
 
     function startGame() {

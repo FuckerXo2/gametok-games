@@ -11,6 +11,50 @@
 
         // Expose startGame globally so app can trigger it
         window.startGame = startGame;
+        
+        // Draw idle preview
+        drawIdlePreview();
+    }
+    
+    function drawIdlePreview() {
+        const grid = document.getElementById('grid');
+        grid.innerHTML = '';
+        
+        // Create preview grid with some numbers visible
+        const previewNumbers = [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23, 24, 25];
+        
+        previewNumbers.forEach(num => {
+            const cell = document.createElement('div');
+            cell.className = 'cell';
+            cell.textContent = num;
+            
+            // Mark some as done for preview
+            if (num <= 5) {
+                cell.classList.add('done');
+            }
+            
+            grid.appendChild(cell);
+        });
+        
+        document.getElementById('game-area').classList.remove('hidden');
+        
+        // Animate cells with pulse
+        let pulseTime = 0;
+        function animateIdle() {
+            // Check if game has started
+            const doneCells = grid.querySelectorAll('.cell.done');
+            if (doneCells.length > 5) return; // Game started
+            
+            pulseTime += 0.03;
+            const cells = grid.querySelectorAll('.cell:not(.done)');
+            cells.forEach((cell, i) => {
+                const offset = i * 0.1;
+                const scale = 1 + Math.sin(pulseTime + offset) * 0.03;
+                cell.style.transform = `scale(${scale})`;
+            });
+            requestAnimationFrame(animateIdle);
+        }
+        animateIdle();
     }
 
     function startGame() {

@@ -11,9 +11,58 @@
     const gameArea = document.getElementById('game-area');
 
     function init() {
-
         // Expose startGame globally so app can trigger it
         window.startGame = startGame;
+        
+        // Draw idle preview
+        drawIdlePreview();
+    }
+    
+    function drawIdlePreview() {
+        // Show a preview target
+        const size = 70;
+        const x = window.innerWidth / 2;
+        const y = window.innerHeight / 2;
+        
+        const target = document.createElement('div');
+        target.className = 'target target-outer preview-target';
+        target.style.width = size + 'px';
+        target.style.height = size + 'px';
+        target.style.left = x + 'px';
+        target.style.top = y + 'px';
+        target.style.position = 'absolute';
+        
+        // Middle ring
+        const middle = document.createElement('div');
+        middle.className = 'target-middle';
+        middle.style.width = (size * 0.6) + 'px';
+        middle.style.height = (size * 0.6) + 'px';
+        target.appendChild(middle);
+        
+        // Inner circle
+        const inner = document.createElement('div');
+        inner.className = 'target-inner';
+        inner.style.width = (size * 0.3) + 'px';
+        inner.style.height = (size * 0.3) + 'px';
+        target.appendChild(inner);
+        
+        document.body.appendChild(target);
+        
+        // Animate with pulse
+        let pulseTime = 0;
+        function animateIdle() {
+            if (!document.body.contains(target)) return;
+            if (gameArea && !gameArea.classList.contains('hidden')) {
+                target.remove();
+                return;
+            }
+            
+            pulseTime += 0.05;
+            const scale = 1 + Math.sin(pulseTime) * 0.1;
+            target.style.transform = `translate(-50%, -50%) scale(${scale})`;
+            requestAnimationFrame(animateIdle);
+        }
+        animateIdle();
     }
 
     function startGame() {

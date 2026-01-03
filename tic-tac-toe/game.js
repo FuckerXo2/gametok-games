@@ -20,6 +20,50 @@
 
         // Expose startGame globally so app can trigger it
         window.startGame = startGame;
+        
+        // Draw idle preview
+        drawIdlePreview();
+    }
+    
+    function drawIdlePreview() {
+        // Create preview board
+        const boardEl = document.getElementById('board');
+        boardEl.innerHTML = '';
+        
+        // Preview pattern - partial game
+        const previewBoard = ['X', 'O', '', '', 'X', '', 'O', '', 'X'];
+        
+        for (let i = 0; i < 9; i++) {
+            const cell = document.createElement('div');
+            cell.className = 'cell';
+            cell.textContent = previewBoard[i];
+            if (previewBoard[i]) {
+                cell.classList.add(previewBoard[i].toLowerCase());
+            }
+            boardEl.appendChild(cell);
+        }
+        
+        document.getElementById('game-area').classList.remove('hidden');
+        document.getElementById('status').textContent = 'Tap to play!';
+        
+        // Animate cells with pulse
+        let pulseTime = 0;
+        function animateIdle() {
+            // Check if game started
+            if (board.some(cell => cell !== '')) return;
+            
+            pulseTime += 0.03;
+            const cells = boardEl.querySelectorAll('.cell');
+            cells.forEach((cell, i) => {
+                if (cell.textContent) {
+                    const offset = i * 0.3;
+                    const scale = 1 + Math.sin(pulseTime + offset) * 0.05;
+                    cell.style.transform = `scale(${scale})`;
+                }
+            });
+            requestAnimationFrame(animateIdle);
+        }
+        animateIdle();
     }
 
     function startGame() {

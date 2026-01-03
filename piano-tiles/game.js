@@ -122,6 +122,42 @@
 
         // Expose startGame globally so app can trigger it
         window.startGame = startGame;
+        
+        // Draw idle preview
+        drawIdlePreview();
+    }
+    
+    function drawIdlePreview() {
+        // Initialize preview tiles
+        tiles = [];
+        for (let i = 0; i < VISIBLE_ROWS + 2; i++) {
+            const blackCol = (i + 1) % COLS;
+            tiles.push({ y: -tileH * (i + 1) + height, blackCol: blackCol, tapped: i > VISIBLE_ROWS });
+        }
+        
+        draw();
+        
+        // Animate tiles scrolling slowly
+        let scrollOffset = 0;
+        function animateIdle() {
+            if (gameState === 'playing') return;
+            
+            scrollOffset += 0.5;
+            
+            // Update tile positions for preview
+            for (let tile of tiles) {
+                tile.y = tile.y + 0.5;
+                if (tile.y > height + tileH) {
+                    tile.y = tiles.reduce((min, t) => t.y < min ? t.y : min, tiles[0].y) - tileH;
+                    tile.blackCol = Math.floor(Math.random() * COLS);
+                    tile.tapped = false;
+                }
+            }
+            
+            draw();
+            requestAnimationFrame(animateIdle);
+        }
+        animateIdle();
     }
 
     function startGame() {

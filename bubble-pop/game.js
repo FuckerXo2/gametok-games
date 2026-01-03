@@ -16,6 +16,61 @@
 
         // Expose startGame globally so app can trigger it
         window.startGame = startGame;
+        
+        // Draw idle preview
+        drawIdlePreview();
+    }
+    
+    function drawIdlePreview() {
+        // Show preview bubbles
+        const colors = ['#ff6b6b', '#4ecdc4', '#45b7d1', '#96ceb4', '#ffeaa7', '#dfe6e9'];
+        
+        for (let i = 0; i < 5; i++) {
+            const size = 50 + Math.random() * 30;
+            const x = 50 + Math.random() * (window.innerWidth - 100);
+            const y = window.innerHeight * 0.3 + Math.random() * (window.innerHeight * 0.4);
+            
+            const bubble = document.createElement('div');
+            bubble.className = 'bubble preview-bubble';
+            bubble.style.width = size + 'px';
+            bubble.style.height = size + 'px';
+            bubble.style.left = x + 'px';
+            bubble.style.top = y + 'px';
+            bubble.style.position = 'absolute';
+            
+            const hue = Math.random() * 360;
+            bubble.style.background = `radial-gradient(circle at 30% 30%, 
+                hsla(${hue}, 70%, 80%, 0.8), 
+                hsla(${hue}, 70%, 60%, 0.3))`;
+            
+            gameArea.appendChild(bubble);
+        }
+        
+        gameArea.classList.remove('hidden');
+        
+        // Animate bubbles floating
+        let floatTime = 0;
+        function animateIdle() {
+            if (gameActive) {
+                // Remove preview bubbles when game starts
+                const previewBubbles = gameArea.querySelectorAll('.preview-bubble');
+                previewBubbles.forEach(b => b.remove());
+                return;
+            }
+            
+            floatTime += 0.03;
+            const previewBubbles = gameArea.querySelectorAll('.preview-bubble');
+            previewBubbles.forEach((bubble, i) => {
+                const offset = i * 0.5;
+                const y = parseFloat(bubble.dataset.baseY || bubble.style.top);
+                if (!bubble.dataset.baseY) bubble.dataset.baseY = y;
+                bubble.style.top = (parseFloat(bubble.dataset.baseY) + Math.sin(floatTime + offset) * 15) + 'px';
+                const scale = 1 + Math.sin(floatTime * 0.5 + offset) * 0.1;
+                bubble.style.transform = `scale(${scale})`;
+            });
+            requestAnimationFrame(animateIdle);
+        }
+        animateIdle();
     }
 
     function startGame() {

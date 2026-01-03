@@ -28,6 +28,47 @@
 
         // Expose startGame globally so app can trigger it
         window.startGame = startGame;
+        
+        // Draw idle preview
+        drawIdlePreview();
+    }
+    
+    function drawIdlePreview() {
+        // Initialize preview state
+        player = { y: height / 2 - PADDLE_HEIGHT / 2 };
+        ai = { y: height / 2 - PADDLE_HEIGHT / 2 };
+        ball = {
+            x: width / 2,
+            y: height / 2,
+            vx: 0,
+            vy: 0
+        };
+        
+        draw();
+        
+        // Animate ball and paddles
+        let animTime = 0;
+        function animateIdle() {
+            if (gameState === 'playing') return;
+            
+            animTime += 0.03;
+            
+            // Ball moves in a figure-8 pattern
+            ball.x = width / 2 + Math.sin(animTime) * 100;
+            ball.y = height / 2 + Math.sin(animTime * 2) * 50;
+            
+            // Paddles follow ball
+            player.y = ball.y - PADDLE_HEIGHT / 2 + Math.sin(animTime * 0.5) * 20;
+            ai.y = ball.y - PADDLE_HEIGHT / 2 - Math.sin(animTime * 0.5) * 20;
+            
+            // Clamp paddles
+            player.y = Math.max(0, Math.min(height - PADDLE_HEIGHT, player.y));
+            ai.y = Math.max(0, Math.min(height - PADDLE_HEIGHT, ai.y));
+            
+            draw();
+            requestAnimationFrame(animateIdle);
+        }
+        animateIdle();
     }
 
     function startGame() {
