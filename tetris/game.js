@@ -69,7 +69,8 @@
             if (e.key === 'ArrowUp') rotate();
         });
         
-        draw();
+        // Auto-start game
+        setTimeout(startGame, 100);
     }
 
     function startGame() {

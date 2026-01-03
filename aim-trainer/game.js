@@ -13,6 +13,9 @@
     function init() {
         document.getElementById('start-btn').addEventListener('click', startGame);
         document.getElementById('restart-btn').addEventListener('click', startGame);
+        
+        // Auto-start game
+        setTimeout(startGame, 100);
     }
 
     function startGame() {

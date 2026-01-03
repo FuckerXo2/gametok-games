@@ -22,6 +22,9 @@
             e.preventDefault();
             handleTap();
         }, { passive: false });
+        
+        // Auto-start game
+        setTimeout(startGame, 100);
     }
 
     function startGame() {

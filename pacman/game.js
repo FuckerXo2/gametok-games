@@ -73,7 +73,9 @@
         canvas.style.height = (HEIGHT * scale) + 'px';
 
         setupSwipeControls();
-        draw();
+        
+        // Auto-start game
+        setTimeout(startGame, 100);
     }
 
     function startGame() {
