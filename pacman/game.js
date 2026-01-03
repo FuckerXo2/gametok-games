@@ -74,8 +74,8 @@
 
         setupSwipeControls();
         
-        // Auto-start game
-        setTimeout(startGame, 100);
+        // Expose startGame globally so app can trigger it
+        window.startGame = startGame;
     }
 
     function startGame() {
