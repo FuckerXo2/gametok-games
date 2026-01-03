@@ -21,7 +21,7 @@
     function resize() {
         width = canvas.width = window.innerWidth;
         height = canvas.height = window.innerHeight;
-        groundY = height - 100;
+        groundY = height - 180; // Higher ground for better visibility
     }
 
     function init() {
