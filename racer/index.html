@@ -4,7 +4,82 @@
 <head>
   <title>Javascript Racer</title>
   <meta http-equiv="Content-Type" content="text/html; charset=utf-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
   <link href="common.css" rel="stylesheet" type="text/css" />
+  <style>
+    /* GameTok fullscreen and mobile fixes */
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    html, body { 
+      width: 100%; height: 100%; 
+      overflow: hidden; 
+      touch-action: none;
+      background: #72D7EE;
+    }
+    #controls, #instructions, #mute, #fps { display: none !important; }
+    #racer { width: 100%; height: 100%; position: relative; }
+    #canvas { 
+      width: 100% !important; 
+      height: 100% !important; 
+      position: absolute !important;
+      top: 0; left: 0;
+    }
+    #hud {
+      position: fixed !important;
+      top: 60px !important;
+      left: 10px !important;
+      right: 10px !important;
+      z-index: 10;
+      display: flex;
+      justify-content: space-between;
+      pointer-events: none;
+    }
+    .hud {
+      background: rgba(0,0,0,0.5);
+      padding: 8px 12px;
+      border-radius: 8px;
+      font-size: 14px;
+      color: white;
+    }
+    #last_lap_time, #fast_lap_time { display: none; }
+    
+    /* Touch controls */
+    #touch-controls {
+      position: fixed;
+      bottom: 100px;
+      left: 0;
+      right: 0;
+      display: flex;
+      justify-content: space-between;
+      padding: 0 20px;
+      z-index: 100;
+      pointer-events: none;
+    }
+    .touch-btn {
+      width: 70px;
+      height: 70px;
+      background: rgba(255,255,255,0.3);
+      border: 2px solid rgba(255,255,255,0.5);
+      border-radius: 50%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 28px;
+      color: white;
+      pointer-events: auto;
+      user-select: none;
+      -webkit-user-select: none;
+    }
+    .touch-btn:active { background: rgba(255,255,255,0.5); }
+    #gas-btn { 
+      position: fixed;
+      bottom: 100px;
+      right: 20px;
+      width: 80px;
+      height: 80px;
+      background: rgba(0,200,0,0.4);
+      border-color: rgba(0,255,0,0.6);
+    }
+  </style>
 </head> 
 
 <body> 
@@ -89,6 +164,42 @@
   <script src="js/stats.js"></script>
   <script src="js/common.js"></script>
   <script src="js/main.js"></script>
+  
+  <!-- Touch controls -->
+  <div id="touch-controls">
+    <div class="touch-btn" id="left-btn">◀</div>
+    <div class="touch-btn" id="right-btn">▶</div>
+  </div>
+  <div class="touch-btn" id="gas-btn">▲</div>
+  
+  <script>
+    // Touch controls
+    var leftBtn = document.getElementById('left-btn');
+    var rightBtn = document.getElementById('right-btn');
+    var gasBtn = document.getElementById('gas-btn');
+    
+    function simulateKey(keyCode, isDown) {
+      var event = new KeyboardEvent(isDown ? 'keydown' : 'keyup', { keyCode: keyCode, which: keyCode });
+      document.dispatchEvent(event);
+    }
+    
+    // Left button
+    leftBtn.addEventListener('touchstart', function(e) { e.preventDefault(); simulateKey(37, true); }, {passive: false});
+    leftBtn.addEventListener('touchend', function(e) { e.preventDefault(); simulateKey(37, false); }, {passive: false});
+    
+    // Right button  
+    rightBtn.addEventListener('touchstart', function(e) { e.preventDefault(); simulateKey(39, true); }, {passive: false});
+    rightBtn.addEventListener('touchend', function(e) { e.preventDefault(); simulateKey(39, false); }, {passive: false});
+    
+    // Gas button
+    gasBtn.addEventListener('touchstart', function(e) { e.preventDefault(); simulateKey(38, true); }, {passive: false});
+    gasBtn.addEventListener('touchend', function(e) { e.preventDefault(); simulateKey(38, false); }, {passive: false});
+    
+    // Expose startGame for GameTok
+    window.startGame = function() {
+      // Game auto-starts, nothing needed
+    };
+  </script>
 
 </body> 
 </html>
