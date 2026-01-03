@@ -227,6 +227,11 @@ function setStartScreen() {
 	requestAnimFrame(animLoop);
 }
 
+// Expose startGame for GameTok app
+window.startGame = function() {
+	init(1);
+};
+
 var spd = 1;
 
 function animLoop() {
@@ -343,6 +348,10 @@ function checkGameOver() {
 			}
 			writeHighScores();
 			gameOverDisplay();
+			// Send score to GameTok app
+			if (window.ReactNativeWebView) {
+				window.ReactNativeWebView.postMessage(JSON.stringify({ type: 'gameOver', score: score }));
+			}
 			return true;
 		}
 	}
