@@ -40,32 +40,9 @@
 
     * {cursor:crosshair}
 
+    /* Hide fullscreen button for mobile */
     #fullscreen {
-      border: 3px solid black;
-      border-top: none;
-      background: white;
-      padding: 5px;
-
-      position: fixed;
-      left: 50%;
-      transform: translateX(-50%);
-
-      top: 0px;
-      transition-property: top;
-      transition-duration: 1s;
-    }
-
-    :fullscreen > #fullscreen {
-      top: -120%;
-    }
-
-    #fullscreen button {
-      border: none;
-      background: none;
-
-      color: red;
-      font-weight: bold;
-      white-space: nowrap;
+      display: none !important;
     }
 
     /* ]]> */
@@ -685,6 +662,35 @@
   <script type="application/javascript" src="src/banner.js"></script>
   <script type="application/javascript" src="src/fog.js"></script>
   <script type="application/javascript" src="src/main.js"></script>
+  
+  <!-- GameTok integration -->
+  <script type="application/javascript">
+    // Expose startGame for app to trigger
+    window.startGame = function() {
+      // Simulate click to start game
+      if (MG && MG.game && MG.game.onMouseClick) {
+        MG.game.onMouseClick();
+      }
+    };
+    
+    // Override game over to report score
+    var originalGoCrash = null;
+    window.addEventListener('load', function() {
+      // Track level for score
+      var checkGameOver = setInterval(function() {
+        if (MG && MG.game) {
+          var level = MG.game.getLevel();
+          var lives = MG.game.getNumLives();
+          if (lives === 0 && window.ReactNativeWebView) {
+            window.ReactNativeWebView.postMessage(JSON.stringify({
+              type: 'gameOver',
+              score: level * 100
+            }));
+          }
+        }
+      }, 500);
+    });
+  </script>
  
 </body>
 </html>

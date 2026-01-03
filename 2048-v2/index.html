@@ -3,13 +3,42 @@
 
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <meta http-equiv="X-UA-Compatible" content="ie=edge">
     <link rel="stylesheet" href="css/keyframes.css">
     <link rel="stylesheet" href="css/style.css">
     <link rel="stylesheet" href="css/media.css">
     <link rel="shortcut icon" href="./favicon.ico">
     <title>2048</title>
+    <style>
+        /* GameTok mobile fullscreen styles */
+        html, body {
+            margin: 0;
+            padding: 0;
+            width: 100%;
+            height: 100%;
+            overflow: hidden;
+            background: #faf8ef;
+        }
+        .container {
+            width: 100%;
+            max-width: 100%;
+            padding: 10px;
+            box-sizing: border-box;
+        }
+        /* Hide header and footer for cleaner mobile view */
+        .heading, .game-intro, .footer {
+            display: none !important;
+        }
+        .game-container {
+            margin: 0 auto;
+            margin-top: 20vh;
+        }
+        /* Hide game over/winning popups - app handles this */
+        .failure-container, .winning-container {
+            display: none !important;
+        }
+    </style>
 </head>
 
 <body>
@@ -93,7 +122,61 @@
     <script src="js/event.js"></script>
     <script src="js/view.js"></script>
     <script src="js/game.js"></script>
-    <script src="js/main.js"></script>
+    <script>
+        // GameTok integration
+        var gameInstance = null;
+        var viewInstance = null;
+        var gameStarted = false;
+        
+        window.startGame = function() {
+            if (gameStarted && gameInstance) {
+                gameInstance.restart();
+            }
+            gameStarted = true;
+        };
+        
+        // Override game over functions to report to app
+        var originalFailure = Game.prototype.failure;
+        Game.prototype.failure = function() {
+            if (window.ReactNativeWebView) {
+                window.ReactNativeWebView.postMessage(JSON.stringify({
+                    type: 'gameOver',
+                    score: data.score
+                }));
+            }
+            // Don't show failure popup
+        };
+        
+        var originalWinning = Game.prototype.winning;
+        Game.prototype.winning = function() {
+            if (window.ReactNativeWebView) {
+                window.ReactNativeWebView.postMessage(JSON.stringify({
+                    type: 'gameOver',
+                    score: data.score
+                }));
+            }
+            // Don't show winning popup
+        };
+        
+        // Report score changes
+        var originalAddScore = Game.prototype.addScore;
+        Game.prototype.addScore = function(score) {
+            originalAddScore.call(this, score);
+            if (window.ReactNativeWebView) {
+                window.ReactNativeWebView.postMessage(JSON.stringify({
+                    type: 'score',
+                    score: data.score
+                }));
+            }
+        };
+        
+        on(window, 'load', function () {
+            viewInstance = new View();
+            gameInstance = new Game();
+            gameInstance.init(viewInstance);
+            event(gameInstance);
+        });
+    </script>
 </body>
 
 </html>
