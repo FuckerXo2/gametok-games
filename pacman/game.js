@@ -76,6 +76,42 @@
         
         // Expose startGame globally so app can trigger it
         window.startGame = startGame;
+        
+        // Draw idle preview
+        drawIdlePreview();
+    }
+    
+    function drawIdlePreview() {
+        // Initialize map for preview
+        map = MAP.map(row => [...row]);
+        dotsLeft = 0;
+        for (let y = 0; y < ROWS; y++) {
+            for (let x = 0; x < COLS; x++) {
+                if (map[y][x] === 2 || map[y][x] === 3) dotsLeft++;
+            }
+        }
+        
+        // Initialize pacman and ghosts for preview
+        pacman = { x: 9, y: 15, dir: 0, nextDir: 0, mouthOpen: 0.3 };
+        ghosts = [
+            { x: 9, y: 9, dir: 0, color: COLORS.blinky, mode: 'scatter', target: {x: 0, y: 0} },
+            { x: 8, y: 9, dir: 0, color: COLORS.pinky, mode: 'scatter', target: {x: 0, y: 0} },
+            { x: 10, y: 9, dir: 0, color: COLORS.inky, mode: 'scatter', target: {x: 0, y: 0} },
+            { x: 9, y: 10, dir: 0, color: COLORS.clyde, mode: 'scatter', target: {x: 0, y: 0} }
+        ];
+        
+        draw();
+        
+        // Animate pacman mouth
+        let mouthTime = 0;
+        function animateIdle() {
+            if (gameState === 'playing') return;
+            mouthTime += 0.15;
+            pacman.mouthOpen = 0.15 + Math.abs(Math.sin(mouthTime)) * 0.35;
+            draw();
+            requestAnimationFrame(animateIdle);
+        }
+        animateIdle();
     }
 
     function startGame() {

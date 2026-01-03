@@ -69,6 +69,32 @@
         
         // Expose startGame globally so app can trigger it
         window.startGame = startGame;
+        
+        // Draw idle preview
+        drawIdlePreview();
+    }
+    
+    function drawIdlePreview() {
+        // Create a preview board with some blocks
+        board = Array(ROWS).fill(null).map(() => Array(COLS).fill(0));
+        
+        // Add some random blocks at the bottom for preview
+        for (let y = ROWS - 5; y < ROWS; y++) {
+            for (let x = 0; x < COLS; x++) {
+                if (Math.random() < 0.4) {
+                    board[y][x] = COLORS[Math.floor(Math.random() * COLORS.length)];
+                }
+            }
+        }
+        
+        // Add a falling piece
+        const idx = Math.floor(Math.random() * SHAPES.length);
+        current = SHAPES[idx].map(row => [...row]);
+        currentColor = COLORS[idx];
+        currentX = Math.floor((COLS - current[0].length) / 2);
+        currentY = 5;
+        
+        draw();
     }
 
     function startGame() {

@@ -32,6 +32,38 @@
 
         // Expose startGame globally so app can trigger it
         window.startGame = startGame;
+        
+        // Draw idle preview
+        drawIdlePreview();
+    }
+    
+    function drawIdlePreview() {
+        // Initialize bird for preview
+        bird = {
+            x: width * 0.3,
+            y: height / 2,
+            vy: 0,
+            rotation: 0
+        };
+        pipes = [];
+        
+        // Add some preview pipes
+        pipes.push({ x: width * 0.6, gapY: height * 0.3, scored: false });
+        pipes.push({ x: width * 0.9, gapY: height * 0.45, scored: false });
+        
+        draw();
+        
+        // Animate bird bobbing
+        let bobTime = 0;
+        function animateIdle() {
+            if (gameState === 'playing') return;
+            bobTime += 0.05;
+            bird.y = height / 2 + Math.sin(bobTime) * 15;
+            bird.rotation = Math.sin(bobTime) * 10;
+            draw();
+            requestAnimationFrame(animateIdle);
+        }
+        animateIdle();
     }
 
     function startGame() {
