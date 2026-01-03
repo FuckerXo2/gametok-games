@@ -311,16 +311,17 @@ function shootBall(xDelta) {
     // Convert screen delta to game force (-1 to 1 range)
     const xForce = Math.max(-1, Math.min(1, xDelta / 150));
     
-    // Apply impulse - based on OpenPigeon physics
-    // Original: apply_impulse(Vector3(x_force, 6.80, -2.5))
+    // Calculate trajectory to hit the hoop
+    // Ball starts at z=1.0, hoop at z=-3.5 (distance = 4.5)
+    // Ball starts at y=0.8, hoop at y=2.8 (need to go up 2.0)
     ballVelocity.set(
-        xForce * 3 + ball.position.x * 0.5,  // Horizontal based on swipe + ball position
-        11,                                    // Upward force
-        -8                                     // Forward toward hoop
+        xForce * 2 + ball.position.x * -0.8,  // Horizontal - aim toward center
+        8,                                      // Upward force (reduced)
+        -6                                      // Forward toward hoop (reduced)
     );
     
     // Add spin
-    ballAngularVelocity.set(-8, xForce * 2, 0);
+    ballAngularVelocity.set(-6, xForce * 2, 0);
     
     // Play swoosh sound
     playSound('swoosh');
@@ -330,7 +331,7 @@ function shootBall(xDelta) {
         if (gameState === 'playing') {
             resetBallPosition();
         }
-    }, 1500);
+    }, 2000);
 }
 
 function updateBallPhysics(delta) {
