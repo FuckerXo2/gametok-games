@@ -37,8 +37,8 @@ function init() {
     
     // Camera - positioned to look at the hoop from below
     camera = new THREE.PerspectiveCamera(60, window.innerWidth / window.innerHeight, 0.1, 100);
-    camera.position.set(0, 1.5, 3);
-    camera.lookAt(0, 2.5, -2);
+    camera.position.set(0, 2, 4);  // Higher and further back
+    camera.lookAt(0, 2, -2);
     
     // Renderer
     renderer = new THREE.WebGLRenderer({ antialias: true });
@@ -236,7 +236,7 @@ function createBall() {
 function resetBallPosition() {
     // Random x position like in OpenPigeon
     const xPos = (Math.random() * 0.66 - 0.33);
-    ball.position.set(xPos, 0.5, 1.5);
+    ball.position.set(xPos, 0.8, 1.0);  // Moved closer and higher to be visible
     ballVelocity.set(0, 0, 0);
     ballAngularVelocity.set(0, 0, 0);
     canShoot = true;
@@ -534,9 +534,10 @@ function drawIdlePreview() {
         
         idleTime += 0.02;
         
-        // Gentle bob
-        ball.position.y = 0.5 + Math.sin(idleTime) * 0.05;
+        // Gentle bob - ball at bottom of screen
+        ball.position.y = 0.8 + Math.sin(idleTime) * 0.08;
         ball.rotation.y += 0.01;
+        ball.rotation.x += 0.005;
         
         renderer.render(scene, camera);
         requestAnimationFrame(idleLoop);
