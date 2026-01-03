@@ -33,9 +33,7 @@
     let lastTime = 0;
 
     function init() {
-        document.getElementById('start-btn').addEventListener('click', startGame);
-        document.getElementById('restart-btn').addEventListener('click', startGame);
-        
+
         // Button controls
         document.getElementById('btn-left').addEventListener('touchstart', (e) => { e.preventDefault(); move(-1); });
         document.getElementById('btn-right').addEventListener('touchstart', (e) => { e.preventDefault(); move(1); });
@@ -80,9 +78,7 @@
         gameState = 'playing';
         
         spawnPiece();
-        
-        document.getElementById('start-screen').classList.add('hidden');
-        document.getElementById('game-over').classList.add('hidden');
+
         document.getElementById('game-container').classList.remove('hidden');
         updateUI();
         
@@ -196,7 +192,7 @@
     function gameOver() {
         gameState = 'gameover';
         document.getElementById('final-score').textContent = score;
-        document.getElementById('game-over').classList.remove('hidden');
+        
         document.getElementById('game-container').classList.add('hidden');
         
         if (window.ReactNativeWebView) {

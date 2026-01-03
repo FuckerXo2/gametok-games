@@ -28,10 +28,7 @@
         resize();
         window.addEventListener('resize', resize);
         setupControls();
-        
-        document.getElementById('start-btn').addEventListener('click', startGame);
-        document.getElementById('restart-btn').addEventListener('click', startGame);
-        
+
         // Expose startGame globally so app can trigger it
         window.startGame = startGame;
     }
@@ -42,9 +39,7 @@
         
         setupHole();
         gameState = 'aiming';
-        
-        document.getElementById('start-screen').classList.add('hidden');
-        document.getElementById('game-over').classList.add('hidden');
+
         document.getElementById('ui').classList.remove('hidden');
         updateUI();
         
@@ -269,7 +264,7 @@
         document.getElementById('final-score').textContent = totalStrokes;
         document.getElementById('score-text').textContent = diff === 0 ? 'Even par!' : 
             (diff > 0 ? `+${diff} over par` : `${diff} under par`);
-        document.getElementById('game-over').classList.remove('hidden');
+        
         document.getElementById('ui').classList.add('hidden');
         
         if (window.ReactNativeWebView) {

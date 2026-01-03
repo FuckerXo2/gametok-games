@@ -12,8 +12,7 @@
         addTile();
         render();
         setupControls();
-        
-        document.getElementById('restart-btn').addEventListener('click', restart);
+
     }
 
     function createBoard() {

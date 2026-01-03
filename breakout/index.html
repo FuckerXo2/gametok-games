@@ -51,23 +51,8 @@
         <div class="stat">Score: <span id="score">0</span></div>
         <div class="stat">Lives: <span id="lives">3</span></div>
     </div>
-    <div id="start-screen">
-        <div class="brick-icon">
-            <div class="brick" style="background:#ff6b6b"></div>
-            <div class="brick" style="background:#feca57"></div>
-            <div class="brick" style="background:#48dbfb"></div>
-            <div class="brick" style="background:#1dd1a1"></div>
-        </div>
-        <div class="title">BREAKOUT</div>
-        <div class="subtitle">Drag to move paddle</div>
-        <button class="btn" id="start-btn">PLAY</button>
-    </div>
-    <div id="game-over">
-        <div class="title" id="end-title">Game Over</div>
-        <div class="final-score" id="final-score">0</div>
-        <div class="subtitle">points</div>
-        <button class="btn" id="restart-btn">PLAY AGAIN</button>
-    </div>
+    <div id="start-screen" class="hidden"></div>
+    <div id="game-over" class="hidden"></div>
     <script src="game.js"></script>
 </body>
 </html>

@@ -25,10 +25,7 @@
         resize();
         window.addEventListener('resize', resize);
         setupControls();
-        
-        document.getElementById('start-btn').addEventListener('click', startGame);
-        document.getElementById('restart-btn').addEventListener('click', startGame);
-        
+
         // Expose startGame globally so app can trigger it
         window.startGame = startGame;
     }
@@ -41,10 +38,7 @@
         
         resetBall();
         gameState = 'playing';
-        
-        document.getElementById('start-screen').classList.add('hidden');
-        document.getElementById('game-over').classList.add('hidden');
-        
+
         lastTime = performance.now();
         requestAnimationFrame(gameLoop);
     }
@@ -147,8 +141,7 @@
             gameState = 'gameover';
             document.getElementById('result').textContent = playerScore >= WIN_SCORE ? 'YOU WIN!' : 'YOU LOSE';
             document.getElementById('final-score').textContent = `${playerScore} - ${aiScore}`;
-            document.getElementById('game-over').classList.remove('hidden');
-            
+
             if (window.ReactNativeWebView) {
                 window.ReactNativeWebView.postMessage(JSON.stringify({ 
                     type: 'gameOver', 

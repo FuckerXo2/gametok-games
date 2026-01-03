@@ -17,9 +17,7 @@
     ];
 
     function init() {
-        document.getElementById('start-btn').addEventListener('click', startGame);
-        document.getElementById('restart-btn').addEventListener('click', startGame);
-        
+
         // Expose startGame globally so app can trigger it
         window.startGame = startGame;
     }
@@ -28,9 +26,7 @@
         playerScore = 0;
         aiScore = 0;
         gamesPlayed = 0;
-        
-        document.getElementById('start-screen').classList.add('hidden');
-        document.getElementById('game-over').classList.add('hidden');
+
         document.getElementById('game-area').classList.remove('hidden');
         
         updateScoreBoard();
@@ -191,8 +187,7 @@
         
         document.getElementById('result-title').textContent = title;
         document.getElementById('final-result').textContent = `${playerScore} - ${aiScore}`;
-        document.getElementById('game-over').classList.remove('hidden');
-        
+
         const score = playerScore * 100;
         
         if (window.ReactNativeWebView) {

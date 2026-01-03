@@ -28,10 +28,7 @@
         resize();
         window.addEventListener('resize', resize);
         setupControls();
-        
-        document.getElementById('start-btn').addEventListener('click', startGame);
-        document.getElementById('restart-btn').addEventListener('click', startGame);
-        
+
         // Expose startGame globally so app can trigger it
         window.startGame = startGame;
     }
@@ -50,8 +47,7 @@
         distance = 0;
         
         gameState = 'playing';
-        document.getElementById('start-screen').classList.add('hidden');
-        document.getElementById('game-over').classList.add('hidden');
+
         document.getElementById('ui').classList.remove('hidden');
         document.getElementById('progress').classList.remove('hidden');
         updateUI();
@@ -209,7 +205,7 @@
         
         const percent = Math.floor((distance / levelLength) * 100);
         document.getElementById('final-score').textContent = percent + '%';
-        document.getElementById('game-over').classList.remove('hidden');
+        
         document.getElementById('ui').classList.add('hidden');
         document.getElementById('progress').classList.add('hidden');
         
@@ -222,7 +218,7 @@
         gameState = 'gameover';
         document.getElementById('game-over').querySelector('h1').textContent = 'LEVEL COMPLETE!';
         document.getElementById('final-score').textContent = '100%';
-        document.getElementById('game-over').classList.remove('hidden');
+        
         document.getElementById('ui').classList.add('hidden');
         document.getElementById('progress').classList.add('hidden');
         

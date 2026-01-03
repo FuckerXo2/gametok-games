@@ -26,10 +26,7 @@
         resize();
         window.addEventListener('resize', resize);
         setupControls();
-        
-        document.getElementById('start-btn').addEventListener('click', startGame);
-        document.getElementById('restart-btn').addEventListener('click', startGame);
-        
+
         // Expose startGame globally so app can trigger it
         window.startGame = startGame;
     }
@@ -59,9 +56,7 @@
         }
         
         gameState = 'playing';
-        
-        document.getElementById('start-screen').classList.add('hidden');
-        document.getElementById('game-over').classList.add('hidden');
+
         document.getElementById('ui').classList.remove('hidden');
         updateUI();
         
@@ -189,7 +184,7 @@
     function gameOver() {
         gameState = 'gameover';
         document.getElementById('final-score').textContent = score;
-        document.getElementById('game-over').classList.remove('hidden');
+        
         document.getElementById('ui').classList.add('hidden');
         
         if (window.ReactNativeWebView) {

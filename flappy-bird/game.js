@@ -29,10 +29,7 @@
         canvas.addEventListener('touchstart', flap, { passive: false });
         canvas.addEventListener('mousedown', flap);
         document.addEventListener('keydown', (e) => { if (e.code === 'Space') flap(e); });
-        
-        document.getElementById('start-btn').addEventListener('click', startGame);
-        document.getElementById('restart-btn').addEventListener('click', startGame);
-        
+
         // Expose startGame globally so app can trigger it
         window.startGame = startGame;
     }
@@ -49,9 +46,7 @@
         gameState = 'playing';
         
         addPipe();
-        
-        document.getElementById('start-screen').classList.add('hidden');
-        document.getElementById('game-over').classList.add('hidden');
+
         document.getElementById('ui').classList.remove('hidden');
         document.getElementById('score').textContent = '0';
         
@@ -147,7 +142,7 @@
     function gameOver() {
         gameState = 'gameover';
         document.getElementById('final-score').textContent = score;
-        document.getElementById('game-over').classList.remove('hidden');
+        
         document.getElementById('ui').classList.add('hidden');
         
         if (window.ReactNativeWebView) {

@@ -26,23 +26,8 @@
     </style>
 </head>
 <body>
-    <div id="start-screen" class="overlay">
-        <h1>⚡ Reaction Time</h1>
-        <p class="subtitle" style="color:#aaa;margin-bottom:20px;">Test your reflexes! Tap when the screen turns GREEN</p>
-        <button id="start-btn" class="btn">TAP TO START</button>
-    </div>
-    <div id="game-screen" class="waiting hidden">
-        <div class="message" id="message">Wait for green...</div>
-        <div class="time hidden" id="time-display">0 ms</div>
-        <div class="subtitle" id="round-info"></div>
-    </div>
-    <div id="game-over" class="overlay hidden">
-        <h1>RESULTS</h1>
-        <div id="final-score">0 ms</div>
-        <p style="color:#aaa;">average reaction time</p>
-        <div id="results"></div>
-        <button id="restart-btn" class="btn">TRY AGAIN</button>
-    </div>
+    <div id="start-screen" class="hidden"></div>
+    <div id="game-over" class="hidden"></div>
     <script src="game.js"></script>
 </body>
 </html>

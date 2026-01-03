@@ -85,9 +85,7 @@
         swipeCount = 0;
         resetLevel();
         gameState = 'playing';
-        
-        document.getElementById('start-screen').classList.add('hidden');
-        document.getElementById('game-over').classList.add('hidden');
+
         document.getElementById('ui').classList.remove('hidden');
         document.getElementById('swipe-hint').classList.remove('hidden');
         
@@ -350,7 +348,7 @@
     function gameOver() {
         gameState = 'gameover';
         document.getElementById('final-score').textContent = score;
-        document.getElementById('game-over').classList.remove('hidden');
+        
         document.getElementById('ui').classList.add('hidden');
         document.getElementById('swipe-hint').classList.add('hidden');
         
@@ -625,8 +623,6 @@
             }
         });
 
-        document.getElementById('start-btn').addEventListener('click', startGame);
-        document.getElementById('restart-btn').addEventListener('click', startGame);
     }
 
     window.addEventListener('load', init);

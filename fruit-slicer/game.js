@@ -39,9 +39,8 @@ var isSlicing = false;
 var lastX = 0, lastY = 0;
 var sliceTrail = [];
 
-document.getElementById('bestScore').textContent = highScore;
-document.getElementById('startBtn').onclick = startGame;
-document.getElementById('retryBtn').onclick = startGame;
+// Expose startGame globally
+window.startGame = startGame;
 
 // Swipe detection
 container.ontouchstart = container.onmousedown = function(e) {
@@ -128,9 +127,8 @@ function startGame() {
   });
   splats = [];
   
-  document.getElementById('menu').classList.add('hidden');
-  document.getElementById('gameOver').classList.add('hidden');
-  document.getElementById('score').textContent = '0';
+  var scoreEl = document.getElementById('score');
+  if (scoreEl) scoreEl.textContent = '0';
   updateLives();
   
   // Start spawning
@@ -378,11 +376,10 @@ function endGame() {
     localStorage.setItem('fs_hi', highScore);
   }
   
-  document.getElementById('finalScore').textContent = score;
-  document.getElementById('bestScore').textContent = highScore;
-  setTimeout(function() {
-    document.getElementById('gameOver').classList.remove('hidden');
-  }, 300);
+  // Send score to app
+  if (window.ReactNativeWebView) {
+    window.ReactNativeWebView.postMessage(JSON.stringify({ type: 'gameOver', score: score }));
+  }
 }
 
 })();

@@ -8,9 +8,7 @@
     let cells = [];
 
     function init() {
-        document.getElementById('start-btn').addEventListener('click', startGame);
-        document.getElementById('restart-btn').addEventListener('click', startGame);
-        
+
         // Expose startGame globally so app can trigger it
         window.startGame = startGame;
     }
@@ -39,9 +37,7 @@
             grid.appendChild(cell);
             cells.push(cell);
         });
-        
-        document.getElementById('start-screen').classList.add('hidden');
-        document.getElementById('game-over').classList.add('hidden');
+
         document.getElementById('ui').classList.remove('hidden');
         document.getElementById('game-area').classList.remove('hidden');
         
@@ -95,8 +91,7 @@
         document.getElementById('game-area').classList.add('hidden');
         document.getElementById('ui').classList.add('hidden');
         document.getElementById('final-score').textContent = totalTime + 's';
-        document.getElementById('game-over').classList.remove('hidden');
-        
+
         // Score: faster is better
         const score = Math.max(0, Math.round(2500 - totalTime * 50));
         

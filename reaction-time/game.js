@@ -15,8 +15,7 @@
     const roundInfo = document.getElementById('round-info');
 
     function init() {
-        document.getElementById('start-btn').addEventListener('click', startGame);
-        document.getElementById('restart-btn').addEventListener('click', startGame);
+
         screen.addEventListener('click', handleTap);
         screen.addEventListener('touchstart', (e) => {
             e.preventDefault();
@@ -30,9 +29,7 @@
     function startGame() {
         currentRound = 0;
         times = [];
-        
-        document.getElementById('start-screen').classList.add('hidden');
-        document.getElementById('game-over').classList.add('hidden');
+
         screen.classList.remove('hidden');
         
         startRound();
@@ -102,9 +99,7 @@
             <div>Best: ${best} ms</div>
             <div>All times: ${times.join(', ')} ms</div>
         `;
-        
-        document.getElementById('game-over').classList.remove('hidden');
-        
+
         // Score: lower is better, max 1000 for <150ms avg
         const score = Math.max(0, Math.round(1000 - (avg - 150) * 3));
         

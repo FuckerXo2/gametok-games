@@ -8,7 +8,7 @@
     let width, height;
     let paddle, ball, bricks;
     let score = 0, lives = 3;
-    let gameState = 'start';
+    let gameState = 'preview'; // Start in preview mode
     let lastTime = 0;
 
     const PADDLE_WIDTH = 100;
@@ -24,6 +24,7 @@
     function resize() {
         width = canvas.width = window.innerWidth;
         height = canvas.height = window.innerHeight;
+        if (gameState === 'preview') drawPreview();
     }
 
     function init() {
@@ -37,11 +38,22 @@
         canvas.addEventListener('touchend', () => { touching = false; });
         canvas.addEventListener('mousemove', (e) => movePaddle(e.clientX));
         
-        document.getElementById('start-btn').addEventListener('click', startGame);
-        document.getElementById('restart-btn').addEventListener('click', startGame);
-        
         // Expose startGame globally so app can trigger it
         window.startGame = startGame;
+        
+        // Show preview immediately
+        setupPreview();
+    }
+    
+    function setupPreview() {
+        createBricks();
+        paddle = { x: width / 2, y: height - 50 };
+        ball = { x: width / 2, y: height - 100, vx: 0, vy: 0, speed: 6 };
+        drawPreview();
+    }
+    
+    function drawPreview() {
+        draw();
     }
 
     function movePaddle(x) {
@@ -56,9 +68,8 @@
         resetBall();
         gameState = 'playing';
         
-        document.getElementById('start-screen').classList.add('hidden');
-        document.getElementById('game-over').classList.add('hidden');
-        document.getElementById('ui').classList.remove('hidden');
+        const ui = document.getElementById('ui');
+        if (ui) ui.classList.remove('hidden');
         updateUI();
         
         lastTime = performance.now();
@@ -187,10 +198,6 @@
 
     function gameOver(won) {
         gameState = 'gameover';
-        document.getElementById('end-title').textContent = won ? 'You Win!' : 'Game Over';
-        document.getElementById('final-score').textContent = score;
-        document.getElementById('game-over').classList.remove('hidden');
-        document.getElementById('ui').classList.add('hidden');
         
         if (window.ReactNativeWebView) {
             window.ReactNativeWebView.postMessage(JSON.stringify({ type: 'gameOver', score: score }));
@@ -198,8 +205,10 @@
     }
 
     function updateUI() {
-        document.getElementById('score').textContent = score;
-        document.getElementById('lives').textContent = lives;
+        const scoreEl = document.getElementById('score');
+        const livesEl = document.getElementById('lives');
+        if (scoreEl) scoreEl.textContent = score;
+        if (livesEl) livesEl.textContent = lives;
     }
 
     function draw() {

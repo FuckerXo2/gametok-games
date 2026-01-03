@@ -10,9 +10,7 @@
     let isAITurn = false;
 
     function init() {
-        document.getElementById('start-btn').addEventListener('click', startGame);
-        document.getElementById('restart-btn').addEventListener('click', startGame);
-        
+
         // Expose startGame globally so app can trigger it
         window.startGame = startGame;
     }
@@ -24,9 +22,7 @@
         isAITurn = false;
         
         createBoard();
-        
-        document.getElementById('start-screen').classList.add('hidden');
-        document.getElementById('game-over').classList.add('hidden');
+
         document.getElementById('game-container').classList.remove('hidden');
         updateStatus();
     }
@@ -203,7 +199,7 @@
         }
         
         setTimeout(() => {
-            document.getElementById('game-over').classList.remove('hidden');
+            
             document.getElementById('game-container').classList.add('hidden');
         }, 1000);
         

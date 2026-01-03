@@ -11,18 +11,14 @@
     const gameArea = document.getElementById('game-area');
 
     function init() {
-        document.getElementById('start-btn').addEventListener('click', startGame);
-        document.getElementById('restart-btn').addEventListener('click', startGame);
-        
+
         // Expose startGame globally so app can trigger it
         window.startGame = startGame;
     }
 
     function startGame() {
         hits = 0;
-        
-        document.getElementById('start-screen').classList.add('hidden');
-        document.getElementById('game-over').classList.add('hidden');
+
         document.getElementById('ui').classList.remove('hidden');
         gameArea.classList.remove('hidden');
         gameArea.innerHTML = '';
@@ -107,8 +103,7 @@
         
         document.getElementById('final-score').textContent = totalTime + 's';
         document.getElementById('stats').textContent = `Average: ${avgTime}ms per target`;
-        document.getElementById('game-over').classList.remove('hidden');
-        
+
         // Score: faster is better
         const score = Math.max(0, Math.round(3000 - totalTime * 100));
         

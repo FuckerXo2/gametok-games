@@ -13,9 +13,7 @@
     const MAX_MISSED = 10;
 
     function init() {
-        document.getElementById('start-btn').addEventListener('click', startGame);
-        document.getElementById('restart-btn').addEventListener('click', startGame);
-        
+
         // Expose startGame globally so app can trigger it
         window.startGame = startGame;
     }
@@ -27,9 +25,7 @@
         gameActive = true;
         
         gameArea.innerHTML = '';
-        
-        document.getElementById('start-screen').classList.add('hidden');
-        document.getElementById('game-over').classList.add('hidden');
+
         document.getElementById('ui').classList.remove('hidden');
         gameArea.classList.remove('hidden');
         
@@ -111,8 +107,7 @@
         clearInterval(timerInterval);
         
         document.getElementById('final-score').textContent = score;
-        document.getElementById('game-over').classList.remove('hidden');
-        
+
         if (window.ReactNativeWebView) {
             window.ReactNativeWebView.postMessage(JSON.stringify({ type: 'gameOver', score: score }));
         }
