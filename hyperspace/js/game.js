@@ -33,8 +33,8 @@ define(function( require ) {
 
     this.element.appendChild( this.canvas );
 
-    var width  = 640,
-        height = 480;
+    var width  = window.innerWidth,
+        height = window.innerHeight;
 
     this.canvas.width  = width;
     this.canvas.height = height;
