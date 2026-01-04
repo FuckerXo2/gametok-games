@@ -240,6 +240,7 @@ function resetBallPosition() {
     ballVelocity.set(0, 0, 0);
     ballAngularVelocity.set(0, 0, 0);
     canShoot = true;
+    ballPassedAboveHoop = false;
 }
 
 function setupControls() {
@@ -311,17 +312,43 @@ function shootBall(xDelta) {
     // Convert screen delta to game force (-1 to 1 range)
     const xForce = Math.max(-1, Math.min(1, xDelta / 150));
     
-    // Calculate trajectory to hit the hoop
-    // Ball starts at z=1.0, hoop at z=-3.5 (distance = 4.5)
-    // Ball starts at y=0.8, hoop at y=2.8 (need to go up 2.0)
-    ballVelocity.set(
-        xForce * 2 + ball.position.x * -0.8,  // Horizontal - aim toward center
-        8,                                      // Upward force (reduced)
-        -6                                      // Forward toward hoop (reduced)
-    );
+    // Calculate proper arc trajectory using physics
+    // Ball starts at (x, 0.8, 1.0), hoop at (0, 2.8, -3.5)
+    const startY = ball.position.y;
+    const targetY = HOOP_CENTER.y + 0.5; // Aim slightly above hoop
+    const startZ = ball.position.z;
+    const targetZ = HOOP_CENTER.z;
+    
+    // We want the ball to reach peak height above the hoop, then fall through
+    const peakHeight = targetY + 1.2; // Peak 1.2 units above target
+    
+    // Time to reach peak (using v = v0 + at, where v=0 at peak)
+    // v0 = sqrt(2 * g * (peakHeight - startY))
+    const upVelocity = Math.sqrt(2 * Math.abs(GRAVITY) * (peakHeight - startY));
+    
+    // Time to reach peak
+    const timeToPeak = upVelocity / Math.abs(GRAVITY);
+    
+    // Time to fall from peak to hoop height
+    const fallHeight = peakHeight - targetY;
+    const timeToFall = Math.sqrt(2 * fallHeight / Math.abs(GRAVITY));
+    
+    // Total flight time to reach hoop
+    const totalTime = timeToPeak + timeToFall;
+    
+    // Z velocity needed to cover distance in that time
+    const zDistance = targetZ - startZ; // negative (going toward hoop)
+    const zVelocity = zDistance / totalTime;
+    
+    // X velocity - aim toward center with user input adjustment
+    const xTarget = HOOP_CENTER.x + xForce * 0.3; // Allow slight aim adjustment
+    const xDistance = xTarget - ball.position.x;
+    const xVelocity = xDistance / totalTime;
+    
+    ballVelocity.set(xVelocity, upVelocity, zVelocity);
     
     // Add spin
-    ballAngularVelocity.set(-6, xForce * 2, 0);
+    ballAngularVelocity.set(-8, xForce * 3, 0);
     
     // Play swoosh sound
     playSound('swoosh');
@@ -331,7 +358,7 @@ function shootBall(xDelta) {
         if (gameState === 'playing') {
             resetBallPosition();
         }
-    }, 2000);
+    }, 2500);
 }
 
 function updateBallPhysics(delta) {
@@ -400,6 +427,8 @@ function updateBallPhysics(delta) {
 }
 
 let hasScored = false;
+let ballPassedAboveHoop = false;
+
 function checkHoopCollision() {
     // Check if ball passes through hoop
     const distToCenter = new THREE.Vector2(
@@ -407,11 +436,18 @@ function checkHoopCollision() {
         ball.position.z - HOOP_CENTER.z
     ).length();
     
-    // Ball is within hoop radius and at hoop height, moving downward
-    if (distToCenter < HOOP_RADIUS - 0.1 && 
-        ball.position.y < HOOP_CENTER.y && 
-        ball.position.y > HOOP_CENTER.y - 0.3 &&
+    // Track if ball went above the hoop (must come from above to score)
+    if (ball.position.y > HOOP_CENTER.y + 0.2 && distToCenter < HOOP_RADIUS + 0.3) {
+        ballPassedAboveHoop = true;
+    }
+    
+    // Ball is within hoop radius, below hoop level, moving downward, and came from above
+    // More forgiving detection zone
+    if (distToCenter < HOOP_RADIUS && 
+        ball.position.y < HOOP_CENTER.y - 0.1 && 
+        ball.position.y > HOOP_CENTER.y - 0.5 &&
         ballVelocity.y < 0 &&
+        ballPassedAboveHoop &&
         !hasScored) {
         
         // SCORE!
@@ -420,8 +456,20 @@ function checkHoopCollision() {
         updateUI();
         playSound('score');
         
-        // Reset flag after ball resets
-        setTimeout(() => { hasScored = false; }, 1000);
+        // Visual feedback - ball drops straight through
+        ballVelocity.x *= 0.3;
+        ballVelocity.z *= 0.3;
+        
+        // Reset flags after ball resets
+        setTimeout(() => { 
+            hasScored = false; 
+            ballPassedAboveHoop = false;
+        }, 1500);
+    }
+    
+    // Reset the above-hoop flag if ball goes too far away
+    if (ball.position.y < HOOP_CENTER.y - 1 || distToCenter > HOOP_RADIUS + 1) {
+        ballPassedAboveHoop = false;
     }
 }
 
