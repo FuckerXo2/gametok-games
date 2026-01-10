@@ -38,59 +38,13 @@
 		<link rel="stylesheet" href="style/fa/css/font-awesome.min.css">
 		<link rel="stylesheet" type="text/css" href="style/style.css">
 		<style>
-			/* Hide all UI for GameTok integration */
+			/* Hide UI elements for GameTok integration */
 			#startBtn, #gameoverscreen, #openSideBar, #pauseBtn, #restartBtn, 
-			#helpScreen, #HIGHSCORE, #highScoreInGameText, #bottomContainer,
-			#overlay, #buttonCont, #container, #socialShare, #badges, #restart,
-			.rrssb-buttons, #androidBadge, #iOSBadge, .faded,
-			#inst_main_body, .helpText, .unselectable, #fork-ribbon { 
+			#HIGHSCORE, #highScoreInGameText, #bottomContainer,
+			#buttonCont, #container, #socialShare, #badges, #restart,
+			.rrssb-buttons, #androidBadge, #iOSBadge,
+			#fork-ribbon { 
 				display: none !important; 
-				opacity: 0 !important;
-				visibility: hidden !important;
-			}
-			.overlay {
-				display: none !important;
-				opacity: 0 !important;
-				visibility: hidden !important;
-			}
-			/* Custom instructions overlay */
-			#game-instructions {
-				position: fixed;
-				top: 50%;
-				left: 50%;
-				transform: translate(-50%, -50%);
-				background: rgba(0,0,0,0.85);
-				padding: 30px 40px;
-				border-radius: 16px;
-				text-align: center;
-				z-index: 1000;
-				opacity: 1;
-				transition: opacity 0.5s ease;
-				pointer-events: none;
-			}
-			#game-instructions.hidden {
-				opacity: 0;
-			}
-			#game-instructions h2 {
-				color: #fff;
-				font-size: 24px;
-				margin-bottom: 20px;
-				font-family: 'Exo 2', sans-serif;
-			}
-			#game-instructions p {
-				color: #aaa;
-				font-size: 16px;
-				margin-bottom: 12px;
-				font-family: 'Exo 2', sans-serif;
-			}
-			#game-instructions .key {
-				display: inline-block;
-				background: #333;
-				color: #fff;
-				padding: 8px 16px;
-				border-radius: 8px;
-				margin: 5px;
-				font-weight: bold;
 			}
 		</style>
 		<script type='text/javascript' src="vendor/hammer.min.js"></script>
@@ -112,30 +66,9 @@
 		<script type='text/javascript' src="js/input.js"></script>
 		<script type='text/javascript' src="js/main.js"></script>
 		<script type='text/javascript' src="js/initialization.js"></script>
-		<script>
-			// Show instructions then fade after 4 seconds
-			setTimeout(function() {
-				var inst = document.getElementById('game-instructions');
-				if (inst) inst.classList.add('hidden');
-			}, 4000);
-			// Remove completely after fade
-			setTimeout(function() {
-				var inst = document.getElementById('game-instructions');
-				if (inst) inst.style.display = 'none';
-			}, 4500);
-		</script>
-		<script type='text/javascript' async src="../../../../hextris.io/scripts/a.html"></script>
-		<script src="vendor/sweet-alert.min.js"></script>
-		<link rel="stylesheet" href="style/rrssb.css"/>
 	</head>
 	<body>
 		<canvas id="canvas"></canvas>
-		<div id="game-instructions">
-			<h2>HOW TO PLAY</h2>
-			<p>Tap <span class="key">LEFT</span> or <span class="key">RIGHT</span> to rotate</p>
-			<p>Match 3+ blocks of the same color to clear them</p>
-			<p>Don't let blocks overflow the hexagon!</p>
-		</div>
 		<div id="overlay" class="faded overlay"></div>
 		<div id='startBtn' ></div>
 		<div id="helpScreen" class='unselectable'>
