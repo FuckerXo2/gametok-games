@@ -1,0 +1,98 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>GameTOK Icons</title>
+  <style>
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    body { 
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+      background: #1a1a2e;
+      padding: 40px;
+    }
+    h1 { color: #fff; margin-bottom: 30px; }
+    .grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(120px, 1fr));
+      gap: 20px;
+    }
+    .icon-card {
+      text-align: center;
+    }
+    .icon {
+      width: 88px;
+      height: 88px;
+      border-radius: 24px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      margin: 0 auto 8px;
+      font-size: 40px;
+      font-weight: 800;
+      color: #fff;
+      text-shadow: 0 2px 8px rgba(0,0,0,0.3);
+      box-shadow: 0 4px 20px rgba(0,0,0,0.3);
+    }
+    .name {
+      color: #888;
+      font-size: 12px;
+    }
+  </style>
+</head>
+<body>
+  <h1>Game Icons</h1>
+  <div class="grid" id="icons"></div>
+  
+  <script>
+    const games = [
+      { id: '2048', name: '2048', color: '#edc22e', symbol: '2048' },
+      { id: 'tetris', name: 'Tetris', color: '#00d4ff', symbol: 'T' },
+      { id: 'hextris', name: 'Hextris', color: '#9b59b6', symbol: '⬡' },
+      { id: 'memory-match', name: 'Memory', color: '#9b59b6', symbol: '🃏' },
+      { id: 'block-blast', name: 'Block Blast', color: '#3498db', symbol: 'B' },
+      { id: 'color-match', name: 'Color Match', color: '#f39c12', symbol: '🎨' },
+      { id: 'simon-says', name: 'Simon Says', color: '#e91e63', symbol: 'S' },
+      { id: 'number-tap', name: 'Number Tap', color: '#1abc9c', symbol: '#' },
+      { id: 'pacman', name: 'Pac-Man', color: '#FFFF00', symbol: '◐' },
+      { id: 'breakout', name: 'Breakout', color: '#e74c3c', symbol: '▬' },
+      { id: 'snake-io', name: 'Snake.io', color: '#00d4ff', symbol: '🐍' },
+      { id: 'piano-tiles', name: 'Piano Tiles', color: '#1a1a2e', symbol: '🎹' },
+      { id: 'tower-blocks-3d', name: 'Tower Blocks', color: '#3498db', symbol: '▣' },
+      { id: 'flappy-bird', name: 'Flappy Bird', color: '#70c5ce', symbol: '🐦' },
+      { id: 'doodle-jump', name: 'Doodle Jump', color: '#8bc34a', symbol: '↑' },
+      { id: 'crossy-road', name: 'Crossy Road', color: '#8bc34a', symbol: '🐔' },
+      { id: 'bubble-pop', name: 'Bubble Pop', color: '#00bcd4', symbol: '○' },
+      { id: 'ball-bounce', name: 'Ball Bounce', color: '#ff5722', symbol: '●' },
+      { id: 'stack-ball', name: 'Stack Ball', color: '#FF6B6B', symbol: '◉' },
+      { id: 'pong', name: 'Pong', color: '#2ecc71', symbol: '|' },
+      { id: 'tic-tac-toe', name: 'Tic Tac Toe', color: '#9b59b6', symbol: '✕' },
+      { id: 'connect4', name: 'Connect 4', color: '#e74c3c', symbol: '●●' },
+      { id: 'asteroids', name: 'Asteroids', color: '#34495e', symbol: '✦' },
+      { id: 'geometry-dash', name: 'Geometry Dash', color: '#ff6b6b', symbol: '▲' },
+      { id: 'whack-a-mole', name: 'Whack-a-Mole', color: '#8d6e63', symbol: '🔨' },
+      { id: 'aim-trainer', name: 'Aim Trainer', color: '#e74c3c', symbol: '◎' },
+      { id: 'racer', name: 'Racer', color: '#e74c3c', symbol: '🏎' },
+      { id: 'hyperspace', name: 'Hyperspace', color: '#673ab7', symbol: '★' },
+      { id: 'towermaster', name: 'Tower Master', color: '#ff9800', symbol: '🏗' },
+      { id: 'chess', name: 'Chess', color: '#5d4037', symbol: '♞' },
+      { id: 'rock-paper-scissors', name: 'RPS', color: '#607d8b', symbol: '✊' },
+      { id: 'tap-tap-dash', name: 'Tap Tap Dash', color: '#ff4081', symbol: '→' },
+      { id: 'basketball', name: 'Basketball', color: '#ff5722', symbol: '🏀' },
+    ];
+    
+    const container = document.getElementById('icons');
+    games.forEach(game => {
+      const card = document.createElement('div');
+      card.className = 'icon-card';
+      card.innerHTML = `
+        <div class="icon" style="background: ${game.color}">
+          <span style="font-size: ${game.symbol.length > 2 ? '24px' : '40px'}">${game.symbol}</span>
+        </div>
+        <div class="name">${game.name}</div>
+      `;
+      container.appendChild(card);
+    });
+  </script>
+</body>
+</html>

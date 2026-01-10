@@ -1,0 +1,137 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Generate Game Icons</title>
+  <style>
+    body { font-family: system-ui; background: #1a1a2e; color: #fff; padding: 20px; }
+    .grid { display: flex; flex-wrap: wrap; gap: 10px; }
+    .item { text-align: center; }
+    canvas { border-radius: 12px; }
+    a { display: block; color: #888; font-size: 11px; margin-top: 4px; text-decoration: none; }
+    button { margin: 20px 0; padding: 12px 24px; font-size: 16px; cursor: pointer; }
+  </style>
+</head>
+<body>
+  <h1>Game Icon Generator</h1>
+  <button onclick="downloadAll()">Download All PNGs</button>
+  <div class="grid" id="grid"></div>
+
+  <script>
+    const games = [
+      { id: '2048', color: '#edc22e', text: '2048', textSize: 22 },
+      { id: 'tetris', color: '#00d4ff', text: 'T', textSize: 48 },
+      { id: 'hextris', color: '#9b59b6', text: '⬡', textSize: 44 },
+      { id: 'memory-match', color: '#9b59b6', text: '?', textSize: 48 },
+      { id: 'block-blast', color: '#3498db', text: '▣', textSize: 44 },
+      { id: 'color-match', color: '#f39c12', text: '◐', textSize: 44 },
+      { id: 'simon-says', color: '#e91e63', text: '●', textSize: 44 },
+      { id: 'number-tap', color: '#1abc9c', text: '123', textSize: 24 },
+      { id: 'pacman', color: '#FFEB3B', text: '◗', textSize: 52 },
+      { id: 'breakout', color: '#e74c3c', text: '▬', textSize: 44 },
+      { id: 'snake-io', color: '#4CAF50', text: 'S', textSize: 48 },
+      { id: 'piano-tiles', color: '#212121', text: '♪', textSize: 44 },
+      { id: 'tower-blocks-3d', color: '#3498db', text: '▤', textSize: 44 },
+      { id: 'flappy-bird', color: '#70c5ce', text: '>', textSize: 48 },
+      { id: 'doodle-jump', color: '#8bc34a', text: '↑', textSize: 48 },
+      { id: 'crossy-road', color: '#8bc34a', text: '⬆', textSize: 44 },
+      { id: 'bubble-pop', color: '#00bcd4', text: '○', textSize: 48 },
+      { id: 'ball-bounce', color: '#ff5722', text: '●', textSize: 48 },
+      { id: 'stack-ball', color: '#FF6B6B', text: '◉', textSize: 48 },
+      { id: 'pong', color: '#2ecc71', text: '|●|', textSize: 28 },
+      { id: 'tic-tac-toe', color: '#9b59b6', text: '✕○', textSize: 32 },
+      { id: 'connect4', color: '#e74c3c', text: '●●', textSize: 32 },
+      { id: 'asteroids', color: '#455a64', text: '✦', textSize: 44 },
+      { id: 'geometry-dash', color: '#ff6b6b', text: '▲', textSize: 44 },
+      { id: 'whack-a-mole', color: '#8d6e63', text: '⚒', textSize: 40 },
+      { id: 'aim-trainer', color: '#e74c3c', text: '◎', textSize: 48 },
+      { id: 'racer', color: '#e74c3c', text: '▶', textSize: 44 },
+      { id: 'hyperspace', color: '#673ab7', text: '★', textSize: 44 },
+      { id: 'towermaster', color: '#ff9800', text: '▲', textSize: 44 },
+      { id: 'chess', color: '#5d4037', text: '♞', textSize: 44 },
+      { id: 'rock-paper-scissors', color: '#607d8b', text: '✊', textSize: 40 },
+      { id: 'tap-tap-dash', color: '#ff4081', text: '→', textSize: 48 },
+      { id: 'basketball', color: '#ff5722', text: '●', textSize: 48 },
+    ];
+
+    const grid = document.getElementById('grid');
+    const canvases = {};
+
+    games.forEach(game => {
+      const canvas = document.createElement('canvas');
+      canvas.width = 88;
+      canvas.height = 88;
+      const ctx = canvas.getContext('2d');
+      
+      // Draw rounded rect background
+      ctx.fillStyle = game.color;
+      roundRect(ctx, 0, 0, 88, 88, 20);
+      ctx.fill();
+      
+      // Add subtle gradient overlay
+      const gradient = ctx.createLinearGradient(0, 0, 0, 88);
+      gradient.addColorStop(0, 'rgba(255,255,255,0.15)');
+      gradient.addColorStop(0.5, 'rgba(255,255,255,0)');
+      gradient.addColorStop(1, 'rgba(0,0,0,0.1)');
+      ctx.fillStyle = gradient;
+      roundRect(ctx, 0, 0, 88, 88, 20);
+      ctx.fill();
+      
+      // Draw text
+      ctx.fillStyle = '#fff';
+      ctx.font = `bold ${game.textSize}px system-ui, -apple-system, sans-serif`;
+      ctx.textAlign = 'center';
+      ctx.textBaseline = 'middle';
+      ctx.shadowColor = 'rgba(0,0,0,0.3)';
+      ctx.shadowBlur = 4;
+      ctx.shadowOffsetY = 2;
+      ctx.fillText(game.text, 44, 46);
+      
+      canvases[game.id] = canvas;
+      
+      const item = document.createElement('div');
+      item.className = 'item';
+      item.appendChild(canvas);
+      
+      const link = document.createElement('a');
+      link.href = '#';
+      link.textContent = game.id;
+      link.onclick = (e) => {
+        e.preventDefault();
+        downloadCanvas(canvas, game.id);
+      };
+      item.appendChild(link);
+      
+      grid.appendChild(item);
+    });
+
+    function roundRect(ctx, x, y, w, h, r) {
+      ctx.beginPath();
+      ctx.moveTo(x + r, y);
+      ctx.lineTo(x + w - r, y);
+      ctx.quadraticCurveTo(x + w, y, x + w, y + r);
+      ctx.lineTo(x + w, y + h - r);
+      ctx.quadraticCurveTo(x + w, y + h, x + w - r, y + h);
+      ctx.lineTo(x + r, y + h);
+      ctx.quadraticCurveTo(x, y + h, x, y + h - r);
+      ctx.lineTo(x, y + r);
+      ctx.quadraticCurveTo(x, y, x + r, y);
+      ctx.closePath();
+    }
+
+    function downloadCanvas(canvas, name) {
+      const link = document.createElement('a');
+      link.download = name + '.png';
+      link.href = canvas.toDataURL('image/png');
+      link.click();
+    }
+
+    function downloadAll() {
+      Object.entries(canvases).forEach(([id, canvas], i) => {
+        setTimeout(() => downloadCanvas(canvas, id), i * 100);
+      });
+    }
+  </script>
+</body>
+</html>
