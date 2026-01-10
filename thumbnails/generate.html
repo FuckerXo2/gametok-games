@@ -1,0 +1,50 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <title>Generate Game Thumbnails</title>
+  <style>
+    body { font-family: system-ui; background: #111; color: #fff; padding: 20px; }
+    .grid { display: flex; flex-wrap: wrap; gap: 16px; }
+    .card { background: #222; border-radius: 12px; padding: 12px; width: 200px; }
+    .card img { width: 100%; border-radius: 8px; }
+    .card h3 { margin: 8px 0 4px; font-size: 14px; }
+    iframe { display: none; }
+    button { padding: 12px 24px; font-size: 16px; margin: 20px 0; cursor: pointer; background: #FF8E53; border: none; color: #fff; border-radius: 8px; }
+    .status { color: #888; font-size: 12px; }
+  </style>
+</head>
+<body>
+  <h1>Game Thumbnail Generator</h1>
+  <p>This captures actual game screenshots for thumbnails.</p>
+  <button onclick="generateAll()">Generate All Thumbnails</button>
+  <div class="grid" id="grid"></div>
+  
+  <script>
+    const games = [
+      '2048', 'tetris', 'hextris', 'pacman', 'snake-io', 'flappy-bird', 
+      'doodle-jump', 'breakout', 'pong', 'space-invaders', 'fruit-slicer',
+      'geometry-dash', 'crossy-road', 'piano-tiles', 'memory-match',
+      'tic-tac-toe', 'connect4', 'bubble-pop', 'stack-ball', 'basketball-3d'
+    ];
+    
+    // For now, show placeholder - actual generation requires server-side puppeteer
+    const grid = document.getElementById('grid');
+    games.forEach(id => {
+      const card = document.createElement('div');
+      card.className = 'card';
+      card.innerHTML = `
+        <div style="width:100%;height:120px;background:#333;border-radius:8px;display:flex;align-items:center;justify-content:center;">
+          <span style="font-size:32px;">🎮</span>
+        </div>
+        <h3>${id}</h3>
+        <p class="status">Pending...</p>
+      `;
+      grid.appendChild(card);
+    });
+    
+    function generateAll() {
+      alert('To generate real thumbnails, run: node generate-thumbnails.js\\n\\nThis uses Puppeteer to screenshot each game.');
+    }
+  </script>
+</body>
+</html>
