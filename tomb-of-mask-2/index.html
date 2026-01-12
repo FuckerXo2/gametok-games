@@ -3,9 +3,10 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>Tomb of the Mask - Level 2</title>
+    <base href="game/">
+    <title>Tomb of the Mask</title>
     <link rel="stylesheet" href="https://fonts.googleapis.com/icon?family=Material+Icons">
-    <link rel="stylesheet" href="game/style-game.css">
+    <link rel="stylesheet" href="style-game.css">
     <style>
         * { margin: 0; padding: 0; box-sizing: border-box; }
         html, body { 
@@ -127,7 +128,7 @@
         <h3>YOU DIED! 💀</h3>
         <button id="button-lose" onclick="location.reload()">TRY AGAIN</button>
     </div>
-    <script src="game/script-game.js"></script>
+    <script src="script-game.js"></script>
     <script>
         // Override win/lose to reload instead of navigating away
         const originalWin = window.win;
