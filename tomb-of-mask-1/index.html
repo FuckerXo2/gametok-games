@@ -123,18 +123,18 @@
             <div id="arrow">&larr;</div>
         </div>
         <div id="map-container"></div>
-        <div id="count-star"><p>STARS: <span id="numero-score">0</span> / 3</p></div>
+        <div id="count-star"></div>
     </div>
     <div id="win-container">
-        <div id="first-sep"><h4>STAGE <span class="stage-level">1</span></h4><h3>LEVEL COMPLETE! 🎉</h3></div>
+        <div id="first-sep"><h3>Nice! 🎉</h3></div>
         <div id="second-sep"></div>
         <span class="stage-level" style="display:none">1</span>
-        <button id="button-win">PLAY AGAIN</button>
+        <button id="button-win">Play Again</button>
     </div>
     <div id="lose-container">
-        <h4>STAGE <span class="stage-level">1</span></h4>
-        <h3>YOU DIED! 💀</h3>
-        <button id="button-lose" onclick="location.reload()">TRY AGAIN</button>
+        <h3>Try Again 💀</h3>
+        <span class="stage-level" style="display:none">1</span>
+        <button id="button-lose" onclick="location.reload()">Retry</button>
     </div>
     <script src="script-game.js"></script>
     <script>
