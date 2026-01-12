@@ -1,0 +1,170 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Tomb of the Mask - Level 4</title>
+    <link rel="stylesheet" href="https://fonts.googleapis.com/icon?family=Material+Icons">
+    <link rel="stylesheet" href="game/style-game.css">
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        html, body { 
+            width: 100%; 
+            height: 100%; 
+            overflow: hidden; 
+            background: #1a1a2e;
+            touch-action: none;
+        }
+        .container { 
+            display: flex; 
+            flex-direction: column; 
+            align-items: center; 
+            justify-content: center;
+            height: 100%;
+            padding: 10px;
+        }
+        #map-container { 
+            display: flex; 
+            justify-content: center; 
+            align-items: center;
+        }
+        #map-container canvas {
+            max-width: 100%;
+            max-height: 70vh;
+        }
+        .header { display: none; }
+        #arrow { display: none; }
+        #count-star {
+            color: #fff;
+            font-family: -apple-system, BlinkMacSystemFont, sans-serif;
+            margin-top: 10px;
+            font-size: 14px;
+        }
+        #win-container, #lose-container {
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: rgba(0,0,0,0.9);
+            display: none;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            color: #fff;
+            font-family: -apple-system, BlinkMacSystemFont, sans-serif;
+            z-index: 100;
+        }
+        #win-container h3, #lose-container h3 {
+            font-size: 24px;
+            margin: 20px 0;
+        }
+        #button-win, #button-lose {
+            background: linear-gradient(135deg, #FF6B6B, #FF8E53);
+            border: none;
+            color: #fff;
+            padding: 15px 30px;
+            border-radius: 25px;
+            font-size: 16px;
+            font-weight: 600;
+            cursor: pointer;
+            margin-top: 20px;
+        }
+        #first-sep, #second-sep { text-align: center; }
+        #first-sep h4 { color: #888; font-size: 14px; }
+    </style>
+    <script>
+        // Override problematic functions before game loads
+        window.goBackToLevelSelection = function() {}; // No-op, we don't have level selection
+        
+        // Hardcode Level 4 map
+        const LEVEL_MAP = [
+            ["E","E","E","E","E","E","WD","E","E","E","E","E","E","E","E"],
+            ["E","E","E","E","E","WR","END","WL","E","E","E","E","E","E","E"],
+            ["E","E","E","E","E","WR","C","WL","E","E","E","E","E","E","E"],
+            ["E","E","E","E","E","WR","C","WL","E","E","E","E","E","E","E"],
+            ["E","E","E","E","E","WR","C","WDL","WD","WD","WD","WD","WD","WD","E"],
+            ["E","E","E","E","E","WR","C","C","C","C","C","C","C","C","WL"],
+            ["E","E","E","E","E","E","WU","WU","WU","WU","WU","WU","WUR","C","WL"],
+            ["E","E","E","E","E","E","E","E","E","WD","WD","WD","WDR","C","WL"],
+            ["E","E","E","E","WD","WD","WD","WD","WDR","C","C","C","C","C","WL"],
+            ["E","E","E","WR","C","C","C","C","C","C","WUL","WUR","C","C","WL"],
+            ["E","E","E","SR","C","E","C","STUL","STU","STU","E","E","WU","WU","E"],
+            ["E","E","E","SR","C","E","C","STDL","STD","STD","WD","E","E","E","E"],
+            ["E","E","E","SR","C","WF","C","C","C","C","C","WDL","WD","WD","E"],
+            ["E","E","E","SR","C","E","C","WUL","WU","WUR","C","C","C","C","WL"],
+            ["E","E","E","SR","S","C","C","WL","E","WD","WUD","WUD","WUR","C","WL"],
+            ["E","E","E","E","WU","WU","WU","E","WR","C","C","C","WNU","C","WL"],
+            ["E","E","E","E","E","E","WD","WD","WDR","C","WND","C","E","C","WL"],
+            ["E","E","E","E","E","WR","C","C","C","C","WLR","C","C","C","WL"],
+            ["E","E","E","E","E","WR","C","E","WNR","WUD","WD","WUD","WU","WU","E"],
+            ["E","E","E","E","E","WR","C","C","C","C","E","E","SL","E","E"],
+            ["E","E","E","E","E","E","WU","WU","WUR","C","E","E","SL","E","E"],
+            ["E","E","E","E","E","E","E","E","WR","C","E","E","SL","E","E"],
+            ["E","E","E","E","E","E","WD","WD","WDR","C","E","E","SL","E","E"],
+            ["E","E","E","E","E","WR","C","C","C","C","WF","E","SL","E","E"],
+            ["E","E","E","E","E","WR","C","E","E","E","E","E","SL","E","E"],
+            ["E","WD","WD","WD","WD","WR","C","WUL","WU","SU","SU","SU","E","E","E"],
+            ["WR","C","C","C","C","WNU","C","WL","E","E","E","E","E","E","E"],
+            ["WR","C","WUL","WUR","S","C","C","WL","E","E","E","WD","WD","WD","E"],
+            ["WR","C","WL","WD","WUD","WUD","WU","WD","WD","WD","WDR","C","C","C","WL"],
+            ["WR","C","WNU","C","C","C","WNU","C","C","C","C","C","WND","C","WL"],
+            ["WR","C","C","C","WND","C","C","C","WUL","WNL","E","WNR","WR","C","WL"],
+            ["E","WUD","WUD","WUD","WD","WUD","WUD","WU","WR","C","C","C","WNU","C","WL"],
+            ["WR","C","C","C","C","C","C","WL","WR","C","TS","C","E","C","WL"],
+            ["WR","C","WUL","WU","WU","WUR","C","WDL","WDR","C","E","C","TS","C","WL"],
+            ["WR","C","WDL","E","E","WR","C","C","C","C","WND","S","C","C","WL"],
+            ["WR","C","C","WL","E","E","WU","WU","WU","WU","E","WU","WU","WU","E"],
+            ["E","WUR","C","WDL","WD","E","E","WD","WD","WD","WD","WD","E","E","E"],
+            ["E","WR","C","C","C","WDL","WR","C","C","C","C","C","WL","E","E"],
+            ["E","WR","E","E","C","E","WNU","C","E","E","E","C","WDL","WD","E"],
+            ["E","E","WU","WUR","C","C","C","C","WUL","WU","WUR","C","C","C","WL"],
+            ["E","WD","WD","WD","WUD","WUD","WUD","WUD","WD","W","W","WU","WUR","C","WL"],
+            ["WR","C","C","C","C","C","C","C","C","WL","E","E","WR","C","WL","E","E"],
+            ["WR","E","E","E","E","E","WUL","WUR","C","WDL","WD","WD","WDR","C","WL"],
+            ["WR","E","E","E","E","E","WL","WR","C","E","E","E","E","C","WL"],
+            ["WR","E","E","P","E","E","WL","WR","C","C","C","C","C","C","WL"],
+            ["E","WU","WU","WU","WU","WU","E","E","WU","WU","WU","WU","WU","WU","E"]
+        ];
+        const STAGE_LEVEL = "4";
+        window.localStorage.setItem('map', JSON.stringify(LEVEL_MAP));
+        window.localStorage.setItem('stage-level', STAGE_LEVEL);
+    </script>
+</head>
+<body onload="startGame()">
+    <div class="container">
+        <div class="header">
+            <div id="stage-number"><h1>STAGE <span class="stage-level">4</span></h1></div>
+            <div id="arrow">&larr;</div>
+        </div>
+        <div id="map-container"></div>
+        <div id="count-star"><p>STARS: <span id="numero-score">0</span> / 3</p></div>
+    </div>
+    <div id="win-container">
+        <div id="first-sep"><h4>STAGE <span class="stage-level">4</span></h4><h3>LEVEL COMPLETE! 🎉</h3></div>
+        <div id="second-sep"></div>
+        <span class="stage-level" style="display:none">4</span>
+        <button id="button-win">PLAY AGAIN</button>
+    </div>
+    <div id="lose-container">
+        <h4>STAGE <span class="stage-level">4</span></h4>
+        <h3>YOU DIED! 💀</h3>
+        <button id="button-lose" onclick="location.reload()">TRY AGAIN</button>
+    </div>
+    <script src="game/script-game.js"></script>
+    <script>
+        // Override win/lose to reload instead of navigating away
+        const originalWin = window.win;
+        window.win = function() {
+            winSound.play();
+            window.removeEventListener("keydown", getKey);
+            setTimeout(function(){
+                addStarsToWin();
+                document.getElementById('win-container').style.display = "flex";
+            }, 100);
+        };
+        document.getElementById('button-win').onclick = () => location.reload();
+        document.getElementById('button-lose').onclick = () => location.reload();
+    </script>
+</body>
+</html>
