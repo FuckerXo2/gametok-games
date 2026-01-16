@@ -1,0 +1,81 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Open in GameTOK</title>
+  <meta name="apple-itunes-app" content="app-id=YOUR_APP_ID">
+  <style>
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+      background: linear-gradient(135deg, #1a1a2e 0%, #16213e 100%);
+      color: #fff;
+      min-height: 100vh;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: 20px;
+    }
+    .container {
+      text-align: center;
+      max-width: 400px;
+    }
+    .logo { font-size: 64px; margin-bottom: 24px; }
+    h1 { font-size: 28px; margin-bottom: 12px; }
+    p { color: #888; margin-bottom: 32px; }
+    .btn {
+      display: inline-block;
+      padding: 16px 32px;
+      background: linear-gradient(135deg, #FF6B6B, #FF8E53);
+      color: #fff;
+      text-decoration: none;
+      border-radius: 12px;
+      font-weight: 600;
+      font-size: 16px;
+    }
+    .btn:hover { opacity: 0.9; }
+    .store-link {
+      display: block;
+      margin-top: 16px;
+      color: #FF8E53;
+      text-decoration: none;
+      font-size: 14px;
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <div class="logo">🎮</div>
+    <h1>GameTOK</h1>
+    <p id="message">Opening game in GameTOK app...</p>
+    <a href="#" class="btn" id="openBtn">Open in App</a>
+    <a href="https://apps.apple.com/app/gametok/id0000000000" class="store-link">
+      Don't have the app? Download from App Store
+    </a>
+  </div>
+
+  <script>
+    // Get game ID from URL path
+    const path = window.location.pathname;
+    const gameId = path.split('/game/')[1]?.replace('/', '') || '';
+    
+    // Update message
+    if (gameId) {
+      document.getElementById('message').textContent = `Opening "${gameId}" in GameTOK...`;
+    }
+    
+    // Deep link URL scheme
+    const deepLink = `gametok://game/${gameId}`;
+    const universalLink = `https://gametok-games.pages.dev/game/${gameId}`;
+    
+    // Try to open the app
+    document.getElementById('openBtn').href = deepLink;
+    
+    // Auto-redirect attempt
+    setTimeout(() => {
+      window.location.href = deepLink;
+    }, 500);
+  </script>
+</body>
+</html>
