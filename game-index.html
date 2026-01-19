@@ -59,7 +59,6 @@
       font-weight: 600;
     }
     .badge-self { background: #e8f5e9; color: #2e7d32; }
-    .badge-external { background: #fff3e0; color: #e65100; }
     .stats { 
       display: flex; 
       gap: 24px; 
@@ -79,7 +78,6 @@
       font-size: 13px;
       color: #666;
     }
-    .loading { text-align: center; padding: 40px; color: #666; }
   </style>
 </head>
 <body>
@@ -91,7 +89,7 @@
       <strong>Last Updated:</strong> <span id="lastUpdated">Loading...</span><br>
       <strong>Bundle ID:</strong> com.olasubomi.gametok<br>
       <strong>Contact:</strong> gametokapp@gmail.com<br>
-      <strong>Version:</strong> 2.1 (Fixed URLs - Jan 19, 2026)
+      <strong>Version:</strong> 3.0 (Hardcoded URLs - Jan 19, 2026)
     </div>
     
     <div class="stats">
@@ -100,7 +98,7 @@
         <div class="stat-label">Total Games</div>
       </div>
       <div class="stat">
-        <div class="stat-value" id="selfHosted">-</div>
+        <div class="stat-value" id="selfHosted">23</div>
         <div class="stat-label">Self-Hosted</div>
       </div>
       <div class="stat">
@@ -111,9 +109,9 @@
     
     <h2>Self-Hosted Games (Developed by GameTOK)</h2>
     <p style="color: #666; font-size: 14px; margin-bottom: 16px;">
-      These games are developed and hosted by GameTOK on our servers at <strong>gametok-games.pages.dev</strong>. All games are rated 4+ (suitable for all ages).
+      These games are developed and hosted by GameTOK at <strong>gametok-games.pages.dev</strong>. All games are rated 4+ (suitable for all ages).
     </p>
-    <table id="selfHostedTable">
+    <table>
       <thead>
         <tr>
           <th>Game Name</th>
@@ -124,15 +122,37 @@
         </tr>
       </thead>
       <tbody id="selfHostedBody">
-        <tr><td colspan="5" class="loading">Loading games...</td></tr>
+        <tr><td><strong>2048</strong></td><td>GameTOK</td><td>Puzzle</td><td><span class="badge badge-self">4+</span></td><td><a href="https://gametok-games.pages.dev/2048/" class="url" target="_blank">https://gametok-games.pages.dev/2048/</a></td></tr>
+        <tr><td><strong>2048 V2</strong></td><td>GameTOK</td><td>Puzzle</td><td><span class="badge badge-self">4+</span></td><td><a href="https://gametok-games.pages.dev/2048-v2/" class="url" target="_blank">https://gametok-games.pages.dev/2048-v2/</a></td></tr>
+        <tr><td><strong>Basketball</strong></td><td>GameTOK</td><td>Sports</td><td><span class="badge badge-self">4+</span></td><td><a href="https://gametok-games.pages.dev/basketball/" class="url" target="_blank">https://gametok-games.pages.dev/basketball/</a></td></tr>
+        <tr><td><strong>Basketball 3D</strong></td><td>GameTOK</td><td>Sports</td><td><span class="badge badge-self">4+</span></td><td><a href="https://gametok-games.pages.dev/basketball-3d/" class="url" target="_blank">https://gametok-games.pages.dev/basketball-3d/</a></td></tr>
+        <tr><td><strong>Block Blast</strong></td><td>GameTOK</td><td>Puzzle</td><td><span class="badge badge-self">4+</span></td><td><a href="https://gametok-games.pages.dev/block-blast/" class="url" target="_blank">https://gametok-games.pages.dev/block-blast/</a></td></tr>
+        <tr><td><strong>Color Match</strong></td><td>GameTOK</td><td>Casual</td><td><span class="badge badge-self">4+</span></td><td><a href="https://gametok-games.pages.dev/color-match/" class="url" target="_blank">https://gametok-games.pages.dev/color-match/</a></td></tr>
+        <tr><td><strong>Doodle Jump</strong></td><td>GameTOK</td><td>Casual</td><td><span class="badge badge-self">4+</span></td><td><a href="https://gametok-games.pages.dev/doodle-jump/" class="url" target="_blank">https://gametok-games.pages.dev/doodle-jump/</a></td></tr>
+        <tr><td><strong>Flappy Bird</strong></td><td>GameTOK</td><td>Casual</td><td><span class="badge badge-self">4+</span></td><td><a href="https://gametok-games.pages.dev/flappy-bird/" class="url" target="_blank">https://gametok-games.pages.dev/flappy-bird/</a></td></tr>
+        <tr><td><strong>Fruit Slicer</strong></td><td>GameTOK</td><td>Action</td><td><span class="badge badge-self">4+</span></td><td><a href="https://gametok-games.pages.dev/fruit-slicer/" class="url" target="_blank">https://gametok-games.pages.dev/fruit-slicer/</a></td></tr>
+        <tr><td><strong>Geometry Dash</strong></td><td>GameTOK</td><td>Action</td><td><span class="badge badge-self">4+</span></td><td><a href="https://gametok-games.pages.dev/geometry-dash/" class="url" target="_blank">https://gametok-games.pages.dev/geometry-dash/</a></td></tr>
+        <tr><td><strong>Memory Match</strong></td><td>GameTOK</td><td>Puzzle</td><td><span class="badge badge-self">4+</span></td><td><a href="https://gametok-games.pages.dev/memory-match/" class="url" target="_blank">https://gametok-games.pages.dev/memory-match/</a></td></tr>
+        <tr><td><strong>Number Tap</strong></td><td>GameTOK</td><td>Casual</td><td><span class="badge badge-self">4+</span></td><td><a href="https://gametok-games.pages.dev/number-tap/" class="url" target="_blank">https://gametok-games.pages.dev/number-tap/</a></td></tr>
+        <tr><td><strong>Pong</strong></td><td>GameTOK</td><td>Arcade</td><td><span class="badge badge-self">4+</span></td><td><a href="https://gametok-games.pages.dev/pong/" class="url" target="_blank">https://gametok-games.pages.dev/pong/</a></td></tr>
+        <tr><td><strong>Rock Paper Scissors</strong></td><td>GameTOK</td><td>Casual</td><td><span class="badge badge-self">4+</span></td><td><a href="https://gametok-games.pages.dev/rock-paper-scissors/" class="url" target="_blank">https://gametok-games.pages.dev/rock-paper-scissors/</a></td></tr>
+        <tr><td><strong>Simon Says</strong></td><td>GameTOK</td><td>Casual</td><td><span class="badge badge-self">4+</span></td><td><a href="https://gametok-games.pages.dev/simon-says/" class="url" target="_blank">https://gametok-games.pages.dev/simon-says/</a></td></tr>
+        <tr><td><strong>Snake IO</strong></td><td>GameTOK</td><td>Action</td><td><span class="badge badge-self">4+</span></td><td><a href="https://gametok-games.pages.dev/snake-io/" class="url" target="_blank">https://gametok-games.pages.dev/snake-io/</a></td></tr>
+        <tr><td><strong>Tic Tac Toe</strong></td><td>GameTOK</td><td>Casual</td><td><span class="badge badge-self">4+</span></td><td><a href="https://gametok-games.pages.dev/tic-tac-toe/" class="url" target="_blank">https://gametok-games.pages.dev/tic-tac-toe/</a></td></tr>
+        <tr><td><strong>Tomb of the Mask</strong></td><td>GameTOK</td><td>Action</td><td><span class="badge badge-self">4+</span></td><td><a href="https://gametok-games.pages.dev/tomb-of-mask-1/" class="url" target="_blank">https://gametok-games.pages.dev/tomb-of-mask-1/</a></td></tr>
+        <tr><td><strong>Tomb of the Mask 2</strong></td><td>GameTOK</td><td>Action</td><td><span class="badge badge-self">4+</span></td><td><a href="https://gametok-games.pages.dev/tomb-of-mask-2/" class="url" target="_blank">https://gametok-games.pages.dev/tomb-of-mask-2/</a></td></tr>
+        <tr><td><strong>Tomb of the Mask 3</strong></td><td>GameTOK</td><td>Action</td><td><span class="badge badge-self">4+</span></td><td><a href="https://gametok-games.pages.dev/tomb-of-mask-3/" class="url" target="_blank">https://gametok-games.pages.dev/tomb-of-mask-3/</a></td></tr>
+        <tr><td><strong>Tomb of the Mask 4</strong></td><td>GameTOK</td><td>Action</td><td><span class="badge badge-self">4+</span></td><td><a href="https://gametok-games.pages.dev/tomb-of-mask-4/" class="url" target="_blank">https://gametok-games.pages.dev/tomb-of-mask-4/</a></td></tr>
+        <tr><td><strong>Tower Blocks 3D</strong></td><td>GameTOK</td><td>Arcade</td><td><span class="badge badge-self">4+</span></td><td><a href="https://gametok-games.pages.dev/tower-blocks-3d/" class="url" target="_blank">https://gametok-games.pages.dev/tower-blocks-3d/</a></td></tr>
+        <tr><td><strong>Whack a Mole</strong></td><td>GameTOK</td><td>Casual</td><td><span class="badge badge-self">4+</span></td><td><a href="https://gametok-games.pages.dev/whack-a-mole/" class="url" target="_blank">https://gametok-games.pages.dev/whack-a-mole/</a></td></tr>
       </tbody>
     </table>
     
     <h2>Third-Party Games (GameMonetize Publisher Network)</h2>
     <p style="color: #666; font-size: 14px; margin-bottom: 16px;">
-      GameTOK is a registered publisher on GameMonetize. These games are provided by third-party developers and embedded via secure HTTPS iframe. All games are reviewed to ensure they meet our 4+ age rating requirement.
+      GameTOK is a registered publisher on GameMonetize. These games are provided by third-party developers via secure HTTPS. All games are reviewed to ensure they meet our 4+ age rating requirement.
     </p>
-    <table id="externalTable">
+    <table>
       <thead>
         <tr>
           <th>Game Name</th>
@@ -140,11 +160,10 @@
           <th>Category</th>
           <th>Age Rating</th>
           <th>GameMonetize Source URL</th>
-          <th>GameTOK Wrapper URL</th>
         </tr>
       </thead>
       <tbody id="externalBody">
-        <tr><td colspan="6" class="loading">Loading games...</td></tr>
+        <tr><td colspan="5" style="text-align: center; padding: 20px;">Loading external games...</td></tr>
       </tbody>
     </table>
     
@@ -169,82 +188,36 @@
 
   <script>
     const API = 'https://gametok-backend-production.up.railway.app';
-    const GAMES_HOST = 'https://gametok-games.pages.dev';
     
-    // Test if a URL is accessible
-    async function testUrl(url) {
-      try {
-        const controller = new AbortController();
-        const timeout = setTimeout(() => controller.abort(), 5000); // 5s timeout
-        const response = await fetch(url, { 
-          method: 'HEAD',
-          mode: 'no-cors', // Allow testing without CORS
-          signal: controller.signal
-        });
-        clearTimeout(timeout);
-        return true;
-      } catch (e) {
-        return false; // URL not accessible
-      }
-    }
-    
-    async function loadGames() {
+    async function loadExternalGames() {
       try {
         const res = await fetch(`${API}/api/games?limit=500`);
         const data = await res.json();
-        const games = data.games || [];
+        const external = (data.games || []).filter(g => g.embedUrl);
         
-        const selfHosted = games.filter(g => !g.embedUrl);
-        const external = games.filter(g => g.embedUrl);
-        
-        document.getElementById('totalGames').textContent = games.length;
-        document.getElementById('selfHosted').textContent = selfHosted.length;
         document.getElementById('external').textContent = external.length;
+        document.getElementById('totalGames').textContent = 23 + external.length;
         document.getElementById('lastUpdated').textContent = new Date().toLocaleString();
         
-        // Render self-hosted with working status
-        document.getElementById('selfHostedBody').innerHTML = selfHosted.length > 0 
-          ? selfHosted.map(g => {
-              const url = `${GAMES_HOST}/${g.id}/`;
-              return `
-                <tr>
-                  <td><strong>${g.name}</strong></td>
-                  <td>GameTOK</td>
-                  <td>${g.category || 'General'}</td>
-                  <td><span class="badge badge-self">4+</span></td>
-                  <td>
-                    <a href="${url}" class="url" target="_blank" rel="noopener noreferrer">${url}</a>
-                  </td>
-                </tr>
-              `;
-            }).join('')
-          : '<tr><td colspan="5" style="text-align: center; padding: 20px; color: #999;">No self-hosted games</td></tr>';
-        
-        // Render external
         document.getElementById('externalBody').innerHTML = external.length > 0
-          ? external.map(g => {
-              const wrapperUrl = `${GAMES_HOST}/${g.id}/`;
-              return `
-                <tr>
-                  <td><strong>${g.name}</strong></td>
-                  <td>GameMonetize Network</td>
-                  <td>${g.category || 'General'}</td>
-                  <td><span class="badge badge-self">4+</span></td>
-                  <td><a href="${g.embedUrl}" class="url" target="_blank" rel="noopener noreferrer">${g.embedUrl}</a></td>
-                  <td><a href="${wrapperUrl}" class="url" target="_blank" rel="noopener noreferrer">${wrapperUrl}</a></td>
-                </tr>
-              `;
-            }).join('')
-          : '<tr><td colspan="6" style="text-align: center; padding: 20px; color: #999;">No third-party games</td></tr>';
+          ? external.map(g => `
+              <tr>
+                <td><strong>${g.name}</strong></td>
+                <td>GameMonetize Network</td>
+                <td>${g.category || 'General'}</td>
+                <td><span class="badge badge-self">4+</span></td>
+                <td><a href="${g.embedUrl}" class="url" target="_blank">${g.embedUrl}</a></td>
+              </tr>
+            `).join('')
+          : '<tr><td colspan="5" style="text-align: center; padding: 20px; color: #999;">No third-party games</td></tr>';
         
       } catch (e) {
-        console.error('Failed to load games:', e);
-        document.getElementById('selfHostedBody').innerHTML = '<tr><td colspan="5" style="text-align: center; padding: 20px; color: #f44336;">Failed to load games from API. Please try again later.</td></tr>';
-        document.getElementById('externalBody').innerHTML = '<tr><td colspan="6" style="text-align: center; padding: 20px; color: #f44336;">Failed to load games from API. Please try again later.</td></tr>';
+        console.error('Failed to load external games:', e);
+        document.getElementById('externalBody').innerHTML = '<tr><td colspan="5" style="text-align: center; padding: 20px; color: #f44336;">Failed to load external games.</td></tr>';
       }
     }
     
-    loadGames();
+    loadExternalGames();
   </script>
 </body>
 </html>
