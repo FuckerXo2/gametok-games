@@ -110,7 +110,7 @@
     
     <h2>Self-Hosted Games (Developed by GameTOK)</h2>
     <p style="color: #666; font-size: 14px; margin-bottom: 16px;">
-      These games are developed and hosted by GameTOK on our servers. All games are rated 4+ (suitable for all ages).
+      These games are developed and hosted by GameTOK on our servers at <strong>gametok-games.pages.dev</strong>. All games are rated 4+ (suitable for all ages).
     </p>
     <table id="selfHostedTable">
       <thead>
@@ -119,7 +119,7 @@
           <th>Developer</th>
           <th>Category</th>
           <th>Age Rating</th>
-          <th>Universal Link</th>
+          <th>Direct Game URL</th>
         </tr>
       </thead>
       <tbody id="selfHostedBody">
@@ -138,8 +138,8 @@
           <th>Developer</th>
           <th>Category</th>
           <th>Age Rating</th>
-          <th>Universal Link</th>
-          <th>Source URL</th>
+          <th>GameMonetize Source URL</th>
+          <th>GameTOK Wrapper URL</th>
         </tr>
       </thead>
       <tbody id="externalBody">
@@ -190,7 +190,7 @@
             <td>GameTOK</td>
             <td>${g.category || 'General'}</td>
             <td><span class="badge badge-self">4+</span></td>
-            <td><a href="https://gametok-games.pages.dev/game/${g.id}" class="url">gametok-games.pages.dev/game/${g.id}</a></td>
+            <td><a href="https://gametok-games.pages.dev/${g.id}/" class="url" target="_blank">gametok-games.pages.dev/${g.id}/</a></td>
           </tr>
         `).join('') || '<tr><td colspan="5">No self-hosted games</td></tr>';
         
@@ -201,8 +201,8 @@
             <td>GameMonetize Network</td>
             <td>${g.category || 'General'}</td>
             <td><span class="badge badge-self">4+</span></td>
-            <td><a href="https://gametok-games.pages.dev/game/${g.id}" class="url">gametok-games.pages.dev/game/${g.id}</a></td>
-            <td><a href="${g.embedUrl}" class="url" target="_blank">${g.embedUrl}</a></td>
+            <td><a href="${g.embedUrl}" class="url" target="_blank">${new URL(g.embedUrl).hostname}${new URL(g.embedUrl).pathname}</a></td>
+            <td><a href="https://gametok-games.pages.dev/${g.id}/" class="url" target="_blank">gametok-games.pages.dev/${g.id}/</a></td>
           </tr>
         `).join('') || '<tr><td colspan="6">No third-party games</td></tr>';
         
