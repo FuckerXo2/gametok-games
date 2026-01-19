@@ -98,7 +98,7 @@
         <div class="stat-label">Total Games</div>
       </div>
       <div class="stat">
-        <div class="stat-value" id="selfHosted">23</div>
+        <div class="stat-value" id="selfHosted">21</div>
         <div class="stat-label">Self-Hosted</div>
       </div>
       <div class="stat">
@@ -124,8 +124,6 @@
       <tbody id="selfHostedBody">
         <tr><td><strong>2048</strong></td><td>GameTOK</td><td>Puzzle</td><td><span class="badge badge-self">4+</span></td><td><a href="https://gametok-games.pages.dev/2048/" class="url" target="_blank">https://gametok-games.pages.dev/2048/</a></td></tr>
         <tr><td><strong>2048 V2</strong></td><td>GameTOK</td><td>Puzzle</td><td><span class="badge badge-self">4+</span></td><td><a href="https://gametok-games.pages.dev/2048-v2/" class="url" target="_blank">https://gametok-games.pages.dev/2048-v2/</a></td></tr>
-        <tr><td><strong>Basketball</strong></td><td>GameTOK</td><td>Sports</td><td><span class="badge badge-self">4+</span></td><td><a href="https://gametok-games.pages.dev/basketball/" class="url" target="_blank">https://gametok-games.pages.dev/basketball/</a></td></tr>
-        <tr><td><strong>Basketball 3D</strong></td><td>GameTOK</td><td>Sports</td><td><span class="badge badge-self">4+</span></td><td><a href="https://gametok-games.pages.dev/basketball-3d/" class="url" target="_blank">https://gametok-games.pages.dev/basketball-3d/</a></td></tr>
         <tr><td><strong>Block Blast</strong></td><td>GameTOK</td><td>Puzzle</td><td><span class="badge badge-self">4+</span></td><td><a href="https://gametok-games.pages.dev/block-blast/" class="url" target="_blank">https://gametok-games.pages.dev/block-blast/</a></td></tr>
         <tr><td><strong>Color Match</strong></td><td>GameTOK</td><td>Casual</td><td><span class="badge badge-self">4+</span></td><td><a href="https://gametok-games.pages.dev/color-match/" class="url" target="_blank">https://gametok-games.pages.dev/color-match/</a></td></tr>
         <tr><td><strong>Doodle Jump</strong></td><td>GameTOK</td><td>Casual</td><td><span class="badge badge-self">4+</span></td><td><a href="https://gametok-games.pages.dev/doodle-jump/" class="url" target="_blank">https://gametok-games.pages.dev/doodle-jump/</a></td></tr>
@@ -196,7 +194,7 @@
         const external = (data.games || []).filter(g => g.embedUrl);
         
         document.getElementById('external').textContent = external.length;
-        document.getElementById('totalGames').textContent = 23 + external.length;
+        document.getElementById('totalGames').textContent = 21 + external.length;
         document.getElementById('lastUpdated').textContent = new Date().toLocaleString();
         
         document.getElementById('externalBody').innerHTML = external.length > 0
