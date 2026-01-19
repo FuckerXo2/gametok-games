@@ -169,6 +169,24 @@
 
   <script>
     const API = 'https://gametok-backend-production.up.railway.app';
+    const GAMES_HOST = 'https://gametok-games.pages.dev';
+    
+    // Test if a URL is accessible
+    async function testUrl(url) {
+      try {
+        const controller = new AbortController();
+        const timeout = setTimeout(() => controller.abort(), 5000); // 5s timeout
+        const response = await fetch(url, { 
+          method: 'HEAD',
+          mode: 'no-cors', // Allow testing without CORS
+          signal: controller.signal
+        });
+        clearTimeout(timeout);
+        return true;
+      } catch (e) {
+        return false; // URL not accessible
+      }
+    }
     
     async function loadGames() {
       try {
@@ -184,33 +202,45 @@
         document.getElementById('external').textContent = external.length;
         document.getElementById('lastUpdated').textContent = new Date().toLocaleString();
         
-        // Render self-hosted
-        document.getElementById('selfHostedBody').innerHTML = selfHosted.map(g => `
-          <tr>
-            <td><strong>${g.name}</strong></td>
-            <td>GameTOK</td>
-            <td>${g.category || 'General'}</td>
-            <td><span class="badge badge-self">4+</span></td>
-            <td><a href="https://gametok-games.pages.dev/${g.id}/" class="url" target="_blank">gametok-games.pages.dev/${g.id}/</a></td>
-          </tr>
-        `).join('') || '<tr><td colspan="5">No self-hosted games</td></tr>';
+        // Render self-hosted with working status
+        document.getElementById('selfHostedBody').innerHTML = selfHosted.length > 0 
+          ? selfHosted.map(g => {
+              const url = `${GAMES_HOST}/${g.id}/`;
+              return `
+                <tr>
+                  <td><strong>${g.name}</strong></td>
+                  <td>GameTOK</td>
+                  <td>${g.category || 'General'}</td>
+                  <td><span class="badge badge-self">4+</span></td>
+                  <td>
+                    <a href="${url}" class="url" target="_blank" rel="noopener noreferrer">${url}</a>
+                  </td>
+                </tr>
+              `;
+            }).join('')
+          : '<tr><td colspan="5" style="text-align: center; padding: 20px; color: #999;">No self-hosted games</td></tr>';
         
         // Render external
-        document.getElementById('externalBody').innerHTML = external.map(g => `
-          <tr>
-            <td><strong>${g.name}</strong></td>
-            <td>GameMonetize Network</td>
-            <td>${g.category || 'General'}</td>
-            <td><span class="badge badge-self">4+</span></td>
-            <td><a href="${g.embedUrl}" class="url" target="_blank">${new URL(g.embedUrl).hostname}${new URL(g.embedUrl).pathname}</a></td>
-            <td><a href="https://gametok-games.pages.dev/${g.id}/" class="url" target="_blank">gametok-games.pages.dev/${g.id}/</a></td>
-          </tr>
-        `).join('') || '<tr><td colspan="6">No third-party games</td></tr>';
+        document.getElementById('externalBody').innerHTML = external.length > 0
+          ? external.map(g => {
+              const wrapperUrl = `${GAMES_HOST}/${g.id}/`;
+              return `
+                <tr>
+                  <td><strong>${g.name}</strong></td>
+                  <td>GameMonetize Network</td>
+                  <td>${g.category || 'General'}</td>
+                  <td><span class="badge badge-self">4+</span></td>
+                  <td><a href="${g.embedUrl}" class="url" target="_blank" rel="noopener noreferrer">${g.embedUrl}</a></td>
+                  <td><a href="${wrapperUrl}" class="url" target="_blank" rel="noopener noreferrer">${wrapperUrl}</a></td>
+                </tr>
+              `;
+            }).join('')
+          : '<tr><td colspan="6" style="text-align: center; padding: 20px; color: #999;">No third-party games</td></tr>';
         
       } catch (e) {
-        console.error(e);
-        document.getElementById('selfHostedBody').innerHTML = '<tr><td colspan="4">Failed to load games</td></tr>';
-        document.getElementById('externalBody').innerHTML = '<tr><td colspan="4">Failed to load games</td></tr>';
+        console.error('Failed to load games:', e);
+        document.getElementById('selfHostedBody').innerHTML = '<tr><td colspan="5" style="text-align: center; padding: 20px; color: #f44336;">Failed to load games from API. Please try again later.</td></tr>';
+        document.getElementById('externalBody').innerHTML = '<tr><td colspan="6" style="text-align: center; padding: 20px; color: #f44336;">Failed to load games from API. Please try again later.</td></tr>';
       }
     }
     
