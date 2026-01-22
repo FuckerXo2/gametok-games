@@ -33,7 +33,11 @@
     <div id="game-area" class="hidden">
         <div id="grid"></div>
     </div>
-    <div id="start-screen" class="hidden"></div>
+    <div id="start-screen" class="overlay">
+        <h1>🐹 Whack-a-Mole</h1>
+        <p class="subtitle">Tap the moles!</p>
+        <button class="btn" onclick="document.getElementById('start-screen').classList.add('hidden'); window.startGame();">Play</button>
+    </div>
     <div id="game-over" class="hidden"></div>
     <script src="game.js"></script>
 </body>

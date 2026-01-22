@@ -46,6 +46,37 @@
 			#fork-ribbon { 
 				display: none !important; 
 			}
+			#gametok-start {
+				position: fixed;
+				inset: 0;
+				background: linear-gradient(135deg, #1a1a2e 0%, #16213e 100%);
+				display: flex;
+				flex-direction: column;
+				align-items: center;
+				justify-content: center;
+				z-index: 9999;
+				font-family: 'Exo 2', sans-serif;
+			}
+			#gametok-start h1 {
+				font-size: 48px;
+				color: #fff;
+				margin-bottom: 10px;
+			}
+			#gametok-start p {
+				color: rgba(255,255,255,0.7);
+				font-size: 16px;
+				margin-bottom: 30px;
+			}
+			#gametok-start button {
+				background: linear-gradient(135deg, #ff6b6b, #ee5a24);
+				color: #fff;
+				border: none;
+				padding: 16px 48px;
+				font-size: 18px;
+				font-weight: bold;
+				border-radius: 30px;
+				cursor: pointer;
+			}
 		</style>
 		<script type='text/javascript' src="vendor/hammer.min.js"></script>
 		<script type='text/javascript' src="vendor/js.cookie.js"></script>
@@ -68,6 +99,11 @@
 		<script type='text/javascript' src="js/initialization.js"></script>
 	</head>
 	<body>
+		<div id="gametok-start">
+			<h1>Hextris</h1>
+			<p>Rotate and match colors!</p>
+			<button onclick="document.getElementById('gametok-start').style.display='none'; if(window.init) init();">Play</button>
+		</div>
 		<canvas id="canvas"></canvas>
 		<div id="overlay" class="faded overlay"></div>
 		<div id='startBtn' ></div>

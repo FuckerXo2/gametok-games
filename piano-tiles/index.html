@@ -54,7 +54,12 @@
 <body>
     <canvas id="game"></canvas>
     <div id="ui" class="hidden"><div class="score">0</div></div>
-    <div id="start-screen" class="hidden"></div>
+    <div id="start-screen">
+        <div class="piano-icon">🎹</div>
+        <div class="title">Piano Tiles</div>
+        <div class="subtitle">Tap the black tiles!</div>
+        <button class="btn" onclick="document.getElementById('start-screen').style.display='none'; window.startGame();">Play</button>
+    </div>
     <div id="game-over" class="hidden"></div>
     <script src="game.js"></script>
 </body>

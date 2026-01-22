@@ -63,7 +63,12 @@
         <div class="score">Score: <span id="score">0</span></div>
         <div class="length">Length: <span id="length">10</span></div>
     </div>
-    <div id="start-screen" class="hidden"></div>
+    <div id="start-screen">
+        <div class="icon">🐍</div>
+        <div class="title">Snake.io</div>
+        <div class="subtitle">Eat food, grow longer!</div>
+        <button class="btn" onclick="document.getElementById('start-screen').style.display='none'; window.startGame();">Play</button>
+    </div>
     <div id="game-over" class="hidden"></div>
     <script src="game.js"></script>
 </body>

@@ -34,7 +34,11 @@
             <div>AI: <span id="ai-score">0</span></div>
         </div>
     </div>
-    <div id="start-screen" class="hidden"></div>
+    <div id="start-screen" class="overlay">
+        <h1>⭕ Tic Tac Toe</h1>
+        <p class="subtitle">Beat the AI!</p>
+        <button class="btn" onclick="document.getElementById('start-screen').classList.add('hidden'); window.startGame();">Play</button>
+    </div>
     <div id="game-over" class="hidden"></div>
     <script src="game.js"></script>
 </body>

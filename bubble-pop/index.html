@@ -29,7 +29,11 @@
         <div>Time: <span id="time">60</span>s</div>
     </div>
     <div id="game-area" class="hidden"></div>
-    <div id="start-screen" class="hidden"></div>
+    <div id="start-screen" class="overlay">
+        <h1>🫧 Bubble Pop</h1>
+        <p class="subtitle">Pop the bubbles!</p>
+        <button class="btn" onclick="document.getElementById('start-screen').classList.add('hidden'); window.startGame();">Play</button>
+    </div>
     <div id="game-over" class="hidden"></div>
     <script src="game.js"></script>
 </body>

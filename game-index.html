@@ -98,7 +98,7 @@
         <div class="stat-label">Total Games</div>
       </div>
       <div class="stat">
-        <div class="stat-value" id="selfHosted">21</div>
+        <div class="stat-value" id="selfHosted">23</div>
         <div class="stat-label">Self-Hosted</div>
       </div>
       <div class="stat">
@@ -141,6 +141,8 @@
         <tr><td><strong>Tomb of the Mask 2</strong></td><td>GameTOK</td><td>Action</td><td><span class="badge badge-self">4+</span></td><td><a href="https://gametok-games.pages.dev/tomb-of-mask-2/" class="url" target="_blank">https://gametok-games.pages.dev/tomb-of-mask-2/</a></td></tr>
         <tr><td><strong>Tomb of the Mask 3</strong></td><td>GameTOK</td><td>Action</td><td><span class="badge badge-self">4+</span></td><td><a href="https://gametok-games.pages.dev/tomb-of-mask-3/" class="url" target="_blank">https://gametok-games.pages.dev/tomb-of-mask-3/</a></td></tr>
         <tr><td><strong>Tomb of the Mask 4</strong></td><td>GameTOK</td><td>Action</td><td><span class="badge badge-self">4+</span></td><td><a href="https://gametok-games.pages.dev/tomb-of-mask-4/" class="url" target="_blank">https://gametok-games.pages.dev/tomb-of-mask-4/</a></td></tr>
+        <tr><td><strong>Tower Blocks 3D</strong></td><td>GameTOK</td><td>Arcade</td><td><span class="badge badge-self">4+</span></td><td><a href="https://gametok-games.pages.dev/tower-blocks-3d/" class="url" target="_blank">https://gametok-games.pages.dev/tower-blocks-3d/</a></td></tr>
+        <tr><td><strong>Whack a Mole</strong></td><td>GameTOK</td><td>Casual</td><td><span class="badge badge-self">4+</span></td><td><a href="https://gametok-games.pages.dev/whack-a-mole/" class="url" target="_blank">https://gametok-games.pages.dev/whack-a-mole/</a></td></tr></td></tr>
         <tr><td><strong>Tower Blocks 3D</strong></td><td>GameTOK</td><td>Arcade</td><td><span class="badge badge-self">4+</span></td><td><a href="https://gametok-games.pages.dev/tower-blocks-3d/" class="url" target="_blank">https://gametok-games.pages.dev/tower-blocks-3d/</a></td></tr>
         <tr><td><strong>Whack a Mole</strong></td><td>GameTOK</td><td>Casual</td><td><span class="badge badge-self">4+</span></td><td><a href="https://gametok-games.pages.dev/whack-a-mole/" class="url" target="_blank">https://gametok-games.pages.dev/whack-a-mole/</a></td></tr>
       </tbody>
@@ -194,7 +196,7 @@
         const external = (data.games || []).filter(g => g.embedUrl);
         
         document.getElementById('external').textContent = external.length;
-        document.getElementById('totalGames').textContent = 21 + external.length;
+        document.getElementById('totalGames').textContent = 23 + external.length;
         document.getElementById('lastUpdated').textContent = new Date().toLocaleString();
         
         document.getElementById('externalBody').innerHTML = external.length > 0

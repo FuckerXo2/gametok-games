@@ -38,7 +38,12 @@
 </head>
 <body>
     <canvas id="game"></canvas>
-    <div id="start-screen" class="hidden"></div>
+    <div id="start-screen">
+        <div class="icon">🏓</div>
+        <div class="title">Pong</div>
+        <div class="subtitle">Classic paddle game!</div>
+        <button class="btn" onclick="document.getElementById('start-screen').style.display='none'; window.startGame();">Play</button>
+    </div>
     <div id="game-over" class="hidden"></div>
     <script src="game.js"></script>
 </body>

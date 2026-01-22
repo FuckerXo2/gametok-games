@@ -51,7 +51,16 @@
         <div class="stat">Score: <span id="score">0</span></div>
         <div class="stat">Lives: <span id="lives">3</span></div>
     </div>
-    <div id="start-screen" class="hidden"></div>
+    <div id="start-screen">
+        <div class="brick-icon">
+            <div class="brick" style="background:#ff6b6b"></div>
+            <div class="brick" style="background:#feca57"></div>
+            <div class="brick" style="background:#48dbfb"></div>
+        </div>
+        <div class="title">Breakout</div>
+        <div class="subtitle">Break all the bricks!</div>
+        <button class="btn" onclick="document.getElementById('start-screen').style.display='none'; window.startGame();">Play</button>
+    </div>
     <div id="game-over" class="hidden"></div>
     <script src="game.js"></script>
 </body>

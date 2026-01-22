@@ -96,7 +96,17 @@
             <div class="ctrl-btn" id="btn-right">▶</div>
         </div>
     </div>
-    <div id="start-screen" class="hidden"></div>
+    <div id="start-screen">
+        <div class="tetris-icon">
+            <div class="block" style="background:#00f0f0"></div>
+            <div class="block" style="background:#f0a000"></div>
+            <div class="block" style="background:#a000f0"></div>
+            <div class="block" style="background:#f00000"></div>
+        </div>
+        <div class="title">Tetris</div>
+        <div class="subtitle">Stack blocks, clear lines!</div>
+        <button class="btn" onclick="document.getElementById('start-screen').style.display='none'; window.startGame();">Play</button>
+    </div>
     <div id="game-over" class="hidden"></div>
     <script src="game.js"></script>
 </body>

@@ -29,7 +29,11 @@
     <div id="progress" class="hidden">
         <div id="progress-bar"></div>
     </div>
-    <div id="start-screen" class="hidden"></div>
+    <div id="start-screen">
+        <h1>Geometry Dash</h1>
+        <p class="subtitle">Tap to jump over obstacles!</p>
+        <button class="btn" onclick="document.getElementById('start-screen').style.display='none'; window.startGame();">Play</button>
+    </div>
     <div id="game-over" class="hidden"></div>
     <script src="game.js"></script>
 </body>

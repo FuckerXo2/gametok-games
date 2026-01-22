@@ -81,7 +81,12 @@
         <div id="status">Your turn (Red)</div>
         <div id="board"></div>
     </div>
-    <div id="start-screen" class="hidden"></div>
+    <div id="start-screen">
+        <div class="icon">🔴🟡</div>
+        <div class="title">Connect 4</div>
+        <div class="subtitle">Get 4 in a row!</div>
+        <button class="btn" onclick="document.getElementById('start-screen').style.display='none'; window.startGame();">Play</button>
+    </div>
     <div id="game-over" class="hidden"></div>
     <script src="game.js"></script>
 </body>
