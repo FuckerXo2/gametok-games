@@ -1,7 +1,3 @@
-OWNERDOMAIN=gametok-games.pages.dev
-
-google.com, pub-1961802731817431, DIRECT, f08c47fec0942fa0
-
 ironsrc.com, 645515, DIRECT
 
 blueseasx.com, 203625, RESELLER
