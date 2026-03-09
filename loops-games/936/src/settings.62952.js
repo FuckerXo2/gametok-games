@@ -1,0 +1,1 @@
+window._CCSettings={platform:"web-mobile",groupList:["default","car"],collisionMatrix:[[false],[false,true]],hasResourcesBundle:true,hasStartSceneBundle:false,remoteBundles:[],subpackages:[],launchScene:"db://assets/scenes/game_load.fire",orientation:"portrait",jsList:[],bundleVers:{internal:"d17e2",res_bundle:"f8951",resources:"f4d2a",ui_bundle:"f7164",main:"90df3"}};

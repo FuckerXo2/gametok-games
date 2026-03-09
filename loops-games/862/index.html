@@ -1,0 +1,297 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+    <meta charset="utf-8">
+
+    <title>Cat Hero</title>
+
+    <!--http://www.html5rocks.com/en/mobile/mobifying/-->
+    <meta name="viewport"
+        content="width=device-width,user-scalable=no,initial-scale=1,minimum-scale=1,maximum-scale=1,minimal-ui=true" />
+
+    <!--https://developer.apple.com/library/safari/documentation/AppleApplications/Reference/SafariHTMLRef/Articles/MetaTags.html-->
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+    <meta name="format-detection" content="telephone=no">
+    <link rel="icon" href="favicon.ico">
+    <!-- force webkit on 360 -->
+    <meta name="renderer" content="webkit" />
+    <meta name="force-rendering" content="webkit" />
+    <!-- force edge on IE -->
+    <meta http-equiv="X-UA-Compatible" content="IE=edge,chrome=1" />
+    <meta name="msapplication-tap-highlight" content="no">
+
+    <!-- force full screen on some browser -->
+    <meta name="full-screen" content="yes" />
+    <meta name="x5-fullscreen" content="true" />
+    <meta name="360-fullscreen" content="true" />
+
+    <!--fix fireball/issues/3568 -->
+    <!--<meta name="browsermode" content="application">-->
+    <meta name="x5-page-mode" content="app">
+
+    <!--<link rel="apple-touch-icon" href=".png" />-->
+    <!--<link rel="apple-touch-icon-precomposed" href=".png" />-->
+
+    <link rel="stylesheet" type="text/css" href="style.f76d1.css" />
+
+</head>
+
+<body>
+    <div id="GameDiv" cc_exact_fit_screen="true">
+        <div id="Cocos3dGameContainer">
+            <canvas id="GameCanvas" oncontextmenu="event.preventDefault()" tabindex="99"></canvas>
+        </div>
+    </div>
+
+    <!-- Polyfills bundle. -->
+    <script src="src/polyfills.bundle.5adbf.js" charset="utf-8"> </script>
+
+    <!-- SystemJS support. -->
+    <script src="src/system.bundle.543e6.js" charset="utf-8"> </script>
+
+    <!-- Import map -->
+    <script src="src/import-map.1.json" type="systemjs-importmap" charset="utf-8"> </script>
+
+    <script>
+        // 先引入下面的代码
+
+        (function () {
+            const PayBridge = (() => {
+                const state = {
+                    onResultHandler: null
+                };
+
+                function onResult(fn) {
+                    state.onResultHandler = typeof fn === 'function' ? fn : null;
+                }
+
+                function _nativeCallback(method, result) {
+                    try {
+                        if (typeof result === 'string') result = JSON.parse(result);
+                    } catch (e) {}
+                    if (state.onResultHandler) state.onResultHandler(method, result);
+                    try {
+                        window.parent && window.parent !== window &&
+                            window.parent.postMessage({
+                                __fromNative: true,
+                                type: 'nativePayResult',
+                                method,
+                                result
+                            }, '*');
+                    } catch (e) {}
+                }
+
+                function pay(payload) {
+                    payload = payload || {};
+                    payload.requestId = payload.requestId || (Date.now() + '-' + Math.random().toString(16)
+                        .slice(2));
+                    if (window.webkit && window.webkit.messageHandlers && window.webkit.messageHandlers
+                        .pay) {
+                        window.webkit.messageHandlers.pay.postMessage(payload);
+                    } else {
+                        console.warn('In a non-App environment, native payment cannot be invoked');
+                    }
+                    return payload.requestId;
+                }
+
+                return {
+                    onResult,
+                    _nativeCallback,
+                    pay
+                };
+            })();
+            window.PayBridge = PayBridge;
+            try {
+                if (window.top && window.top !== window && !window.top.PayBridge)
+                    window.top.PayBridge = PayBridge;
+            } catch (e) {}
+            let callbackCounter = 0;
+            const CALLBACK_PREFIX = '_gameTok_callback_';
+            const ANDROID_BRIDGE_NAME = 'GameTok';
+            const ANDROID_BRIDGE_METHOD = 'gameTokRequestPayment';
+
+            function detectPlatform() {
+                const isAndroid = /Android/i.test(navigator.userAgent);
+                const isIOS = /iPhone|iPad|iPod|Safari/i.test(navigator.userAgent);
+                const isWKWebView = !!(window.webkit && window.webkit.messageHandlers);
+
+                if (isAndroid) {
+                    const available = !!(window[ANDROID_BRIDGE_NAME] && typeof window[ANDROID_BRIDGE_NAME][
+                        ANDROID_BRIDGE_METHOD
+                    ] === 'function');
+                    return {
+                        platform: 'android',
+                        available
+                    };
+                } else if (isIOS) {
+                    const available = isWKWebView;
+                    return {
+                        platform: 'ios',
+                        available,
+                        isWKWebView,
+                        hasPayHandler: !!(window.webkit && window.webkit.messageHandlers && window.webkit
+                            .messageHandlers.pay)
+                    };
+                } else {
+                    return {
+                        platform: 'browser',
+                        available: false
+                    };
+                }
+            }
+            const iosCallbackManager = {
+                callbacks: new Map(),
+                register(requestId, successCallback, failCallback) {
+                    this.callbacks.set(requestId, {
+                        successCallback,
+                        failCallback
+                    });
+                },
+                handleCallback(method, result) {
+                    if (method !== 'pay') return;
+                    console.log(method, 'method', result, 'result');
+                    const requestId = result.requestId;
+                    const callbacks = this.callbacks.get(requestId);
+
+                    if (callbacks) {
+                        try {
+                            if (result.status === 1 && callbacks.successCallback) {
+                                callbacks.successCallback(result);
+                            } else if (result.status !== 1 && callbacks.failCallback) {
+                                callbacks.failCallback(result.message || 'Payment Fail');
+                            }
+                        } catch (e) {
+                            console.error(e);
+                        } finally {
+                            this.callbacks.delete(requestId);
+                        }
+                    }
+                }
+            };
+            let iosListenerInitialized = false;
+
+            function initIOSMessageListener() {
+                if (iosListenerInitialized) return;
+                iosListenerInitialized = true;
+                window.addEventListener('message', (e) => {
+                    const d = e.data || {};
+                    if (d && d.__fromNative === true && d.type === 'nativePayResult' && d.method ===
+                        'pay') {
+                        iosCallbackManager.handleCallback(d.method, d.result);
+                    }
+                });
+            }
+
+            function cleanupCallbacks(successCallback, failCallback) {
+                try {
+                    delete window[successCallback];
+                    delete window[failCallback];
+                } catch (e) {
+                    console.warn(e);
+                }
+            }
+            window.gameTokRequestPayment = function (options) {
+                if (!options || typeof options !== 'object') {
+                    const error = 'Parameter error: options must be an object';
+                    if (typeof options.fail === 'function') {
+                        options.fail(error);
+                    } else {
+                        console.error(error);
+                    }
+                    return;
+                }
+                if (typeof options.amount !== 'number' || options.amount <= 0) {
+                    const error = 'Parameter error: The "amount" must be a positive number.';
+                    if (typeof options.fail === 'function') {
+                        options.fail(error);
+                    } else {
+                        console.error(error);
+                    }
+                    return;
+                }
+                const platformInfo = detectPlatform();
+                if (!platformInfo.available) {
+                    const error = `${platformInfo.platform}The platform's native bridge is unavailable`;
+                    if (typeof options.fail === 'function') {
+                        options.fail(error);
+                    } else {
+                        console.error(error);
+                    }
+                    return;
+                }
+                if (!options.success && !options.fail) {
+                    return new Promise((resolve, reject) => {
+                        const newOptions = {
+                            ...options,
+                            success: resolve,
+                            fail: reject
+                        };
+                        window.gameTokRequestPayment(newOptions);
+                    });
+                }
+                if (platformInfo.platform === 'android') {
+                    const successCallbackName = CALLBACK_PREFIX + 'success_' + (++callbackCounter);
+                    const failCallbackName = CALLBACK_PREFIX + 'fail_' + callbackCounter;
+                    window[successCallbackName] = function (result) {
+                        cleanupCallbacks(successCallbackName, failCallbackName);
+                        if (typeof options.success === 'function') {
+                            options.success(result);
+                        }
+                    };
+                    window[failCallbackName] = function (error) {
+                        cleanupCallbacks(successCallbackName, failCallbackName);
+                        if (typeof options.fail === 'function') {
+                            options.fail(error);
+                        }
+                    };
+                    try {
+                        window[ANDROID_BRIDGE_NAME][ANDROID_BRIDGE_METHOD](
+                            options.amount,
+                            successCallbackName,
+                            failCallbackName
+                        );
+                    } catch (error) {
+                        console.error('Failed to invoke the native Android recharge method:', error);
+                        cleanupCallbacks(successCallbackName, failCallbackName);
+                        if (typeof options.fail === 'function') {
+                            options.fail(error);
+                        }
+                    }
+                } else if (platformInfo.platform === 'ios') {
+                    initIOSMessageListener();
+                    const requestId = Date.now() + '-' + Math.random().toString(16).slice(2);
+                    const payload = {
+                        amount: options.amount,
+                        requestId: requestId
+                    };
+                    iosCallbackManager.register(requestId, options.success, options.fail);
+                    try {
+                        window.PayBridge.pay(payload);
+                    } catch (error) {
+                        console.error('Failed to invoke the native iOS recharge method:', error);
+                        iosCallbackManager.callbacks.delete(requestId);
+                        if (typeof options.fail === 'function') {
+                            options.fail(error);
+                        }
+                    }
+                }
+            };
+            window.gameTokRequestPayment.version = '2.0.1';
+            window.gameTokRequestPayment.getPlatformInfo = detectPlatform;
+            window.gameTokRequestPayment.isAvailable = function () {
+                return detectPlatform().available;
+            };
+            window.gameTokRequestPayment.iosCallbackManager = iosCallbackManager;
+        })();
+
+        var script = document.createElement('script');
+        script.async = true;
+        script.src = 'https://cdnmj.catherogame.com/webres/index_gameTok.js?v=' + (new Date()).getTime();
+        document.body.appendChild(script);
+    </script>
+
+</body>
+
+</html>

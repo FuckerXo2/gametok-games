@@ -1,0 +1,1 @@
+[1,0,0,[["cc.TextAsset",["_name","text"],1]],[[0,0,1,3]],[[0,"exchange","ID(短一点在节省数据库空间),道具名称,价格,消耗钻石,标识符\r\nnumber,string,number,number,string\r\nID,name,price,diamond,product_id\r\n0,兑换,26600,60,com.Cohe.shoo10\r\n1,兑换,46600,100,com.Cohe.shoo11\r\n2,兑换,106600,200,com.Cohe.shoo12\r\n3,兑换,306600,400,com.Cohe.shoo13\r\n"]],0,0,[],[],[]]
