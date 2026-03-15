@@ -61,7 +61,12 @@
         <div class="subtitle">Tap to fly through pipes!</div>
         <button class="btn" onclick="document.getElementById('start-screen').style.display='none'; window.startGame();">Play</button>
     </div>
-    <div id="game-over" class="hidden"></div>
+    <div id="game-over">
+        <div class="bird-icon">🐦</div>
+        <div class="title">Game Over</div>
+        <div class="final-score" id="final-score">0</div>
+        <button class="btn" onclick="document.getElementById('game-over').style.display='none'; window.startGame();">Play Again</button>
+    </div>
     <script src="game.js"></script>
 </body>
 </html>

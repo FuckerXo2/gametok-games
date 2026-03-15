@@ -25,7 +25,7 @@ gametok-games/
 ### Option 1: Cloudflare Pages (Recommended)
 1. Push this folder to GitHub
 2. Connect to Cloudflare Pages
-3. Deploy — get URLs like: `https://gametok-games.pages.dev/stack-ball/`
+3. Deploy — get URLs like: `https://games.gametok.co/stack-ball/`
 
 ### Option 2: GitHub Pages
 1. Push to GitHub

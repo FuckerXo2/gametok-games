@@ -1,0 +1,127 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Darts - OpenPigeon</title>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        html, body { 
+            width: 100%; 
+            height: 100%; 
+            overflow: hidden;
+            background: #1a1a2e;
+            font-family: system-ui, -apple-system, sans-serif;
+        }
+        #game-container {
+            width: 100%;
+            height: 100%;
+            position: relative;
+        }
+        iframe {
+            width: 100%;
+            height: 100%;
+            border: none;
+        }
+        .loading {
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            background: linear-gradient(135deg, #1a1a2e 0%, #16213e 100%);
+            color: white;
+            z-index: 10;
+        }
+        .loading.hidden { display: none; }
+        .spinner {
+            width: 50px;
+            height: 50px;
+            border: 4px solid rgba(255,255,255,0.2);
+            border-top-color: #a855f7;
+            border-radius: 50%;
+            animation: spin 1s linear infinite;
+            margin-bottom: 20px;
+        }
+        @keyframes spin {
+            to { transform: rotate(360deg); }
+        }
+        .loading-text {
+            font-size: 18px;
+            font-weight: 600;
+            margin-bottom: 8px;
+        }
+        .loading-subtext {
+            font-size: 14px;
+            color: rgba(255,255,255,0.6);
+        }
+        .game-icon {
+            font-size: 48px;
+            margin-bottom: 16px;
+        }
+    </style>
+</head>
+<body>
+    <div id="game-container">
+        <div class="loading" id="loading">
+            <div class="game-icon">🎯</div>
+            <div class="spinner"></div>
+            <div class="loading-text">Loading Darts...</div>
+            <div class="loading-subtext">Powered by OpenPigeon</div>
+        </div>
+        <iframe id="game-frame" src="https://pub-b7694276c8f54290854b276638a93b62.r2.dev/openpigeon/index.html" style="opacity:0;"></iframe>
+    </div>
+    <script>
+        const iframe = document.getElementById('game-frame');
+        const loading = document.getElementById('loading');
+        const GAME_ID = 'darts';
+        
+        iframe.onload = () => {
+            console.log('Godot iframe loaded');
+            setTimeout(() => {
+                loading.classList.add('hidden');
+                iframe.style.opacity = '1';
+                trySwitch();
+            }, 3000);
+        };
+        
+        function trySwitch() {
+            try {
+                if (iframe.contentWindow && iframe.contentWindow.godotSwitchGame) {
+                    iframe.contentWindow.godotSwitchGame(GAME_ID);
+                }
+            } catch(e) {
+                console.log('Cannot access iframe yet');
+            }
+        }
+        
+        window.addEventListener('message', (event) => {
+            if (event.data.type === 'godot_ready') {
+                loading.classList.add('hidden');
+                iframe.style.opacity = '1';
+                trySwitch();
+            }
+            if (event.data.type === 'game_message') {
+                window.parent?.postMessage(event.data, '*');
+            }
+        });
+        
+        window.addEventListener('message', (event) => {
+            if (event.data.type === 'game_data') {
+                try {
+                    iframe.contentWindow?.godotReceiveGameData?.(event.data.data);
+                } catch(e) {}
+            }
+        });
+        
+        setTimeout(() => {
+            loading.classList.add('hidden');
+            iframe.style.opacity = '1';
+        }, 8000);
+    </script>
+</body>
+</html>

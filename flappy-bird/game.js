@@ -176,6 +176,7 @@
         document.getElementById('final-score').textContent = score;
         
         document.getElementById('ui').classList.add('hidden');
+        document.getElementById('game-over').style.display = 'flex';
         
         if (window.ReactNativeWebView) {
             window.ReactNativeWebView.postMessage(JSON.stringify({ type: 'gameOver', score: score }));
