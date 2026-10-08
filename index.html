@@ -1,52 +1,1355 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>GameTOK - Swipe. Play. Compete.</title>
-    <style>
-        * { margin: 0; padding: 0; box-sizing: border-box; }
-        body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; background: linear-gradient(135deg, #0a0a0a 0%, #1a1a2e 100%); min-height: 100vh; color: #fff; }
-        .container { max-width: 600px; margin: 0 auto; padding: 60px 24px; text-align: center; }
-        .logo { width: 120px; height: 120px; background: linear-gradient(135deg, #FF6B6B, #FF8E53, #FFC107); border-radius: 28px; margin: 0 auto 32px; display: flex; align-items: center; justify-content: center; font-size: 48px; font-weight: 800; box-shadow: 0 20px 60px rgba(255, 142, 83, 0.3); }
-        h1 { font-size: 42px; font-weight: 800; margin-bottom: 16px; background: linear-gradient(135deg, #FF6B6B, #FF8E53, #FFC107); -webkit-background-clip: text; -webkit-text-fill-color: transparent; background-clip: text; }
-        .tagline { font-size: 20px; color: #888; margin-bottom: 48px; }
-        .features { text-align: left; margin-bottom: 48px; }
-        .feature { display: flex; align-items: center; padding: 16px 0; border-bottom: 1px solid #222; }
-        .feature-icon { font-size: 28px; margin-right: 16px; }
-        .feature-text h3 { font-size: 16px; margin-bottom: 4px; }
-        .feature-text p { font-size: 14px; color: #666; }
-        .support { background: #111; border-radius: 16px; padding: 32px; margin-top: 32px; }
-        .support h2 { font-size: 20px; margin-bottom: 16px; }
-        .support p { color: #888; font-size: 14px; margin-bottom: 16px; }
-        .support a { color: #FF8E53; text-decoration: none; }
-        .footer { margin-top: 48px; color: #444; font-size: 12px; }
-        .links { margin-top: 24px; }
-        .links a { color: #666; font-size: 12px; margin: 0 12px; text-decoration: none; }
-        .links a:hover { color: #FF8E53; }
-    </style>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>GameTok Studio — Indie Web Game Publishing & Creator Admin</title>
+  <meta name="description" content="Turn your web game into a viral mobile game on GameTok. Distribute to thousands of players, keep 100% code ownership, auto-sync live updates, and get paid for plays.">
+  <link rel="icon" type="image/svg+xml" href="https://gametok.co/favicon.svg">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+  <style>
+    :root {
+      --bg: #090a0f;
+      --surface: #12141c;
+      --surface-elevated: #181b26;
+      --border: #232738;
+      --border-focus: #ff6b6b;
+      --text: #f1f3f9;
+      --text-muted: #8b92a5;
+      --text-subtle: #585f73;
+      --primary: #ff6b6b;
+      --primary-gradient: linear-gradient(135deg, #ff6b6b 0%, #ff8e53 100%);
+      --accent: #ff8e53;
+      --accent-cyan: #4ecdc4;
+      --accent-green: #2ecc71;
+      --radius-sm: 8px;
+      --radius-md: 14px;
+      --radius-lg: 20px;
+      --shadow-sm: 0 4px 12px rgba(0, 0, 0, 0.25);
+      --shadow-md: 0 8px 30px rgba(0, 0, 0, 0.4);
+      --shadow-glow: 0 10px 40px rgba(255, 107, 107, 0.25);
+      --font: 'Plus Jakarta Sans', -apple-system, BlinkMacSystemFont, sans-serif;
+      --font-mono: 'JetBrains Mono', monospace;
+    }
+
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    body {
+      background: var(--bg);
+      color: var(--text);
+      font-family: var(--font);
+      min-height: 100vh;
+      line-height: 1.5;
+      -webkit-font-smoothing: antialiased;
+      overflow-x: hidden;
+    }
+
+    /* Top Bar */
+    header.topbar {
+      position: sticky;
+      top: 0;
+      z-index: 50;
+      background: rgba(9, 10, 15, 0.85);
+      backdrop-filter: blur(16px);
+      -webkit-backdrop-filter: blur(16px);
+      border-bottom: 1px solid var(--border);
+      height: 68px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 0 28px;
+    }
+
+    .brand {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      text-decoration: none;
+      color: inherit;
+    }
+
+    .brand-badge {
+      width: 38px;
+      height: 38px;
+      border-radius: 10px;
+      background: var(--primary-gradient);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-weight: 800;
+      font-size: 20px;
+      color: #fff;
+      box-shadow: 0 4px 14px rgba(255, 107, 107, 0.4);
+    }
+
+    .brand-title {
+      font-size: 19px;
+      font-weight: 800;
+      letter-spacing: -0.02em;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+
+    .brand-title span.tag {
+      font-size: 11px;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+      padding: 3px 8px;
+      border-radius: 6px;
+      background: rgba(255, 107, 107, 0.15);
+      color: var(--primary);
+      border: 1px solid rgba(255, 107, 107, 0.3);
+    }
+
+    .nav-tabs {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      background: var(--surface);
+      padding: 4px;
+      border-radius: 12px;
+      border: 1px solid var(--border);
+    }
+
+    .nav-tab-btn {
+      background: transparent;
+      border: none;
+      color: var(--text-muted);
+      font-family: inherit;
+      font-size: 13.5px;
+      font-weight: 600;
+      padding: 7px 16px;
+      border-radius: 8px;
+      cursor: pointer;
+      transition: all 0.15s ease;
+      display: flex;
+      align-items: center;
+      gap: 7px;
+    }
+
+    .nav-tab-btn:hover { color: var(--text); }
+    .nav-tab-btn.active {
+      background: var(--surface-elevated);
+      color: #fff;
+      box-shadow: 0 2px 8px rgba(0,0,0,0.3);
+    }
+
+    .header-actions {
+      display: flex;
+      align-items: center;
+      gap: 14px;
+    }
+
+    .creator-pill {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      padding: 5px 12px 5px 6px;
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 20px;
+      font-size: 13px;
+      font-weight: 600;
+      cursor: pointer;
+    }
+
+    .creator-pill img {
+      width: 24px;
+      height: 24px;
+      border-radius: 50%;
+      background: #222;
+    }
+
+    .btn-gametok-link {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      font-size: 13px;
+      font-weight: 600;
+      color: var(--text-muted);
+      text-decoration: none;
+      padding: 8px 14px;
+      border-radius: 8px;
+      border: 1px solid var(--border);
+      transition: all 0.15s ease;
+    }
+    .btn-gametok-link:hover { color: #fff; border-color: var(--text-muted); }
+
+    /* Main Container */
+    main.studio-content {
+      max-width: 1320px;
+      margin: 0 auto;
+      padding: 36px 28px 80px;
+    }
+
+    /* Hero Banner */
+    .hero-banner {
+      background: radial-gradient(100% 120% at 50% 0%, rgba(255, 107, 107, 0.12) 0%, rgba(18, 20, 28, 0.8) 100%);
+      border: 1px solid rgba(255, 107, 107, 0.2);
+      border-radius: var(--radius-lg);
+      padding: 38px 40px;
+      margin-bottom: 36px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      gap: 32px;
+      position: relative;
+      overflow: hidden;
+    }
+
+    .hero-text h1 {
+      font-size: 32px;
+      font-weight: 800;
+      letter-spacing: -0.02em;
+      line-height: 1.25;
+      margin-bottom: 10px;
+      background: linear-gradient(135deg, #fff 40%, #ff8e53 100%);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+    }
+
+    .hero-text p {
+      color: var(--text-muted);
+      font-size: 15.5px;
+      max-width: 680px;
+      margin-bottom: 20px;
+    }
+
+    .hero-badges {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 12px;
+    }
+
+    .perk-tag {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      font-size: 12.5px;
+      font-weight: 600;
+      background: rgba(255, 255, 255, 0.05);
+      border: 1px solid rgba(255, 255, 255, 0.1);
+      padding: 6px 14px;
+      border-radius: 20px;
+      color: #e2e6f0;
+    }
+
+    .hero-stats-panel {
+      display: flex;
+      gap: 18px;
+    }
+
+    .stat-card {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: var(--radius-md);
+      padding: 18px 24px;
+      min-width: 145px;
+      text-align: center;
+    }
+
+    .stat-card .val {
+      font-size: 26px;
+      font-weight: 800;
+      font-family: var(--font-mono);
+      color: #fff;
+      margin-bottom: 2px;
+    }
+
+    .stat-card .val.green { color: var(--accent-green); }
+    .stat-card .lbl {
+      font-size: 11.5px;
+      font-weight: 600;
+      text-transform: uppercase;
+      letter-spacing: 0.04em;
+      color: var(--text-muted);
+    }
+
+    /* Views */
+    .view-section { display: none; }
+    .view-section.active { display: block; animation: fadeIn 0.2s ease-out; }
+
+    @keyframes fadeIn {
+      from { opacity: 0; transform: translateY(4px); }
+      to { opacity: 1; transform: translateY(0); }
+    }
+
+    /* Grid Layouts */
+    .grid-2col {
+      display: grid;
+      grid-template-columns: 1.15fr 0.85fr;
+      gap: 32px;
+      align-items: start;
+    }
+
+    .card {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: var(--radius-md);
+      padding: 28px;
+      box-shadow: var(--shadow-sm);
+    }
+
+    .card-title {
+      font-size: 19px;
+      font-weight: 700;
+      margin-bottom: 6px;
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
+
+    .card-desc {
+      font-size: 14px;
+      color: var(--text-muted);
+      margin-bottom: 22px;
+    }
+
+    /* Agent Instruction Box */
+    .agent-prompt-box {
+      background: #0d0f17;
+      border: 1px solid #232738;
+      border-radius: var(--radius-sm);
+      padding: 16px;
+      position: relative;
+      margin-bottom: 20px;
+    }
+
+    .agent-prompt-text {
+      font-family: var(--font-mono);
+      font-size: 13.5px;
+      color: #9feaf9;
+      white-space: pre-wrap;
+      word-break: break-word;
+      line-height: 1.6;
+    }
+
+    .btn-copy {
+      position: absolute;
+      top: 12px;
+      right: 12px;
+      background: var(--surface-elevated);
+      color: #fff;
+      border: 1px solid var(--border);
+      padding: 6px 12px;
+      border-radius: 6px;
+      font-size: 12px;
+      font-weight: 600;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      transition: all 0.15s ease;
+    }
+    .btn-copy:hover {
+      background: var(--primary);
+      border-color: var(--primary);
+    }
+
+    .pill-steps {
+      display: flex;
+      flex-direction: column;
+      gap: 14px;
+      margin-bottom: 24px;
+    }
+
+    .step-item {
+      display: flex;
+      gap: 14px;
+      align-items: flex-start;
+    }
+
+    .step-num {
+      width: 26px;
+      height: 26px;
+      border-radius: 50%;
+      background: var(--surface-elevated);
+      border: 1px solid var(--border);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-weight: 700;
+      font-size: 12px;
+      color: var(--primary);
+      flex-shrink: 0;
+      margin-top: 2px;
+    }
+
+    .step-content h4 {
+      font-size: 14.5px;
+      font-weight: 700;
+      margin-bottom: 2px;
+    }
+    .step-content p {
+      font-size: 13px;
+      color: var(--text-muted);
+    }
+
+    .skill-links {
+      display: flex;
+      gap: 12px;
+    }
+
+    .btn-outline {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      padding: 9px 16px;
+      border-radius: 8px;
+      border: 1px solid var(--border);
+      background: var(--surface-elevated);
+      color: #fff;
+      font-size: 13px;
+      font-weight: 600;
+      text-decoration: none;
+      cursor: pointer;
+      transition: all 0.15s ease;
+    }
+    .btn-outline:hover {
+      border-color: var(--primary);
+      color: var(--primary);
+    }
+
+    /* Forms */
+    .form-group {
+      margin-bottom: 18px;
+    }
+
+    .form-label {
+      display: block;
+      font-size: 13px;
+      font-weight: 600;
+      color: #d1d5e3;
+      margin-bottom: 6px;
+    }
+
+    .form-label span.req { color: var(--primary); }
+
+    .form-control {
+      width: 100%;
+      background: #0d0f17;
+      border: 1px solid var(--border);
+      border-radius: var(--radius-sm);
+      padding: 10px 14px;
+      font-family: inherit;
+      font-size: 14px;
+      color: #fff;
+      outline: none;
+      transition: border-color 0.15s ease;
+    }
+
+    .form-control:focus {
+      border-color: var(--primary);
+      box-shadow: 0 0 0 2px rgba(255, 107, 107, 0.2);
+    }
+
+    .form-row {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 14px;
+    }
+
+    .btn-primary {
+      background: var(--primary-gradient);
+      color: #fff;
+      border: none;
+      border-radius: var(--radius-sm);
+      padding: 12px 24px;
+      font-family: inherit;
+      font-size: 14.5px;
+      font-weight: 700;
+      cursor: pointer;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      gap: 8px;
+      width: 100%;
+      box-shadow: 0 4px 16px rgba(255, 107, 107, 0.35);
+      transition: transform 0.1s ease, box-shadow 0.15s ease;
+    }
+
+    .btn-primary:hover {
+      transform: translateY(-1px);
+      box-shadow: var(--shadow-glow);
+    }
+
+    .btn-primary:disabled {
+      opacity: 0.6;
+      cursor: not-allowed;
+      transform: none;
+    }
+
+    /* Live Phone Simulator */
+    .preview-container {
+      position: sticky;
+      top: 96px;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+    }
+
+    .phone-mockup {
+      width: 320px;
+      height: 600px;
+      background: #000;
+      border-radius: 40px;
+      border: 10px solid #232738;
+      box-shadow: 0 24px 60px rgba(0, 0, 0, 0.8), 0 0 0 1px rgba(255, 255, 255, 0.1);
+      position: relative;
+      overflow: hidden;
+      display: flex;
+      flex-direction: column;
+    }
+
+    .phone-mockup.landscape {
+      width: 460px;
+      height: 300px;
+      border-radius: 30px;
+    }
+
+    .phone-notch {
+      width: 120px;
+      height: 20px;
+      background: #232738;
+      border-bottom-left-radius: 12px;
+      border-bottom-right-radius: 12px;
+      position: absolute;
+      top: 0;
+      left: 50%;
+      transform: translateX(-50%);
+      z-index: 10;
+    }
+
+    .phone-iframe {
+      width: 100%;
+      height: 100%;
+      border: none;
+      background: #111;
+    }
+
+    .phone-empty-state {
+      width: 100%;
+      height: 100%;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      padding: 30px;
+      text-align: center;
+      color: var(--text-subtle);
+      background: radial-gradient(circle at 50% 50%, #161922 0%, #0a0b0e 100%);
+    }
+
+    .phone-empty-state svg {
+      margin-bottom: 14px;
+      opacity: 0.4;
+    }
+
+    .phone-empty-state h5 {
+      font-size: 15px;
+      color: var(--text-muted);
+      margin-bottom: 6px;
+    }
+
+    .preview-hint {
+      margin-top: 14px;
+      font-size: 12px;
+      color: var(--text-subtle);
+      text-align: center;
+    }
+
+    /* My Games View */
+    .games-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(290px, 1fr));
+      gap: 20px;
+      margin-top: 20px;
+    }
+
+    .game-item-card {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: var(--radius-md);
+      overflow: hidden;
+      display: flex;
+      flex-direction: column;
+      transition: transform 0.15s ease, border-color 0.15s ease;
+    }
+
+    .game-item-card:hover {
+      border-color: rgba(255, 107, 107, 0.4);
+      transform: translateY(-2px);
+    }
+
+    .game-item-thumb {
+      width: 100%;
+      height: 150px;
+      background: #191c28;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 44px;
+      position: relative;
+      background-size: cover;
+      background-position: center;
+    }
+
+    .orientation-tag {
+      position: absolute;
+      top: 10px;
+      right: 10px;
+      background: rgba(0,0,0,0.7);
+      backdrop-filter: blur(8px);
+      font-size: 11px;
+      font-weight: 700;
+      padding: 3px 8px;
+      border-radius: 6px;
+      text-transform: uppercase;
+    }
+
+    .game-item-details {
+      padding: 18px;
+      flex: 1;
+      display: flex;
+      flex-direction: column;
+    }
+
+    .game-item-details h3 {
+      font-size: 16.5px;
+      font-weight: 700;
+      margin-bottom: 4px;
+    }
+
+    .game-item-details p {
+      font-size: 12.5px;
+      color: var(--text-muted);
+      margin-bottom: 14px;
+      flex: 1;
+      line-height: 1.4;
+      display: -webkit-box;
+      -webkit-line-clamp: 2;
+      -webkit-box-orient: vertical;
+      overflow: hidden;
+    }
+
+    .game-metrics {
+      display: flex;
+      justify-content: space-between;
+      border-top: 1px solid var(--border);
+      padding-top: 12px;
+      margin-bottom: 14px;
+    }
+
+    .metric-val {
+      font-size: 15px;
+      font-weight: 700;
+      font-family: var(--font-mono);
+      color: #fff;
+    }
+
+    .metric-lbl {
+      font-size: 11px;
+      color: var(--text-subtle);
+      text-transform: uppercase;
+    }
+
+    .game-item-actions {
+      display: flex;
+      gap: 8px;
+    }
+
+    .game-item-actions button, .game-item-actions a {
+      flex: 1;
+      text-align: center;
+      padding: 8px 10px;
+      border-radius: 6px;
+      font-size: 12.5px;
+      font-weight: 600;
+      text-decoration: none;
+      cursor: pointer;
+    }
+
+    /* Modal */
+    .modal-overlay {
+      position: fixed;
+      inset: 0;
+      background: rgba(0, 0, 0, 0.85);
+      backdrop-filter: blur(10px);
+      z-index: 100;
+      display: none;
+      align-items: center;
+      justify-content: center;
+      padding: 20px;
+    }
+
+    .modal-overlay.active { display: flex; }
+
+    .modal-box {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: var(--radius-lg);
+      max-width: 480px;
+      width: 100%;
+      padding: 32px;
+      text-align: center;
+      box-shadow: 0 20px 60px rgba(0, 0, 0, 0.7);
+      animation: popIn 0.2s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+    }
+
+    @keyframes popIn {
+      from { transform: scale(0.92); opacity: 0; }
+      to { transform: scale(1); opacity: 1; }
+    }
+
+    .modal-success-icon {
+      width: 60px;
+      height: 60px;
+      border-radius: 50%;
+      background: rgba(46, 204, 113, 0.15);
+      color: var(--accent-green);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 28px;
+      margin: 0 auto 16px;
+    }
+
+    .qr-container {
+      background: #fff;
+      padding: 12px;
+      border-radius: 12px;
+      display: inline-block;
+      margin: 16px 0;
+    }
+
+    .qr-container img {
+      width: 160px;
+      height: 160px;
+      display: block;
+    }
+
+    .share-link-input {
+      display: flex;
+      gap: 8px;
+      margin-bottom: 20px;
+    }
+
+    .share-link-input input {
+      flex: 1;
+      background: #0d0f17;
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      padding: 10px 12px;
+      color: #9feaf9;
+      font-family: var(--font-mono);
+      font-size: 13px;
+    }
+
+    /* Responsive */
+    @media (max-width: 960px) {
+      .grid-2col { grid-template-columns: 1fr; }
+      .preview-container { display: none; }
+      .hero-banner { flex-direction: column; align-items: flex-start; }
+      .hero-stats-panel { width: 100%; justify-content: space-between; }
+      .nav-tab-btn span.tab-text { display: none; }
+    }
+  </style>
 </head>
 <body>
-    <div class="container">
-        <div class="logo">G</div>
-        <h1>GameTOK</h1>
-        <p class="tagline">Swipe. Play. Compete.</p>
-        <div class="features">
-            <div class="feature"><span class="feature-icon">👆</span><div class="feature-text"><h3>Swipe to Discover</h3><p>Find your next favorite game with a simple swipe</p></div></div>
-            <div class="feature"><span class="feature-icon">🎮</span><div class="feature-text"><h3>Instant Play</h3><p>No downloads, no waiting. Just tap and play</p></div></div>
-            <div class="feature"><span class="feature-icon">🏆</span><div class="feature-text"><h3>Compete & Climb</h3><p>Challenge friends and top the leaderboards</p></div></div>
-            <div class="feature"><span class="feature-icon">🔥</span><div class="feature-text"><h3>New Games Weekly</h3><p>Fresh content added regularly</p></div></div>
-        </div>
-        <div class="support" id="support">
-            <h2>Need Help?</h2>
-            <p>For support, bug reports, or feedback:</p>
-            <p><a href="mailto:info@gametok.com">info@gametok.com</a></p>
-        </div>
-        <div class="links">
-            <a href="/privacy.html">Privacy Policy</a>
-            <a href="/terms.html">Terms of Service</a>
-        </div>
-        <div class="footer"><p>© 2026 GameTOK. All rights reserved.</p></div>
+
+  <!-- Topbar -->
+  <header class="topbar">
+    <a href="/" class="brand">
+      <div class="brand-badge">G</div>
+      <div class="brand-title">
+        GameTok Studio
+        <span class="tag">Creator Admin</span>
+      </div>
+    </a>
+
+    <nav class="nav-tabs">
+      <button class="nav-tab-btn active" data-tab="ai-hub">
+        <span>🤖</span>
+        <span class="tab-text">AI Agent Hub</span>
+      </button>
+      <button class="nav-tab-btn" data-tab="publish">
+        <span>🚀</span>
+        <span class="tab-text">Publish Game</span>
+      </button>
+      <button class="nav-tab-btn" data-tab="games">
+        <span>🎮</span>
+        <span class="tab-text">My Games</span>
+      </button>
+      <button class="nav-tab-btn" data-tab="profile">
+        <span>💰</span>
+        <span class="tab-text">Profile & Payouts</span>
+      </button>
+    </nav>
+
+    <div class="header-actions">
+      <div class="creator-pill" id="headerCreatorPill" onclick="switchTab('profile')">
+        <img id="headerCreatorAvatar" src="https://api.dicebear.com/7.x/bottts/svg?seed=indie" alt="avatar">
+        <span id="headerCreatorHandle">@indie_dev</span>
+      </div>
+      <a href="https://gametok.co" target="_blank" class="btn-gametok-link">
+        GameTok Feed ↗
+      </a>
     </div>
+  </header>
+
+  <!-- Studio Main Content -->
+  <main class="studio-content">
+
+    <!-- Hero Banner -->
+    <section class="hero-banner">
+      <div class="hero-text">
+        <h1>Turn Your Web Game Into a Viral Mobile Hit</h1>
+        <p>
+          Distribute your HTML5 / WebGL / Canvas games to thousands of mobile players swiping on iOS & Android. 
+          Keep 100% code ownership. Your game updates live whenever you push to your site.
+        </p>
+        <div class="hero-badges">
+          <span class="perk-tag">⚡ Zero-Signup Required</span>
+          <span class="perk-tag">🔄 Instant Auto-Sync</span>
+          <span class="perk-tag">💰 Get Paid Per Play</span>
+          <span class="perk-tag">📱 Fullscreen Mobile Touch</span>
+        </div>
+      </div>
+
+      <div class="hero-stats-panel">
+        <div class="stat-card">
+          <div class="val" id="statTotalGames">0</div>
+          <div class="lbl">Published</div>
+        </div>
+        <div class="stat-card">
+          <div class="val" id="statTotalPlays">0</div>
+          <div class="lbl">Total Plays</div>
+        </div>
+        <div class="stat-card">
+          <div class="val green" id="statEstEarnings">$0.00</div>
+          <div class="lbl">Est. Earnings</div>
+        </div>
+      </div>
+    </section>
+
+    <!-- Tab 1: AI Agent Hub -->
+    <section class="view-section active" id="tab-ai-hub">
+      <div class="grid-2col">
+        <div>
+          <div class="card">
+            <h2 class="card-title">🤖 Publish with your AI Agent</h2>
+            <p class="card-desc">
+              Building your game with Cursor, Claude Code, Windsurf, or Devin? 
+              Copy this prompt and paste it directly into your AI assistant. It will inject the GameTok bridge and publish your game automatically in seconds.
+            </p>
+
+            <div class="agent-prompt-box">
+              <button class="btn-copy" id="btnCopyPrompt" onclick="copyAgentPrompt()">
+                <span>📋</span> Copy Prompt
+              </button>
+              <div class="agent-prompt-text" id="agentPromptText">Read https://gametok.co/skill.md and package this game for GameTok. Add the bridge tag with creator handle @<span id="promptHandle">indie_dev</span>, and publish it to the GameTok API.</div>
+            </div>
+
+            <div class="pill-steps">
+              <div class="step-item">
+                <div class="step-num">1</div>
+                <div class="step-content">
+                  <h4>Copy the prompt above</h4>
+                  <p>Your creator handle is automatically linked so your game is attributed to you.</p>
+                </div>
+              </div>
+              <div class="step-item">
+                <div class="step-num">2</div>
+                <div class="step-content">
+                  <h4>Paste it into your AI Agent</h4>
+                  <p>Works in Cursor Composer, Claude Code CLI, Windsurf Cascade, or GitHub Copilot.</p>
+                </div>
+              </div>
+              <div class="step-item">
+                <div class="step-num">3</div>
+                <div class="step-content">
+                  <h4>Done! Your game is live on GameTok</h4>
+                  <p>Your agent will output your shareable <code>gametok.co/game/:id</code> link immediately.</p>
+                </div>
+              </div>
+            </div>
+
+            <div class="skill-links">
+              <a href="/skill.md" target="_blank" class="btn-outline">
+                <span>📄</span> View skill.md Spec
+              </a>
+              <a href="/bridge.js" target="_blank" class="btn-outline">
+                <span>⚡</span> View bridge.js Tag
+              </a>
+            </div>
+          </div>
+        </div>
+
+        <div>
+          <div class="card">
+            <h3 class="card-title">💡 How It Works Under The Hood</h3>
+            <div style="font-size: 13.5px; color: var(--text-muted); line-height: 1.7; display: flex; flex-direction: column; gap: 16px;">
+              <div>
+                <strong style="color: #fff;">1. Drop-in Bridge Tag:</strong><br>
+                Only requires one script tag in your HTML. Stays dormant when played standalone on your site, but unlocks swipe gestures, touch normalization, and score events on GameTok.
+              </div>
+              <div>
+                <strong style="color: #fff;">2. Continuous Live Updates:</strong><br>
+                GameTok points directly to your hosted game URL. Whenever you push code to Vercel, Netlify, or GitHub Pages, players on GameTok get the new version instantly without re-uploading!
+              </div>
+              <div>
+                <strong style="color: #fff;">3. Distribution & Monetization:</strong><br>
+                Your game is pushed to our mobile feed algorithm. We track unique plays and pay you via your preferred payout method (PayPal, Stripe Connect, or Crypto).
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- Tab 2: Publish Web Game (Manual or Direct URL) -->
+    <section class="view-section" id="tab-publish">
+      <div class="grid-2col">
+        <div class="card">
+          <h2 class="card-title">🚀 Instant Web Game Publisher</h2>
+          <p class="card-desc">
+            Enter your deployed game URL or drop a single HTML file. Test it in the live phone simulator and publish to the GameTok feed.
+          </p>
+
+          <form id="publishForm" onsubmit="handleManualPublish(event)">
+            <div class="form-group">
+              <label class="form-label">Game Hosted URL <span class="req">*</span></label>
+              <input type="url" id="inputUrl" class="form-control" placeholder="https://mygame.vercel.app or https://alex.itch.io/game" oninput="updatePhonePreview()">
+            </div>
+
+            <div class="form-row">
+              <div class="form-group">
+                <label class="form-label">Game Title (Optional)</label>
+                <input type="text" id="inputTitle" class="form-control" placeholder="Auto-detected from HTML title">
+              </div>
+              <div class="form-group">
+                <label class="form-label">Category</label>
+                <select id="inputCategory" class="form-control">
+                  <option value="arcade">Arcade</option>
+                  <option value="action">Action</option>
+                  <option value="puzzle">Puzzle</option>
+                  <option value="sports">Sports</option>
+                  <option value="racing">Racing</option>
+                  <option value="strategy">Strategy</option>
+                  <option value="hypercasual">Hypercasual</option>
+                </select>
+              </div>
+            </div>
+
+            <div class="form-row">
+              <div class="form-group">
+                <label class="form-label">Orientation</label>
+                <select id="inputOrientation" class="form-control" onchange="updatePhoneOrientation()">
+                  <option value="portrait">Portrait (Recommended)</option>
+                  <option value="landscape">Landscape</option>
+                </select>
+              </div>
+              <div class="form-group">
+                <label class="form-label">Creator Handle <span class="req">*</span></label>
+                <input type="text" id="inputHandle" class="form-control" placeholder="your_handle" required oninput="syncHandleToProfile(this.value)">
+              </div>
+            </div>
+
+            <div class="form-group">
+              <label class="form-label">Creator Display Name</label>
+              <input type="text" id="inputDisplayName" class="form-control" placeholder="Your Name or Studio">
+            </div>
+
+            <div class="form-group">
+              <label class="form-label">Description (Optional)</label>
+              <textarea id="inputDescription" class="form-control" rows="2" placeholder="Brief tagline for the mobile feed"></textarea>
+            </div>
+
+            <button type="submit" class="btn-primary" id="btnPublishSubmit">
+              <span>🚀</span> Publish to GameTok Feed
+            </button>
+          </form>
+        </div>
+
+        <!-- Phone Preview Simulator -->
+        <div class="preview-container">
+          <div class="phone-mockup" id="phoneMockup">
+            <div class="phone-notch"></div>
+            <div class="phone-empty-state" id="phoneEmptyState">
+              <svg width="44" height="44" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <rect x="2" y="6" width="20" height="12" rx="2"></rect>
+                <path d="M6 12h4m-2-2v4m9-2h.01m-3 0h.01"></path>
+              </svg>
+              <h5>Interactive Phone Preview</h5>
+              <p style="font-size: 12px; color: var(--text-subtle);">Enter your game URL on the left to test full-bleed controls & touch responsiveness.</p>
+            </div>
+            <iframe id="phoneIframe" class="phone-iframe" style="display: none;" allow="autoplay; fullscreen; clipboard-write"></iframe>
+          </div>
+          <div class="preview-hint">Live simulated mobile viewport (375x667)</div>
+        </div>
+      </div>
+    </section>
+
+    <!-- Tab 3: My Published Games -->
+    <section class="view-section" id="tab-games">
+      <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px;">
+        <div>
+          <h2 style="font-size: 22px; font-weight: 800;">My Published Games</h2>
+          <p style="color: var(--text-muted); font-size: 14px;">Games published under <strong id="activeHandleDisplay" style="color: #fff;">@indie_dev</strong></p>
+        </div>
+        <button class="btn-outline" onclick="loadCreatorGames()">
+          <span>🔄</span> Refresh Stats
+        </button>
+      </div>
+
+      <div class="games-grid" id="gamesGrid">
+        <div style="grid-column: 1 / -1; text-align: center; padding: 60px 20px; color: var(--text-muted);">
+          <div style="font-size: 40px; margin-bottom: 12px;">🎮</div>
+          <h3>No games published yet</h3>
+          <p style="margin-top: 6px;">Publish your first game with your AI agent or use the Publish Game tab above!</p>
+        </div>
+      </div>
+    </section>
+
+    <!-- Tab 4: Creator Profile & Payout Settings -->
+    <section class="view-section" id="tab-profile">
+      <div class="grid-2col">
+        <div class="card">
+          <h2 class="card-title">👤 Creator Profile & Payout Details</h2>
+          <p class="card-desc">
+            Customize your GameTok public creator profile and set where you want to receive earnings from game plays.
+          </p>
+
+          <form id="profileForm" onsubmit="handleSaveProfile(event)">
+            <div class="form-group">
+              <label class="form-label">Creator Handle (@username) <span class="req">*</span></label>
+              <input type="text" id="profileHandle" class="form-control" required>
+            </div>
+
+            <div class="form-group">
+              <label class="form-label">Display Name</label>
+              <input type="text" id="profileDisplayName" class="form-control" placeholder="e.g. Alex Chen">
+            </div>
+
+            <div class="form-group">
+              <label class="form-label">Bio / Studio Info</label>
+              <textarea id="profileBio" class="form-control" rows="2" placeholder="Indie developer crafting web games."></textarea>
+            </div>
+
+            <div class="form-group">
+              <label class="form-label">Payout Method & Address (PayPal / Stripe / USDC) <span class="req">*</span></label>
+              <input type="text" id="profilePayoutAddress" class="form-control" placeholder="paypal@example.com or 0x... (USDC)" required>
+              <span style="font-size: 11.5px; color: var(--text-subtle); margin-top: 4px; display: block;">
+                Automated monthly disbursements once your balance hits $20.00.
+              </span>
+            </div>
+
+            <button type="submit" class="btn-primary" id="btnSaveProfile">
+              <span>💾</span> Save Profile & Payout Settings
+            </button>
+          </form>
+        </div>
+
+        <div class="card">
+          <h3 class="card-title">💰 Monetization & Distribution Perks</h3>
+          <div style="display: flex; flex-direction: column; gap: 16px; margin-top: 14px; font-size: 13.5px; color: var(--text-muted);">
+            <div style="background: var(--surface-elevated); padding: 14px; border-radius: 8px; border: 1px solid var(--border);">
+              <div style="font-weight: 700; color: #fff; margin-bottom: 2px;">Mobile Feed Royalties</div>
+              <div>Earn revenue share for every verified game session played on iOS, Android, and web.</div>
+            </div>
+            <div style="background: var(--surface-elevated); padding: 14px; border-radius: 8px; border: 1px solid var(--border);">
+              <div style="font-weight: 700; color: #fff; margin-bottom: 2px;">Global Leaderboards</div>
+              <div>Score sync via <code>GameTok.submitScore()</code> drives repeat sessions and viral competition.</div>
+            </div>
+            <div style="background: var(--surface-elevated); padding: 14px; border-radius: 8px; border: 1px solid var(--border);">
+              <div style="font-weight: 700; color: #fff; margin-bottom: 2px;">Zero Exclusivity Lock-in</div>
+              <div>You own 100% of your game. Publish on itch.io, your personal site, and GameTok simultaneously.</div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+  </main>
+
+  <!-- Publish Success Modal -->
+  <div class="modal-overlay" id="successModal">
+    <div class="modal-box">
+      <div class="modal-success-icon">✓</div>
+      <h2 style="font-size: 22px; font-weight: 800; margin-bottom: 6px;">Game Published Live!</h2>
+      <p style="color: var(--text-muted); font-size: 14px; margin-bottom: 16px;">
+        Your game is live on GameTok and rolling out to mobile players.
+      </p>
+
+      <div class="qr-container">
+        <img id="modalQrCode" src="" alt="Game QR Code">
+      </div>
+      <div style="font-size: 12px; color: var(--text-subtle); margin-bottom: 16px;">
+        Scan with your phone camera to playtest immediately
+      </div>
+
+      <div class="share-link-input">
+        <input type="text" id="modalShareUrl" readonly>
+        <button class="btn-outline" onclick="copyShareUrl()">Copy</button>
+      </div>
+
+      <div style="display: flex; gap: 10px;">
+        <a id="modalOpenBtn" href="#" target="_blank" class="btn-primary" style="flex: 1; text-decoration: none;">
+          Open on GameTok ↗
+        </a>
+        <button class="btn-outline" onclick="closeSuccessModal()">Done</button>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    const API_BASE = 'https://gametok-backend-267787411422.us-central1.run.app/api';
+
+    // State
+    let currentCreator = {
+      handle: 'indie_dev',
+      displayName: 'Indie Developer',
+      avatar: 'https://api.dicebear.com/7.x/bottts/svg?seed=indie',
+      payoutAddress: '',
+      bio: ''
+    };
+
+    // Initialize from URL or LocalStorage
+    function init() {
+      const urlParams = new URLSearchParams(window.location.search);
+      const queryCreator = urlParams.get('creator') || urlParams.get('handle');
+      const savedHandle = localStorage.getItem('gametok_creator_handle');
+
+      const handle = queryCreator || savedHandle || 'indie_dev_' + Math.random().toString(36).slice(2, 6);
+      setCreatorHandle(handle);
+
+      // Tab navigation
+      document.querySelectorAll('.nav-tab-btn').forEach(btn => {
+        btn.addEventListener('click', () => switchTab(btn.dataset.tab));
+      });
+
+      // Load creator details
+      loadCreatorGames();
+    }
+
+    function switchTab(tabId) {
+      document.querySelectorAll('.nav-tab-btn').forEach(b => {
+        b.classList.toggle('active', b.dataset.tab === tabId);
+      });
+      document.querySelectorAll('.view-section').forEach(sec => {
+        sec.classList.toggle('active', sec.id === `tab-${tabId}`);
+      });
+      if (tabId === 'games') {
+        loadCreatorGames();
+      }
+    }
+
+    function setCreatorHandle(handle) {
+      handle = handle.replace(/^@/, '').trim().toLowerCase();
+      currentCreator.handle = handle;
+      localStorage.setItem('gametok_creator_handle', handle);
+
+      const avatar = `https://api.dicebear.com/7.x/bottts/svg?seed=${encodeURIComponent(handle)}`;
+      currentCreator.avatar = avatar;
+
+      document.getElementById('headerCreatorHandle').textContent = `@${handle}`;
+      document.getElementById('headerCreatorAvatar').src = avatar;
+      document.getElementById('inputHandle').value = handle;
+      document.getElementById('profileHandle').value = handle;
+      document.getElementById('promptHandle').textContent = handle;
+      document.getElementById('activeHandleDisplay').textContent = `@${handle}`;
+    }
+
+    function syncHandleToProfile(val) {
+      const sanitized = val.replace(/^@/, '').trim().toLowerCase();
+      if (sanitized) {
+        document.getElementById('promptHandle').textContent = sanitized;
+      }
+    }
+
+    function copyAgentPrompt() {
+      const handle = document.getElementById('inputHandle').value.trim() || currentCreator.handle;
+      const text = `Read https://gametok.co/skill.md and package this game for GameTok. Add the bridge tag with creator handle @${handle}, and publish it to the GameTok API.`;
+      navigator.clipboard.writeText(text).then(() => {
+        const btn = document.getElementById('btnCopyPrompt');
+        btn.innerHTML = '<span>✓</span> Copied!';
+        setTimeout(() => { btn.innerHTML = '<span>📋</span> Copy Prompt'; }, 2000);
+      });
+    }
+
+    function updatePhonePreview() {
+      const url = document.getElementById('inputUrl').value.trim();
+      const iframe = document.getElementById('phoneIframe');
+      const emptyState = document.getElementById('phoneEmptyState');
+
+      if (url && (url.startsWith('http://') || url.startsWith('https://'))) {
+        iframe.src = url;
+        iframe.style.display = 'block';
+        emptyState.style.display = 'none';
+      } else {
+        iframe.style.display = 'none';
+        emptyState.style.display = 'flex';
+      }
+    }
+
+    function updatePhoneOrientation() {
+      const orient = document.getElementById('inputOrientation').value;
+      const mockup = document.getElementById('phoneMockup');
+      if (orient === 'landscape') {
+        mockup.classList.add('landscape');
+      } else {
+        mockup.classList.remove('landscape');
+      }
+    }
+
+    async function handleManualPublish(e) {
+      e.preventDefault();
+      const btn = document.getElementById('btnPublishSubmit');
+      btn.disabled = true;
+      btn.innerHTML = '<span>⏳</span> Publishing to GameTok...';
+
+      const payload = {
+        url: document.getElementById('inputUrl').value.trim(),
+        title: document.getElementById('inputTitle').value.trim(),
+        category: document.getElementById('inputCategory').value,
+        orientation: document.getElementById('inputOrientation').value,
+        creatorHandle: document.getElementById('inputHandle').value.trim(),
+        creatorName: document.getElementById('inputDisplayName').value.trim(),
+        description: document.getElementById('inputDescription').value.trim()
+      };
+
+      try {
+        const res = await fetch(`${API_BASE}/publish`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(payload)
+        });
+        const data = await res.json();
+        if (!res.ok) throw new Error(data.error || 'Publish failed');
+
+        setCreatorHandle(data.creator.username);
+        showSuccessModal(data);
+        loadCreatorGames();
+      } catch (err) {
+        alert('Publish error: ' + err.message);
+      } finally {
+        btn.disabled = false;
+        btn.innerHTML = '<span>🚀</span> Publish to GameTok Feed';
+      }
+    }
+
+    function showSuccessModal(data) {
+      const modal = document.getElementById('successModal');
+      const shareUrl = data.url || `https://gametok.co/game/${data.gameId}`;
+      document.getElementById('modalShareUrl').value = shareUrl;
+      document.getElementById('modalOpenBtn').href = shareUrl;
+      document.getElementById('modalQrCode').src = `https://api.qrserver.com/v1/create-qr-code/?size=180x180&data=${encodeURIComponent(shareUrl)}`;
+      modal.classList.add('active');
+    }
+
+    function closeSuccessModal() {
+      document.getElementById('successModal').classList.remove('active');
+    }
+
+    function copyShareUrl() {
+      const input = document.getElementById('modalShareUrl');
+      input.select();
+      navigator.clipboard.writeText(input.value);
+      alert('GameTok link copied to clipboard!');
+    }
+
+    async function loadCreatorGames() {
+      try {
+        const res = await fetch(`${API_BASE}/publish/creator/${currentCreator.handle}`);
+        if (!res.ok) return;
+        const data = await res.json();
+
+        // Update stats
+        if (data.stats) {
+          document.getElementById('statTotalGames').textContent = data.stats.totalGames || 0;
+          document.getElementById('statTotalPlays').textContent = (data.stats.totalPlays || 0).toLocaleString();
+          document.getElementById('statEstEarnings').textContent = `$${data.stats.estimatedEarnings || '0.00'}`;
+        }
+
+        if (data.creator) {
+          document.getElementById('profileDisplayName').value = data.creator.displayName || '';
+          document.getElementById('profileBio').value = data.creator.bio || '';
+        }
+
+        // Render games grid
+        const grid = document.getElementById('gamesGrid');
+        if (data.games && data.games.length > 0) {
+          grid.innerHTML = data.games.map(game => `
+            <div class="game-item-card">
+              <div class="game-item-thumb" style="${game.thumbnail ? `background-image: url('${game.thumbnail}')` : ''}">
+                ${!game.thumbnail ? (game.icon || '🎮') : ''}
+                <span class="orientation-tag">${game.orientation || 'portrait'}</span>
+              </div>
+              <div class="game-item-details">
+                <h3>${game.name}</h3>
+                <p>${game.description || 'Auto-synced indie web game'}</p>
+                <div class="game-metrics">
+                  <div>
+                    <div class="metric-val">${game.plays || 0}</div>
+                    <div class="metric-lbl">Plays</div>
+                  </div>
+                  <div>
+                    <div class="metric-val">${game.likes || 0}</div>
+                    <div class="metric-lbl">Likes</div>
+                  </div>
+                  <div>
+                    <div class="metric-val" style="color: var(--accent-green);">$${((game.plays || 0) * 0.005).toFixed(2)}</div>
+                    <div class="metric-lbl">Est. Rev</div>
+                  </div>
+                </div>
+                <div class="game-item-actions">
+                  <a href="https://gametok.co/game/${game.id}" target="_blank" class="btn-primary" style="padding: 6px 12px; font-size: 12px;">Play ↗</a>
+                  <button class="btn-outline" style="padding: 6px 12px; font-size: 12px;" onclick="copyLink('https://gametok.co/game/${game.id}')">Copy Link</button>
+                </div>
+              </div>
+            </div>
+          `).join('');
+        }
+      } catch (err) {
+        console.warn('Could not load creator games:', err);
+      }
+    }
+
+    async function handleSaveProfile(e) {
+      e.preventDefault();
+      const handle = document.getElementById('profileHandle').value.trim();
+      const payload = {
+        displayName: document.getElementById('profileDisplayName').value.trim(),
+        bio: document.getElementById('profileBio').value.trim(),
+        payoutAddress: document.getElementById('profilePayoutAddress').value.trim()
+      };
+
+      try {
+        const res = await fetch(`${API_BASE}/publish/creator/${handle}`, {
+          method: 'PATCH',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(payload)
+        });
+        const data = await res.json();
+        if (!res.ok) throw new Error(data.error || 'Failed to save');
+        setCreatorHandle(handle);
+        alert('Profile & Payout settings updated successfully!');
+      } catch (err) {
+        alert('Error: ' + err.message);
+      }
+    }
+
+    function copyLink(url) {
+      navigator.clipboard.writeText(url).then(() => {
+        alert('Game link copied: ' + url);
+      });
+    }
+
+    // Launch
+    window.addEventListener('DOMContentLoaded', init);
+  </script>
 </body>
 </html>
