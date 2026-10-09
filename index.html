@@ -914,6 +914,8 @@
     .check-icon-pending { color: #64748b; }
 
   </style>
+  <!-- Google Identity Services (GIS) for Web -->
+  <script src="https://accounts.google.com/gsi/client" async defer></script>
 </head>
 <body>
 
@@ -1813,7 +1815,93 @@
       alert(`Welcome back, ${user.displayName || user.username}! You are now securely logged in.`);
     }
 
-    window.addEventListener('DOMContentLoaded', init);
+    
+    // Google Identity Services (GIS) Client ID
+    const GOOGLE_CLIENT_ID = '516560435127-l6db4akjqei5q57j764kgu3aoaedu45l.apps.googleusercontent.com';
+
+    function initGoogleAuth() {
+      if (!window.google?.accounts?.id) {
+        setTimeout(initGoogleAuth, 150);
+        return;
+      }
+
+      try {
+        window.google.accounts.id.initialize({
+          client_id: GOOGLE_CLIENT_ID,
+          callback: handleGoogleCredentialResponse,
+          auto_select: false,
+          cancel_on_tap_outside: true
+        });
+
+        const target = document.getElementById('googleBtnContainer');
+        if (target) {
+          window.google.accounts.id.renderButton(target, {
+            type: 'standard',
+            theme: 'filled_black',
+            size: 'large',
+            text: 'continue_with',
+            shape: 'pill',
+            logo_alignment: 'left',
+            width: 360
+          });
+        }
+      } catch (err) {
+        console.warn('[Google Auth] Init error:', err);
+      }
+    }
+
+    // Decode JWT from Google
+    function decodeJwt(token) {
+      try {
+        const base64Url = token.split('.')[1];
+        const base64 = base64Url.replace(/-/g, '+').replace(/_/g, '/');
+        const jsonPayload = decodeURIComponent(atob(base64).split('').map(function(c) {
+          return '%' + ('00' + c.charCodeAt(0).toString(16)).slice(-2);
+        }).join(''));
+        return JSON.parse(jsonPayload);
+      } catch (e) {
+        return null;
+      }
+    }
+
+    async function handleGoogleCredentialResponse(response) {
+      if (!response.credential) return;
+
+      const profile = decodeJwt(response.credential) || {};
+      const deviceId = getDeviceFingerprint();
+
+      try {
+        // Send Google ID token to GameTok backend OAuth endpoint
+        const res = await fetch(`${API_BASE}/auth/oauth`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            provider: 'google',
+            idToken: response.credential,
+            user: {
+              id: profile.sub,
+              email: profile.email,
+              name: profile.name,
+              photo: profile.picture
+            },
+            deviceId
+          })
+        });
+
+        const data = await res.json();
+        if (!res.ok) throw new Error(data.error || 'Google sign-in failed on server');
+
+        if (data.token && data.user) {
+          onAuthSuccess(data.user, data.token);
+        } else {
+          throw new Error('Google sign-in did not return a valid session.');
+        }
+      } catch (err) {
+        alert('Google Sign-In Notice: ' + err.message);
+      }
+    }
+
+    window.addEventListener('DOMContentLoaded', () => { init(); initGoogleAuth(); });
   </script>
 
   <!-- Game Detail & AI Integration Inspector Modal -->
@@ -1903,6 +1991,16 @@
             Continue →
           </button>
         </form>
+
+        <div style="display: flex; align-items: center; margin: 20px 0; gap: 12px;">
+          <div style="flex: 1; height: 1px; background: rgba(255,255,255,0.1);"></div>
+          <span style="font-size: 12px; color: var(--text-dim); text-transform: uppercase; letter-spacing: 0.08em; font-weight: 600;">OR</span>
+          <div style="flex: 1; height: 1px; background: rgba(255,255,255,0.1);"></div>
+        </div>
+
+        <!-- Google One-Tap & Standard Button Container -->
+        <div id="googleBtnContainer" style="display: flex; justify-content: center; min-height: 44px; margin-bottom: 8px;"></div>
+
 
         <div style="margin-top: 20px; text-align: center; font-size: 13.5px; color: var(--text-muted);">
           <span id="authToggleText">Don't have an account?</span> 
