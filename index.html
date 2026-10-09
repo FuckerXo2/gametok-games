@@ -933,7 +933,8 @@
     </ul>
 
     <div class="nav-actions">
-      <button class="btn-text" id="navDashboardToggle" onclick="toggleDashboardView()">Dashboard</button>
+      <button class="btn-text" id="navAuthBtn" onclick="openAuthModal()">Sign in</button>
+      <button class="btn-text" id="navDashboardToggle" onclick="toggleDashboardView()" style="display: none;">Dashboard</button>
       <button class="btn-white-pill" onclick="openPublisherModal()">Publish your game</button>
     </div>
   </nav>
@@ -1663,6 +1664,155 @@
       }
     }
 
+    
+    // Device Fingerprint generator
+    function getDeviceFingerprint() {
+      let devId = localStorage.getItem('gametok_device_id');
+      if (!devId) {
+        devId = 'dev_' + Math.random().toString(36).substring(2, 12) + '_' + Date.now().toString(36);
+        localStorage.setItem('gametok_device_id', devId);
+      }
+      return devId;
+    }
+
+    let authMode = 'login'; // 'login' or 'signup'
+    let pendingAuthEmail = '';
+
+    function openAuthModal() {
+      document.getElementById('authModal').classList.add('active');
+    }
+
+    function closeAuthModal() {
+      document.getElementById('authModal').classList.remove('active');
+    }
+
+    function toggleAuthMode(e) {
+      if (e) e.preventDefault();
+      authMode = authMode === 'login' ? 'signup' : 'login';
+      const isSignup = authMode === 'signup';
+      document.getElementById('authModalTitle').textContent = isSignup ? 'Create Developer Account' : 'Sign in to GameTok';
+      document.getElementById('groupUsername').style.display = isSignup ? 'block' : 'none';
+      document.getElementById('authUsernameInput').required = isSignup;
+      document.getElementById('authSubmitBtn').textContent = isSignup ? 'Create Account & Send Code →' : 'Continue →';
+      document.getElementById('authToggleText').textContent = isSignup ? 'Already have an account?' : "Don't have an account?";
+      document.getElementById('authToggleLink').textContent = isSignup ? 'Sign in' : 'Sign up';
+    }
+
+    function backToCredentials(e) {
+      if (e) e.preventDefault();
+      document.getElementById('authStepCredentials').style.display = 'block';
+      document.getElementById('authStepOtp').style.display = 'none';
+    }
+
+    async function handleAuthSubmit(e) {
+      e.preventDefault();
+      const btn = document.getElementById('authSubmitBtn');
+      btn.disabled = true;
+      btn.textContent = 'Verifying...';
+
+      const email = document.getElementById('authEmailInput').value.trim();
+      const password = document.getElementById('authPasswordInput').value;
+      const username = document.getElementById('authUsernameInput').value.trim();
+      const deviceId = getDeviceFingerprint();
+
+      pendingAuthEmail = email;
+
+      try {
+        const endpoint = authMode === 'signup' ? `${API_BASE}/auth/signup` : `${API_BASE}/auth/login`;
+        const payload = authMode === 'signup' 
+          ? { username, email, password, displayName: username, deviceId }
+          : { username: email, password, deviceId };
+
+        const res = await fetch(endpoint, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(payload)
+        });
+
+        const data = await res.json();
+        if (!res.ok) throw new Error(data.error || 'Authentication failed');
+
+        // Check if 2FA code is required
+        if (data.requireCode) {
+          document.getElementById('otpSubtitleText').innerHTML = `We sent a 6-digit security code from <strong style="color: var(--cyan);">login@gametok.co</strong> to <strong>${email}</strong>`;
+          document.getElementById('authStepCredentials').style.display = 'none';
+          document.getElementById('authStepOtp').style.display = 'block';
+          document.getElementById('authOtpInput').focus();
+        } else if (data.token) {
+          // Instant login
+          onAuthSuccess(data.user, data.token);
+        }
+      } catch (err) {
+        alert(err.message);
+      } finally {
+        btn.disabled = false;
+        btn.textContent = authMode === 'signup' ? 'Create Account & Send Code →' : 'Continue →';
+      }
+    }
+
+    async function handleVerifyOtp(e) {
+      e.preventDefault();
+      const btn = document.getElementById('otpSubmitBtn');
+      btn.disabled = true;
+      btn.textContent = 'Checking code...';
+
+      const code = document.getElementById('authOtpInput').value.trim();
+      const deviceId = getDeviceFingerprint();
+
+      try {
+        const res = await fetch(`${API_BASE}/auth/verify-code`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ email: pendingAuthEmail, code, deviceId })
+        });
+        const data = await res.json();
+        if (!res.ok) throw new Error(data.error || 'Code verification failed');
+
+        onAuthSuccess(data.user, data.token);
+      } catch (err) {
+        alert(err.message);
+      } finally {
+        btn.disabled = false;
+        btn.textContent = 'Verify & Sign In →';
+      }
+    }
+
+    async function resendOtpCode(e) {
+      if (e) e.preventDefault();
+      if (!pendingAuthEmail) return;
+      try {
+        const res = await fetch(`${API_BASE}/auth/resend-code`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ email: pendingAuthEmail, purpose: authMode })
+        });
+        const data = await res.json();
+        alert(data.message || 'Verification code resent!');
+      } catch (err) {
+        alert('Failed to resend code: ' + err.message);
+      }
+    }
+
+    function onAuthSuccess(user, token) {
+      localStorage.setItem('gametok_auth_token', token);
+      if (user && user.username) {
+        updatePromptHandle(user.username);
+      }
+      closeAuthModal();
+
+      // Show dashboard
+      const navAuthBtn = document.getElementById('navAuthBtn');
+      const navDashToggle = document.getElementById('navDashboardToggle');
+      if (navAuthBtn) navAuthBtn.style.display = 'none';
+      if (navDashToggle) {
+        navDashToggle.style.display = 'inline-block';
+        navDashToggle.textContent = '@' + (user.username || 'developer');
+      }
+
+      toggleDashboardView(true);
+      alert(`Welcome back, ${user.displayName || user.username}! You are now securely logged in.`);
+    }
+
     window.addEventListener('DOMContentLoaded', init);
   </script>
 
@@ -1717,6 +1867,73 @@
           🎮 Play on GameTok
         </a>
       </div>
+    </div>
+  </div>
+
+
+  <!-- Interactive Auth & 2-Step Email Verification Modal -->
+  <div class="modal-overlay" id="authModal">
+    <div class="modal-card" style="max-width: 440px;">
+      <button class="modal-close-btn" onclick="closeAuthModal()">✕</button>
+
+      <!-- Step 1: Login / Sign Up with Email & Password -->
+      <div id="authStepCredentials">
+        <div class="modal-header">
+          <h3 id="authModalTitle">Sign in to GameTok</h3>
+          <p id="authModalSubtitle">Developer portal & game distribution dashboard</p>
+        </div>
+
+        <form id="authCredsForm" onsubmit="handleAuthSubmit(event)">
+          <div class="form-group" id="groupUsername" style="display: none;">
+            <label class="form-label">Username / Handle *</label>
+            <input type="text" id="authUsernameInput" class="form-input" placeholder="e.g. indie_dev">
+          </div>
+
+          <div class="form-group">
+            <label class="form-label">Email Address *</label>
+            <input type="email" id="authEmailInput" class="form-input" placeholder="developer@example.com" required>
+          </div>
+
+          <div class="form-group">
+            <label class="form-label">Password *</label>
+            <input type="password" id="authPasswordInput" class="form-input" placeholder="••••••••" required>
+          </div>
+
+          <button type="submit" class="btn-white-pill" style="width: 100%; justify-content: center; margin-top: 16px; padding: 12px;" id="authSubmitBtn">
+            Continue →
+          </button>
+        </form>
+
+        <div style="margin-top: 20px; text-align: center; font-size: 13.5px; color: var(--text-muted);">
+          <span id="authToggleText">Don't have an account?</span> 
+          <a href="#" onclick="toggleAuthMode(event)" style="color: var(--cyan); text-decoration: none; font-weight: 700;" id="authToggleLink">Sign up</a>
+        </div>
+      </div>
+
+      <!-- Step 2: 6-Digit Email Verification Code -->
+      <div id="authStepOtp" style="display: none;">
+        <div class="modal-header">
+          <h3>Verify Your Email</h3>
+          <p id="otpSubtitleText">We sent a 6-digit code from <strong style="color: var(--cyan);">login@gametok.co</strong></p>
+        </div>
+
+        <form id="authOtpForm" onsubmit="handleVerifyOtp(event)">
+          <div class="form-group">
+            <label class="form-label">Enter 6-Digit Code</label>
+            <input type="text" id="authOtpInput" class="form-input" placeholder="123456" maxlength="6" style="font-size: 24px; text-align: center; letter-spacing: 0.25em; font-weight: 800; font-family: monospace;" required>
+          </div>
+
+          <button type="submit" class="btn-white-pill" style="width: 100%; justify-content: center; margin-top: 16px; padding: 12px;" id="otpSubmitBtn">
+            Verify & Sign In →
+          </button>
+        </form>
+
+        <div style="margin-top: 20px; text-align: center; font-size: 13px; color: var(--text-muted); display: flex; justify-content: space-between;">
+          <a href="#" onclick="resendOtpCode(event)" style="color: var(--cyan); text-decoration: none;">Resend code</a>
+          <a href="#" onclick="backToCredentials(event)" style="color: var(--text-muted); text-decoration: none;">Change email</a>
+        </div>
+      </div>
+
     </div>
   </div>
 
