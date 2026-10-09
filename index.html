@@ -736,6 +736,183 @@
       .container { padding: 0 20px; }
       .chalk-title-large { font-size: 32px; }
     }
+  
+    /* =========================================================
+       DEVELOPER DASHBOARD STYLES (MODAL / OVERLAY VIEW)
+       ========================================================= */
+    .dashboard-view-container {
+      display: none;
+      padding: 40px 0 80px;
+      min-height: 80vh;
+    }
+    .dashboard-view-container.active {
+      display: block;
+    }
+
+    .dashboard-header-card {
+      background: var(--bg-card);
+      border: 1px solid var(--border);
+      border-radius: 20px;
+      padding: 30px 36px;
+      margin-bottom: 36px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      flex-wrap: wrap;
+      gap: 20px;
+    }
+
+    .dev-profile-info {
+      display: flex;
+      align-items: center;
+      gap: 18px;
+    }
+
+    .dev-avatar-img {
+      width: 64px;
+      height: 64px;
+      border-radius: 50%;
+      border: 2px solid var(--cyan);
+      background: #141b2a;
+    }
+
+    .dev-stats-row {
+      display: flex;
+      gap: 32px;
+      align-items: center;
+    }
+
+    .dev-stat-box {
+      display: flex;
+      flex-direction: column;
+    }
+
+    .dev-stat-val {
+      font-size: 26px;
+      font-weight: 800;
+      color: #fff;
+      line-height: 1.1;
+    }
+
+    .dev-stat-lbl {
+      font-size: 12px;
+      text-transform: uppercase;
+      letter-spacing: 0.1em;
+      color: var(--text-muted);
+      margin-top: 4px;
+    }
+
+    .dashboard-games-table-wrap {
+      background: var(--bg-card);
+      border: 1px solid var(--border);
+      border-radius: 20px;
+      overflow: hidden;
+      margin-bottom: 40px;
+    }
+
+    .dash-table-header {
+      padding: 24px 30px;
+      border-bottom: 1px solid var(--border);
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+
+    .dash-table-header h2 {
+      font-size: 20px;
+      font-weight: 800;
+    }
+
+    .games-list-table {
+      width: 100%;
+      border-collapse: collapse;
+      text-align: left;
+    }
+
+    .games-list-table th {
+      padding: 16px 30px;
+      font-size: 12px;
+      font-weight: 700;
+      letter-spacing: 0.08em;
+      text-transform: uppercase;
+      color: var(--text-dim);
+      border-bottom: 1px solid var(--border);
+      background: rgba(255, 255, 255, 0.01);
+    }
+
+    .games-list-table td {
+      padding: 18px 30px;
+      border-bottom: 1px solid var(--border);
+      font-size: 14px;
+      color: var(--text-muted);
+      vertical-align: middle;
+    }
+
+    .games-list-table tr:hover td {
+      background: var(--bg-card-hover);
+    }
+
+    .badge-status {
+      display: inline-flex;
+      align-items: center;
+      padding: 4px 10px;
+      border-radius: 12px;
+      font-size: 12px;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+    }
+    .badge-published { background: rgba(34, 197, 94, 0.15); color: #22c55e; border: 1px solid rgba(34, 197, 94, 0.3); }
+    .badge-submitted { background: rgba(56, 189, 248, 0.15); color: #38bdf8; border: 1px solid rgba(56, 189, 248, 0.3); }
+    .badge-draft { background: rgba(148, 163, 184, 0.15); color: #94a3b8; border: 1px solid rgba(148, 163, 184, 0.3); }
+
+    .btn-action-small {
+      background: #141b2a;
+      border: 1px solid #232d46;
+      color: #fff;
+      padding: 6px 12px;
+      border-radius: 8px;
+      font-size: 12.5px;
+      font-weight: 600;
+      cursor: pointer;
+      text-decoration: none;
+      display: inline-flex;
+      align-items: center;
+      gap: 5px;
+      transition: all 0.15s ease;
+    }
+    .btn-action-small:hover {
+      background: var(--cyan);
+      color: #000;
+      border-color: var(--cyan);
+    }
+
+    /* Modal wide for Game Integration Details */
+    .modal-card.modal-wide {
+      max-width: 820px;
+      max-height: 90vh;
+      overflow-y: auto;
+    }
+
+    .integration-checklist-box {
+      background: #05070c;
+      border: 1px solid #171d2b;
+      border-radius: 14px;
+      padding: 20px;
+      margin: 20px 0;
+    }
+
+    .checklist-item {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      margin-bottom: 12px;
+      font-size: 14px;
+    }
+    .checklist-item:last-child { margin-bottom: 0; }
+    .check-icon-done { color: #22c55e; font-weight: bold; }
+    .check-icon-pending { color: #64748b; }
+
   </style>
 </head>
 <body>
@@ -756,10 +933,70 @@
     </ul>
 
     <div class="nav-actions">
-      <button class="btn-text" onclick="openPublisherModal()">Sign in</button>
-      <button class="btn-white-pill" onclick="openPublisherModal()">Get started</button>
+      <button class="btn-text" id="navDashboardToggle" onclick="toggleDashboardView()">Dashboard</button>
+      <button class="btn-white-pill" onclick="openPublisherModal()">Publish your game</button>
     </div>
   </nav>
+
+  <!-- Developer Dashboard View (Shown when toggled or creator parameter present) -->
+  <main class="dashboard-view-container container" id="dashboardContainer">
+    <div class="dashboard-header-card">
+      <div class="dev-profile-info">
+        <img src="https://api.dicebear.com/7.x/bottts/svg?seed=indie_dev" alt="Avatar" class="dev-avatar-img" id="devAvatarImg">
+        <div>
+          <h2 style="font-size: 22px; font-weight: 800;" id="devDisplayName">Indie Developer</h2>
+          <div style="font-size: 13.5px; color: var(--cyan);" id="devHandleDisplay">@indie_dev</div>
+        </div>
+      </div>
+      <div class="dev-stats-row">
+        <div class="dev-stat-box">
+          <span class="dev-stat-val" id="dashTotalGames">0</span>
+          <span class="dev-stat-lbl">Games</span>
+        </div>
+        <div class="dev-stat-box">
+          <span class="dev-stat-val" id="dashTotalPlays">0</span>
+          <span class="dev-stat-lbl">Total Plays</span>
+        </div>
+        <div class="dev-stat-box">
+          <span class="dev-stat-val" id="dashUniquePlayers">0</span>
+          <span class="dev-stat-lbl">Unique Players</span>
+        </div>
+        <button class="btn-white-pill" onclick="openPublisherModal()" style="font-size: 13px; padding: 10px 18px;">
+          + New Game
+        </button>
+      </div>
+    </div>
+
+    <!-- Games Table Card -->
+    <div class="dashboard-games-table-wrap">
+      <div class="dash-table-header">
+        <h2>Your Published & Draft Games</h2>
+        <span style="font-size: 13px; color: var(--text-dim);" id="dashGameCountSubtitle">0 games registered</span>
+      </div>
+      <div style="overflow-x: auto;">
+        <table class="games-list-table">
+          <thead>
+            <tr>
+              <th>Game Title</th>
+              <th>Status</th>
+              <th>Orientation</th>
+              <th>Total Plays</th>
+              <th>Unique Players</th>
+              <th>Actions</th>
+            </tr>
+          </thead>
+          <tbody id="dashGamesTableBody">
+            <tr>
+              <td colspan="6" style="text-align: center; padding: 40px; color: var(--text-dim);">
+                Loading developer games...
+              </td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+  </main>
+
 
   <!-- Hero Section -->
   <section class="hero">
@@ -770,19 +1007,19 @@
         <div class="hero-copy">
           <span class="hero-tag">FOR GAME DEVELOPERS</span>
           <h1 class="hero-title">
-            Build <span class="highlight-blue-soft">once.</span><br>
-            Reach millions.<br>
-            <span class="highlight-cyan">On GameTok.</span>
+            Your game deserves<br>
+            <span class="highlight-blue-soft">more places</span> to be<br>
+            <span class="highlight-cyan">discovered.</span>
           </h1>
           <p class="hero-desc">
-            Publish your games, get real players, earn revenue. Integrate with your AI agent in minutes and let us handle the distribution, analytics and payments.
+            Publish your existing web game on GameTok, reach new players and track how your game performs. Use your preferred AI coding agent to integrate your game with GameTok.
           </p>
           <div class="hero-ctas">
             <button class="btn-white-pill" onclick="openPublisherModal()">
-              Get started →
+              Publish your game →
             </button>
             <a href="/skill.md" target="_blank" class="btn-translucent-pill">
-              View docs
+              Read the integration guide
             </a>
           </div>
         </div>
@@ -1113,27 +1350,263 @@
     </div>
   </div>
 
-  <script>
+    <script>
     const API_BASE = 'https://gametok-backend-267787411422.us-central1.run.app/api';
 
-    // Handle initialization
+    // State
     let creatorHandle = localStorage.getItem('gametok_creator_handle') || 'indie_dev';
+    let developerGames = [];
+    let currentGameDetail = null;
+    let isDashboardOpen = false;
 
     function init() {
       const urlParams = new URLSearchParams(window.location.search);
       const queryHandle = urlParams.get('creator') || urlParams.get('handle');
       if (queryHandle) {
         creatorHandle = queryHandle.replace(/^@/, '').toLowerCase();
+        // If creator is explicitly passed in URL, auto-open dashboard
+        toggleDashboardView(true);
       }
       updatePromptHandle(creatorHandle);
-      document.getElementById('modalHandleInput').value = creatorHandle;
+      const handleInput = document.getElementById('modalHandleInput');
+      if (handleInput) handleInput.value = creatorHandle;
     }
 
     function updatePromptHandle(val) {
       val = val.replace(/^@/, '').trim().toLowerCase() || 'indie_dev';
       creatorHandle = val;
       localStorage.setItem('gametok_creator_handle', val);
-      document.getElementById('promptHandleSpan').textContent = val;
+      const handleSpan = document.getElementById('promptHandleSpan');
+      if (handleSpan) handleSpan.textContent = val;
+      const devHandleDisp = document.getElementById('devHandleDisplay');
+      if (devHandleDisp) devHandleDisp.textContent = '@' + val;
+      const devAvatar = document.getElementById('devAvatarImg');
+      if (devAvatar) devAvatar.src = 'https://api.dicebear.com/7.x/bottts/svg?seed=' + encodeURIComponent(val);
+    }
+
+    function toggleDashboardView(forceOpen) {
+      const dash = document.getElementById('dashboardContainer');
+      const navBtn = document.getElementById('navDashboardToggle');
+      if (forceOpen === true) {
+        isDashboardOpen = true;
+      } else if (forceOpen === false) {
+        isDashboardOpen = false;
+      } else {
+        isDashboardOpen = !isDashboardOpen;
+      }
+
+      if (isDashboardOpen) {
+        dash.classList.add('active');
+        if (navBtn) navBtn.style.color = 'var(--cyan)';
+        loadDeveloperDashboard();
+        dash.scrollIntoView({ behavior: 'smooth' });
+      } else {
+        dash.classList.remove('active');
+        if (navBtn) navBtn.style.color = '';
+      }
+    }
+
+    async function loadDeveloperDashboard() {
+      try {
+        const res = await fetch(`${API_BASE}/developer/games?creator=${encodeURIComponent(creatorHandle)}`);
+        const data = await res.json();
+        if (!res.ok) throw new Error(data.error || 'Failed to load dashboard');
+
+        if (data.developer) {
+          document.getElementById('devDisplayName').textContent = data.developer.displayName || data.developer.username;
+          document.getElementById('devHandleDisplay').textContent = '@' + data.developer.username;
+          if (data.developer.avatar) {
+            document.getElementById('devAvatarImg').src = data.developer.avatar;
+          }
+        }
+
+        developerGames = data.games || [];
+        renderGamesTable(developerGames);
+      } catch (err) {
+        console.error('Dashboard load error:', err);
+        const tbody = document.getElementById('dashGamesTableBody');
+        tbody.innerHTML = `<tr><td colspan="6" style="text-align: center; padding: 40px; color: #ef4444;">Error: ${err.message}</td></tr>`;
+      }
+    }
+
+    function renderGamesTable(games) {
+      const tbody = document.getElementById('dashGamesTableBody');
+      const totalGamesElem = document.getElementById('dashTotalGames');
+      const totalPlaysElem = document.getElementById('dashTotalPlays');
+      const uniquePlayersElem = document.getElementById('dashUniquePlayers');
+      const subtitleElem = document.getElementById('dashGameCountSubtitle');
+
+      totalGamesElem.textContent = games.length;
+      subtitleElem.textContent = `${games.length} games registered`;
+
+      let totalPlays = 0;
+      let totalUniques = 0;
+
+      if (games.length === 0) {
+        tbody.innerHTML = `
+          <tr>
+            <td colspan="6" style="text-align: center; padding: 50px 20px;">
+              <div style="font-size: 16px; font-weight: 700; margin-bottom: 8px;">No games registered yet</div>
+              <p style="color: var(--text-dim); margin-bottom: 20px;">Register your existing web game to generate AI integration instructions.</p>
+              <button class="btn-white-pill" onclick="openPublisherModal()">+ Register Your First Game</button>
+            </td>
+          </tr>
+        `;
+        totalPlaysElem.textContent = '0';
+        uniquePlayersElem.textContent = '0';
+        return;
+      }
+
+      tbody.innerHTML = games.map(g => {
+        totalPlays += (g.plays || 0);
+        totalUniques += (g.uniquePlayers || 0);
+
+        let statusClass = 'badge-published';
+        let statusLabel = g.status || 'published';
+        if (statusLabel === 'draft') statusClass = 'badge-draft';
+        if (statusLabel === 'submitted' || statusLabel === 'in_review') statusClass = 'badge-submitted';
+
+        return `
+          <tr>
+            <td>
+              <div style="display: flex; align-items: center; gap: 12px;">
+                <div style="font-size: 22px;">${g.icon || '🎮'}</div>
+                <div>
+                  <div style="font-weight: 700; color: #fff;">${g.name}</div>
+                  <div style="font-size: 12px; color: var(--text-dim);">${g.id} (v${g.version || '1.0.0'})</div>
+                </div>
+              </div>
+            </td>
+            <td>
+              <span class="badge-status ${statusClass}">${statusLabel}</span>
+            </td>
+            <td>
+              <span style="text-transform: capitalize;">${g.orientation || 'portrait'}</span>
+            </td>
+            <td style="font-weight: 700; color: #fff;">
+              ${(g.plays || 0).toLocaleString()}
+            </td>
+            <td style="color: var(--cyan); font-weight: 600;">
+              ${(g.uniquePlayers || 0).toLocaleString()}
+            </td>
+            <td>
+              <div style="display: flex; gap: 8px;">
+                <button class="btn-action-small" onclick="inspectGame('${g.id}')">Inspect & AI Prompt</button>
+                <a href="https://gametok.co/game/${g.id}" target="_blank" class="btn-action-small">Play</a>
+              </div>
+            </td>
+          </tr>
+        `;
+      }).join('');
+
+      totalPlaysElem.textContent = totalPlays.toLocaleString();
+      uniquePlayersElem.textContent = totalUniques.toLocaleString();
+    }
+
+    async function inspectGame(gameId) {
+      try {
+        const res = await fetch(`${API_BASE}/developer/games/${encodeURIComponent(gameId)}`);
+        const data = await res.json();
+        if (!res.ok) throw new Error(data.error || 'Failed to inspect game');
+
+        currentGameDetail = data;
+        const g = data.game;
+
+        document.getElementById('detailGameTitle').textContent = `${g.name} (v${g.version || '1.0.0'})`;
+        document.getElementById('detailGameSubtitle').textContent = `Game ID: ${g.id} • Status: ${g.status || 'published'} • Orientation: ${g.orientation}`;
+        document.getElementById('detailPromptText').textContent = data.integrationPrompt || '';
+
+        // Update verification checklist indicators
+        const chk = data.checklist || {};
+        document.getElementById('chkReview').textContent = '✓';
+        document.getElementById('chkReview').className = 'check-icon-done';
+        
+        document.getElementById('chkSdk').textContent = (g.verificationStatus === 'verified' || g.status === 'published') ? '✓' : '○';
+        document.getElementById('chkSdk').className = (g.verificationStatus === 'verified' || g.status === 'published') ? 'check-icon-done' : 'check-icon-pending';
+
+        document.getElementById('chkLocal').textContent = '✓';
+        document.getElementById('chkLocal').className = 'check-icon-done';
+
+        document.getElementById('chkPassed').textContent = (g.verificationStatus === 'verified' || g.status === 'published') ? '✓' : '○';
+        document.getElementById('chkPassed').className = (g.verificationStatus === 'verified' || g.status === 'published') ? 'check-icon-done' : 'check-icon-pending';
+
+        // Play preview button
+        const btnPlay = document.getElementById('btnPreviewGame');
+        btnPlay.href = `https://gametok.co/game/${g.id}`;
+        btnPlay.style.display = 'inline-flex';
+
+        // Submit/publish button text
+        const btnSubmit = document.getElementById('btnSubmitGame');
+        if (g.status === 'published') {
+          btnSubmit.textContent = 'Live Published ✓';
+          btnSubmit.disabled = true;
+        } else {
+          btnSubmit.textContent = '🚀 Publish Game Live';
+          btnSubmit.disabled = false;
+        }
+
+        document.getElementById('gameDetailModal').classList.add('active');
+      } catch (err) {
+        alert('Could not inspect game: ' + err.message);
+      }
+    }
+
+    function closeGameDetailModal() {
+      document.getElementById('gameDetailModal').classList.remove('active');
+    }
+
+    function copyDetailPrompt() {
+      const text = document.getElementById('detailPromptText').textContent;
+      navigator.clipboard.writeText(text).then(() => {
+        alert('AI Integration Prompt copied to clipboard! Paste this directly to Claude, Cursor, or your AI coding agent.');
+      });
+    }
+
+    async function runAutomatedVerification() {
+      if (!currentGameDetail?.game?.id) return;
+      const btn = document.getElementById('btnVerifyGame');
+      btn.textContent = 'Probing game...';
+      btn.disabled = true;
+
+      try {
+        const res = await fetch(`${API_BASE}/developer/games/${encodeURIComponent(currentGameDetail.game.id)}/verify`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ url: currentGameDetail.game.embedUrl })
+        });
+        const data = await res.json();
+        alert(data.notes || 'Verification probe finished.');
+        inspectGame(currentGameDetail.game.id);
+        loadDeveloperDashboard();
+      } catch (err) {
+        alert('Verification error: ' + err.message);
+      } finally {
+        btn.textContent = '⚡ Run Automated Verification Probe';
+        btn.disabled = false;
+      }
+    }
+
+    async function publishGameImmediately() {
+      if (!currentGameDetail?.game?.id) return;
+      const btn = document.getElementById('btnSubmitGame');
+      btn.textContent = 'Publishing...';
+      btn.disabled = true;
+
+      try {
+        const res = await fetch(`${API_BASE}/developer/games/${encodeURIComponent(currentGameDetail.game.id)}/submit`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ publishImmediately: true })
+        });
+        const data = await res.json();
+        alert(data.message || 'Game is now live on GameTok!');
+        inspectGame(currentGameDetail.game.id);
+        loadDeveloperDashboard();
+      } catch (err) {
+        alert('Publish error: ' + err.message);
+      } finally {
+        btn.disabled = false;
+      }
     }
 
     function copyPrompt() {
@@ -1178,18 +1651,74 @@
         const data = await res.json();
         if (!res.ok) throw new Error(data.error || 'Publish failed');
 
-        alert(`Game published successfully! Live at: ${data.url}`);
-        window.open(data.url, '_blank');
+        updatePromptHandle(handle);
+        alert(`Game registered and published successfully! Live at: ${data.url}`);
         closePublisherModal();
+        toggleDashboardView(true);
       } catch (err) {
         alert('Notice: ' + err.message);
       } finally {
         btn.disabled = false;
-        btn.textContent = 'Publish Game Now 🚀';
+        btn.textContent = 'Publish Game Now →';
       }
     }
 
     window.addEventListener('DOMContentLoaded', init);
   </script>
+
+  <!-- Game Detail & AI Integration Inspector Modal -->
+  <div class="modal-overlay" id="gameDetailModal">
+    <div class="modal-card modal-wide">
+      <button class="modal-close-btn" onclick="closeGameDetailModal()">✕</button>
+      <div class="modal-header">
+        <h3 id="detailGameTitle">Game Integration</h3>
+        <p id="detailGameSubtitle">AI coding agent instructions, verification status, and testing.</p>
+      </div>
+
+      <!-- Integration Checklist -->
+      <div class="integration-checklist-box">
+        <div style="font-weight: 700; font-size: 14px; margin-bottom: 12px; color: #fff;">Pre-Publishing Verification Checklist:</div>
+        <div class="checklist-item">
+          <span id="chkReview" class="check-icon-done">✓</span>
+          <span>1. Reviewed integration guide & requirements</span>
+        </div>
+        <div class="checklist-item">
+          <span id="chkSdk" class="check-icon-done">✓</span>
+          <span>2. GameTok Bridge tag integrated (<code style="color: var(--cyan);">&lt;script src="https://gametok.co/bridge.js"&gt;</code>)</span>
+        </div>
+        <div class="checklist-item">
+          <span id="chkLocal" class="check-icon-done">✓</span>
+          <span>3. Tested locally & validated viewport responsiveness</span>
+        </div>
+        <div class="checklist-item">
+          <span id="chkPassed" class="check-icon-done">✓</span>
+          <span>4. Passed automated compatibility probe</span>
+        </div>
+      </div>
+
+      <!-- Dynamic AI Integration Prompt -->
+      <div class="form-label" style="display: flex; justify-content: space-between; align-items: center;">
+        <span>AI Coding Agent Integration Prompt</span>
+        <button class="btn-action-small" onclick="copyDetailPrompt()">Copy Prompt</button>
+      </div>
+      <div class="prompt-box" style="margin-top: 6px;">
+        <pre class="prompt-text" id="detailPromptText" style="white-space: pre-wrap; margin: 0; font-size: 12.5px;"></pre>
+      </div>
+
+      <!-- Action buttons -->
+      <div style="display: flex; gap: 12px; margin-top: 24px; flex-wrap: wrap;">
+        <button class="btn-action-small" onclick="runAutomatedVerification()" id="btnVerifyGame" style="padding: 10px 18px;">
+          ⚡ Run Automated Verification Probe
+        </button>
+        <button class="btn-white-pill" onclick="publishGameImmediately()" id="btnSubmitGame" style="padding: 10px 22px;">
+          🚀 Publish Game Live
+        </button>
+        <a href="#" target="_blank" id="btnPreviewGame" class="btn-translucent-pill" style="display: none; padding: 10px 18px;">
+          🎮 Play on GameTok
+        </a>
+      </div>
+    </div>
+  </div>
+
 </body>
 </html>
