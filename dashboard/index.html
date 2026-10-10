@@ -72,13 +72,11 @@
       padding-left: 8px;
     }
 
-    .brand-icon-triangle {
-      width: 26px;
-      height: 26px;
-      background: linear-gradient(135deg, #38bdf8 0%, #2563eb 100%);
-      clip-path: polygon(15% 10%, 90% 50%, 15% 90%);
-      display: inline-block;
-      box-shadow: 0 0 18px rgba(56, 189, 248, 0.5);
+    .sidebar-brand img {
+      width: 32px;
+      height: 32px;
+      border-radius: 9px;
+      object-fit: contain;
     }
 
     .sidebar-menu {
@@ -466,7 +464,7 @@
     <!-- Left Navigation Sidebar -->
     <aside class="sidebar">
       <a href="/" class="sidebar-brand">
-        <span class="brand-icon-triangle"></span>
+        <img src="/assets/adaptive-icon.png" alt="GameTok Logo" style="width: 32px; height: 32px; border-radius: 9px; object-fit: contain;">
         <span>GameTok</span>
       </a>
 
@@ -569,14 +567,14 @@
           </div>
         </div>
 
-        <!-- 3 Stat Cards Row -->
+        <!-- 3 Stat Cards Row (Real Verified Metrics, No Placeholders) -->
         <div class="stat-cards-grid">
           <!-- Total Players -->
           <div class="stat-card">
             <div class="stat-card-label">Total Players</div>
             <div class="stat-card-value" id="cardTotalPlayers">0</div>
-            <div class="stat-card-trend">
-              <span>↑ 42%</span>
+            <div class="stat-card-trend" id="trendPlayers" style="color: var(--text-dim); font-size: 12px; font-weight: 500;">
+              <span>Real unique users</span>
             </div>
           </div>
 
@@ -584,17 +582,17 @@
           <div class="stat-card">
             <div class="stat-card-label">Total Plays</div>
             <div class="stat-card-value" id="cardTotalPlays">0</div>
-            <div class="stat-card-trend">
-              <span>↑ 56%</span>
+            <div class="stat-card-trend" id="trendPlays" style="color: var(--text-dim); font-size: 12px; font-weight: 500;">
+              <span>Verified sessions</span>
             </div>
           </div>
 
           <!-- Revenue -->
           <div class="stat-card">
             <div class="stat-card-label">Revenue</div>
-            <div class="stat-card-value" id="cardRevenue">$0</div>
-            <div class="stat-card-trend">
-              <span>↑ 68%</span>
+            <div class="stat-card-value" id="cardRevenue">$0.00</div>
+            <div class="stat-card-trend" id="trendRevenue" style="color: var(--cyan); font-size: 12px; font-weight: 600;">
+              <span>$5.00 / 1k plays</span>
             </div>
           </div>
         </div>
@@ -832,19 +830,20 @@
         totalPlays += (g.plays || 0);
         totalPlayers += (g.uniquePlayers || 0);
 
-        const earningsVal = '$' + Math.max(0, Math.round((g.plays || 0) * 0.005)).toLocaleString();
-        const colorClass = colors[idx % colors.length];
+        const earningsNum = ((g.plays || 0) * 0.005).toFixed(2);
+        const earningsVal = '$' + Number(earningsNum).toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+        const gameColor = g.color || '#38bdf8';
 
         return `
           <tr>
             <td>
               <div class="game-cell-title">
-                <div class="game-icon-box ${colorClass}">
+                <div class="game-icon-box" style="background: ${gameColor};">
                   ${g.icon || '🎮'}
                 </div>
                 <div>
                   <div class="game-meta-name">${g.name}</div>
-                  <div style="font-size: 12px; color: var(--text-dim);">${g.orientation || 'portrait'} • v${g.version || '1.0.0'}</div>
+                  <div style="font-size: 12px; color: var(--text-dim); text-transform: capitalize;">${g.orientation || 'portrait'} • v${g.version || '1.0.0'} • <span style="color: ${g.status === 'published' ? 'var(--green)' : 'var(--cyan)'}; font-weight: 600;">${g.status || 'published'}</span></div>
                 </div>
               </div>
             </td>
@@ -861,9 +860,10 @@
         `;
       }).join('');
 
-      document.getElementById('cardTotalPlayers').textContent = formatNumber(totalPlayers);
-      document.getElementById('cardTotalPlays').textContent = formatNumber(totalPlays);
-      document.getElementById('cardRevenue').textContent = '$' + Math.round(totalPlays * 0.005).toLocaleString();
+      document.getElementById('cardTotalPlayers').textContent = Number(totalPlayers).toLocaleString();
+      document.getElementById('cardTotalPlays').textContent = Number(totalPlays).toLocaleString();
+      const totalRev = (totalPlays * 0.005).toFixed(2);
+      document.getElementById('cardRevenue').textContent = '$' + Number(totalRev).toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 });
     }
 
     async function inspectGame(id) {
