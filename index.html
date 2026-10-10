@@ -1578,8 +1578,11 @@
 
     function onAuthSuccess(user, token) {
       localStorage.setItem('gametok_auth_token', token);
-      if (user && user.username) {
-        localStorage.setItem('gametok_creator_handle', user.username);
+      if (user) {
+        if (user.username) localStorage.setItem('gametok_creator_handle', user.username);
+        const name = user.displayName || user.name || user.username || '';
+        if (name) localStorage.setItem('gametok_user_name', name);
+        if (user.email) localStorage.setItem('gametok_user_email', user.email);
       }
       closeAuthModal();
       window.location.href = '/dashboard';

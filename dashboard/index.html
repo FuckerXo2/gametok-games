@@ -1314,7 +1314,7 @@
               <tr>
                 <th style="width: 25%;">Game</th>
                 <th>Version</th>
-                <th>Orientation</th>
+                <th>Source</th>
                 <th>Unique Players</th>
                 <th>Plays</th>
                 <th>Earnings</th>
@@ -1458,7 +1458,7 @@
                 </div>
                 <div style="display: flex; justify-content: space-between;"><span style="color: var(--text-dim);">Created</span><span id="detailCreatedDate">Sep 12, 2026</span></div>
                 <div style="display: flex; justify-content: space-between;"><span style="color: var(--text-dim);">Last Updated</span><span id="detailUpdatedDate">Oct 8, 2026</span></div>
-                <div style="display: flex; justify-content: space-between;"><span style="color: var(--text-dim);">Orientation</span><span id="detailOrientationText">Landscape</span></div>
+                <div style="display: flex; justify-content: space-between;"><span style="color: var(--text-dim);">Platform</span><span id="detailOrientationText">Responsive Web</span></div>
                 <div style="display: flex; justify-content: space-between;"><span style="color: var(--text-dim);">File Size</span><span id="detailFileSize">8.4 MB</span></div>
                 <div style="display: flex; justify-content: space-between;"><span style="color: var(--text-dim);">Engine</span><span id="detailEngine">Three.js</span></div>
               </div>
@@ -1999,10 +1999,10 @@ if (ad.rewarded) {
   <div class="modal-overlay" id="newGameWizardModal">
     <div class="modal-box" style="max-width: 690px;">
       <button class="modal-close" onclick="closeNewGameWizard()">✕</button>
-      <div style="font-size: 19px; font-weight: 800; margin-bottom: 22px;">Create New Game</div>
+      <div style="font-size: 19px; font-weight: 800; margin-bottom: 22px;">Submit Game to GameTok</div>
 
       <div class="wizard-layout">
-        <!-- Left Stepper (Exact Match) -->
+        <!-- Left Stepper (3 Clear Steps) -->
         <div class="wizard-stepper">
           <div class="wizard-step-item active" id="wStepTab1" onclick="jumpToWizardStep(1)">
             <div class="wizard-step-num">1</div>
@@ -2010,15 +2010,11 @@ if (ad.rewarded) {
           </div>
           <div class="wizard-step-item" id="wStepTab2" onclick="jumpToWizardStep(2)">
             <div class="wizard-step-num">2</div>
-            <span>Integration Guide</span>
+            <span>SDK &amp; AI Agent</span>
           </div>
           <div class="wizard-step-item" id="wStepTab3" onclick="jumpToWizardStep(3)">
             <div class="wizard-step-num">3</div>
-            <span>Verification</span>
-          </div>
-          <div class="wizard-step-item" id="wStepTab4" onclick="jumpToWizardStep(4)">
-            <div class="wizard-step-num">4</div>
-            <span>Publish</span>
+            <span>Submit for Review</span>
           </div>
         </div>
 
@@ -2028,12 +2024,12 @@ if (ad.rewarded) {
           <!-- STEP 1: Details -->
           <div id="wStepContent1">
             <div style="font-weight: 800; font-size: 15px; margin-bottom: 4px;">Game Details</div>
-            <p style="font-size: 12.5px; color: var(--text-dim); margin-bottom: 18px;">Tell us about your game. You can always edit this later.</p>
+            <p style="font-size: 12.5px; color: var(--text-dim); margin-bottom: 18px;">Tell us about your web game. You can edit this anytime.</p>
 
             <form onsubmit="handleWizardStep1(event)">
               <div class="form-group">
                 <label class="form-label">Game Name *</label>
-                <input type="text" id="wizGameName" class="form-input" placeholder="My Awesome Game" value="My Awesome Game" required>
+                <input type="text" id="wizGameName" class="form-input" placeholder="e.g. Cyber Runner" value="" required>
               </div>
 
               <div class="form-group">
@@ -2041,7 +2037,7 @@ if (ad.rewarded) {
                   <label class="form-label">Description *</label>
                   <span style="font-size: 11px; color: var(--text-dim);" id="descCharCount">0/500</span>
                 </div>
-                <textarea id="wizGameDesc" class="form-input" rows="3" placeholder="A short description of your game..." oninput="updateCharCount(this.value)" required>A thrilling instant web game designed for GameTok.</textarea>
+                <textarea id="wizGameDesc" class="form-input" rows="3" placeholder="Describe gameplay, features, and controls..." oninput="updateCharCount(this.value)" required></textarea>
               </div>
 
               <div class="form-group">
@@ -2061,76 +2057,81 @@ if (ad.rewarded) {
 
               <div class="form-group">
                 <label class="form-label">Game URL *</label>
-                <input type="url" id="wizGameUrl" class="form-input" placeholder="https://yourgame.vercel.app" value="https://yourgame.vercel.app" required>
-                <span style="font-size: 11px; color: var(--text-dim); margin-top: 4px; display: block;">Must be a public HTTPS web game URL.</span>
-              </div>
-
-              <div class="form-group">
-                <label class="form-label">Orientation</label>
-                <select id="wizGameOrientation" class="form-input">
-                  <option value="landscape">Landscape</option>
-                  <option value="portrait">Portrait</option>
-                </select>
+                <input type="url" id="wizGameUrl" class="form-input" placeholder="https://yourgame.vercel.app" value="" required>
+                <span style="font-size: 11px; color: var(--text-dim); margin-top: 4px; display: block;">Must be a live public HTTPS web game URL.</span>
               </div>
 
               <div style="display: flex; justify-content: flex-end; margin-top: 24px;">
-                <button type="submit" class="btn-blue-action">Next →</button>
+                <button type="submit" class="btn-blue-action">Next: Integration →</button>
               </div>
             </form>
           </div>
 
-          <!-- STEP 2: Integration Guide -->
+          <!-- STEP 2: Integration & AI Prompt -->
           <div id="wStepContent2" style="display: none;">
-            <div style="font-weight: 800; font-size: 15px; margin-bottom: 4px;">SDK &amp; Payments Integration</div>
-            <p style="font-size: 12.5px; color: var(--text-dim); margin-bottom: 12px;">1. Add the GameTok SDK to your web game &lt;head&gt;:</p>
+            <div style="font-weight: 800; font-size: 15px; margin-bottom: 4px;">SDK &amp; AI Integration</div>
+            <p style="font-size: 12.5px; color: var(--text-dim); margin-bottom: 14px;">One drop-in tag connects your game, auto-login, and in-game payments.</p>
 
-            <div class="code-snippet" id="wizSnippetTag">&lt;script src="https://games.gametok.co/sdk/v1.js" data-creator-handle="@johndoe"&gt;&lt;/script&gt;</div>
-            <button class="btn-outline-action" style="font-size: 11.5px; padding: 5px 12px; margin-bottom: 16px;" onclick="copyText(document.getElementById('wizSnippetTag').innerText, 'SDK script tag copied!')">Copy SDK Tag</button>
+            <div style="font-weight: 700; font-size: 12px; color: #fff; margin-bottom: 4px;">1. Add to your HTML &lt;head&gt;:</div>
+            <div class="code-snippet" id="wizSnippetTag">&lt;script src="https://games.gametok.co/sdk/v1.js"&gt;&lt;/script&gt;</div>
+            <button class="btn-outline-action" style="font-size: 11px; padding: 4px 10px; margin-bottom: 14px;" onclick="copyText(document.getElementById('wizSnippetTag').innerText, 'SDK tag copied!')">Copy Tag</button>
 
-            <p style="font-size: 12.5px; color: var(--text-dim); margin-bottom: 6px;">2. In-App Purchases (GameTok processes &amp; splits 80/20):</p>
-            <div class="code-snippet">await window.GameTok.payments.purchase({ itemId: 'gems_100', amount: 0.99 });</div>
+            <!-- Prominent AI Agent Instruction Card -->
+            <div style="background: rgba(37, 99, 235, 0.08); border: 1px solid rgba(56, 189, 248, 0.35); border-radius: 12px; padding: 14px; margin-bottom: 16px;">
+              <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 6px;">
+                <div style="font-weight: 800; font-size: 13px; color: var(--cyan); display: flex; align-items: center; gap: 6px;">
+                  <span>🤖</span> Building with an AI Coding Agent?
+                </div>
+                <button class="btn-blue-action" style="padding: 4px 10px; font-size: 11px;" onclick="copyAiPrompt()">
+                  📋 Copy AI Prompt
+                </button>
+              </div>
+              <p style="font-size: 12px; color: #cbd5e1; line-height: 1.45; margin-bottom: 8px;">
+                Give this prompt to Cursor, Claude, Windsurf, or ChatGPT to integrate GameTok in seconds:
+              </p>
+              <div class="code-snippet" style="font-size: 11px; padding: 10px; margin: 0;" id="wizAiPromptText">Add GameTok SDK integration to this web game:
+1. Add &lt;script src="https://games.gametok.co/sdk/v1.js"&gt;&lt;/script&gt; into index.html &lt;head&gt;.
+2. When the game finishes loading, call window.GameTok.ready().
+3. For any in-game shop items, purchases, or skins, call:
+   await window.GameTok.payments.purchase({ itemId: 'item_id', title: 'Item Name', amount: 0.99 });
+GameTok automatically renders the 1-click payment drawer, charges the player, and returns a verified receipt.</div>
+            </div>
 
-            <p style="font-size: 12.5px; color: var(--text-dim); margin-bottom: 6px; margin-top: 10px;">3. Submit High Scores:</p>
-            <div class="code-snippet">window.GameTok.leaderboards.submitScore(finalScore);</div>
-
-            <div style="display: flex; justify-content: space-between; margin-top: 24px;">
+            <div style="display: flex; justify-content: space-between; margin-top: 20px;">
               <button class="btn-outline-action" onclick="jumpToWizardStep(1)">← Back</button>
-              <button class="btn-blue-action" onclick="startAutomatedVerification()">Run Verification →</button>
+              <button class="btn-blue-action" onclick="jumpToWizardStep(3)">Next: Review &amp; Submit →</button>
             </div>
           </div>
 
-          <!-- STEP 3: Automated Verification -->
+          <!-- STEP 3: Review & Submit for Review -->
           <div id="wStepContent3" style="display: none;">
-            <div style="font-weight: 800; font-size: 15px; margin-bottom: 4px;">Automated Verification</div>
-            <p style="font-size: 12.5px; color: var(--text-dim); margin-bottom: 18px;">Testing runtime compliance and bridge handshake...</p>
+            <div style="font-weight: 800; font-size: 15px; margin-bottom: 4px;">Submit for Review</div>
+            <p style="font-size: 12.5px; color: var(--text-dim); margin-bottom: 18px;">Review your submission before submitting to the moderation queue.</p>
 
-            <div style="display: flex; flex-direction: column; gap: 12px; margin-bottom: 24px;">
-              <div class="checklist-row" id="chkProbe1"><div class="chk-icon" id="chkIcon1">⋯</div><span>Bridge.js script tag detected</span></div>
-              <div class="checklist-row" id="chkProbe2"><div class="chk-icon" id="chkIcon2">⋯</div><span>Responsive viewport meta tag</span></div>
-              <div class="checklist-row" id="chkProbe3"><div class="chk-icon" id="chkIcon3">⋯</div><span>Touch controls &amp; pointer compatibility</span></div>
-              <div class="checklist-row" id="chkProbe4"><div class="chk-icon" id="chkIcon4">⋯</div><span>Mobile audio autoplay unlock</span></div>
+            <div style="background: var(--bg-card); border: 1px solid var(--border); border-radius: 12px; padding: 16px; margin-bottom: 16px;">
+              <div style="display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 6px;">
+                <div style="font-weight: 800; font-size: 16px;" id="wizSummaryName">—</div>
+                <span class="badge-status badge-review">In Review</span>
+              </div>
+              <p style="font-size: 12.5px; color: var(--text-muted); margin-bottom: 10px;" id="wizSummaryDesc">—</p>
+              <div style="font-size: 11.5px; color: var(--cyan); word-break: break-all;" id="wizSummaryUrl">—</div>
+            </div>
+
+            <!-- Review Queue Explanation -->
+            <div style="background: rgba(245, 158, 11, 0.08); border: 1px solid rgba(245, 158, 11, 0.3); border-radius: 12px; padding: 14px; margin-bottom: 22px;">
+              <div style="font-weight: 800; font-size: 13px; color: #fbbf24; margin-bottom: 4px; display: flex; align-items: center; gap: 6px;">
+                <span>⏳</span> Automated Verification Pipeline
+              </div>
+              <p style="font-size: 12px; color: #cbd5e1; line-height: 1.5;">
+                After submitting, your game will be in <strong>In Review</strong> status. Our automated verification engine will test your game URL for mobile responsiveness, audio context unlock, and GameTok SDK handshake before it is published live to the platform feed.
+              </p>
             </div>
 
             <div style="display: flex; justify-content: space-between;">
               <button class="btn-outline-action" onclick="jumpToWizardStep(2)">← Back</button>
-              <button class="btn-blue-action" id="btnToStep4" style="opacity: 0.5; pointer-events: none;" onclick="jumpToWizardStep(4)">Proceed to Publish →</button>
-            </div>
-          </div>
-
-          <!-- STEP 4: Publish Live -->
-          <div id="wStepContent4" style="display: none;">
-            <div style="font-weight: 800; font-size: 15px; margin-bottom: 4px;">Ready to Publish!</div>
-            <p style="font-size: 12.5px; color: var(--text-dim); margin-bottom: 20px;">Your game has passed all automated quality &amp; runtime checks.</p>
-
-            <div style="background: var(--bg-card); border: 1px solid var(--border); border-radius: 12px; padding: 18px; margin-bottom: 24px;">
-              <div style="font-weight: 800; font-size: 16px; margin-bottom: 4px;" id="wizSummaryName">My Awesome Game</div>
-              <div style="font-size: 12px; color: var(--green); font-weight: 700; margin-bottom: 8px;">✓ Verified &amp; Ready for Distribution</div>
-              <p style="font-size: 12.5px; color: var(--text-muted);" id="wizSummaryDesc">A thrilling instant web game designed for GameTok.</p>
-            </div>
-
-            <div style="display: flex; justify-content: space-between;">
-              <button class="btn-outline-action" onclick="jumpToWizardStep(3)">← Back</button>
-              <button class="btn-blue-action" onclick="finalizeGamePublish()">🚀 Publish to GameTok</button>
+              <button class="btn-blue-action" id="btnSubmitReview" onclick="submitGameForReview()">
+                🚀 Submit Game for Review
+              </button>
             </div>
           </div>
 
@@ -2431,7 +2432,7 @@ if (ad.rewarded) {
               </div>
             </td>
             <td style="color: var(--text-dim); font-size: 13px;">${g.version}</td>
-            <td style="color: var(--text-dim); font-size: 13px;">${g.orientation}</td>
+            <td style="color: var(--text-dim); font-size: 13px;">${(g.fileSize && g.fileSize.includes('External')) ? 'External URL' : 'HTML5 Web'}</td>
             <td style="font-weight: 600;">${g.players.toLocaleString()}</td>
             <td style="font-weight: 600;">${g.plays.toLocaleString()}</td>
             <td style="font-weight: 700; color: #fff;">$${g.earnings.toFixed(2)}</td>
@@ -2870,6 +2871,14 @@ if (ad.rewarded) {
 
     function openNewGameWizard() {
       wizardCurrentStep = 1;
+      const n = document.getElementById('wizGameName');
+      const d = document.getElementById('wizGameDesc');
+      const u = document.getElementById('wizGameUrl');
+      if (n) n.value = '';
+      if (d) d.value = '';
+      if (u) u.value = '';
+      const c = document.getElementById('descCharCount');
+      if (c) c.textContent = '0/500';
       jumpToWizardStep(1);
       document.getElementById('newGameWizardModal').classList.add('active');
     }
@@ -2884,9 +2893,10 @@ if (ad.rewarded) {
 
     function jumpToWizardStep(stepNum) {
       wizardCurrentStep = stepNum;
-      for (let i = 1; i <= 4; i++) {
+      for (let i = 1; i <= 3; i++) {
         const tab = document.getElementById('wStepTab' + i);
         const content = document.getElementById('wStepContent' + i);
+        if (!tab || !content) continue;
         if (i < stepNum) {
           tab.className = 'wizard-step-item completed';
         } else if (i === stepNum) {
@@ -2900,67 +2910,107 @@ if (ad.rewarded) {
 
     function handleWizardStep1(e) {
       e.preventDefault();
-      const name = document.getElementById('wizGameName').value;
-      const desc = document.getElementById('wizGameDesc').value;
-      document.getElementById('wizSummaryName').textContent = name;
-      document.getElementById('wizSummaryDesc').textContent = desc;
-      jumpToWizardStep(2);
-    }
-
-    function startAutomatedVerification() {
-      jumpToWizardStep(3);
-      const probes = [
-        { icon: 'chkIcon1', delay: 350 },
-        { icon: 'chkIcon2', delay: 750 },
-        { icon: 'chkIcon3', delay: 1150 },
-        { icon: 'chkIcon4', delay: 1550 },
-      ];
-
-      probes.forEach((p, idx) => {
-        setTimeout(() => {
-          document.getElementById(p.icon).textContent = '✓';
-          document.getElementById(p.icon).style.background = 'var(--green-bg)';
-          document.getElementById(p.icon).style.color = 'var(--green)';
-          if (idx === probes.length - 1) {
-            const btn = document.getElementById('btnToStep4');
-            btn.style.opacity = '1';
-            btn.style.pointerEvents = 'auto';
-          }
-        }, p.delay);
-      });
-    }
-
-    function finalizeGamePublish() {
       const name = document.getElementById('wizGameName').value.trim();
       const desc = document.getElementById('wizGameDesc').value.trim();
       const url = document.getElementById('wizGameUrl').value.trim();
-      const orientation = document.getElementById('wizGameOrientation').value;
+
+      document.getElementById('wizSummaryName').textContent = name || 'Untitled Game';
+      document.getElementById('wizSummaryDesc').textContent = desc || 'No description provided';
+      document.getElementById('wizSummaryUrl').textContent = url || 'No URL specified';
+      jumpToWizardStep(2);
+    }
+
+    function copyAiPrompt() {
+      const text = document.getElementById('wizAiPromptText')?.innerText || 
+`Add GameTok SDK integration to this web game:
+1. Add <script src="https://games.gametok.co/sdk/v1.js"></script> into index.html <head>.
+2. When the game finishes loading, call window.GameTok.ready().
+3. For any in-game shop items, purchases, or skins, call:
+   await window.GameTok.payments.purchase({ itemId: 'item_id', title: 'Item Name', amount: 0.99 });
+GameTok automatically renders the 1-click payment drawer, charges the player, and returns a verified receipt.`;
+
+      navigator.clipboard.writeText(text).then(() => {
+        showToast('📋 AI prompt copied to clipboard! Paste it into Cursor / Claude / ChatGPT.');
+      }).catch(() => {
+        copyText(text, '📋 AI prompt copied!');
+      });
+    }
+
+    async function submitGameForReview() {
+      const name = document.getElementById('wizGameName').value.trim();
+      const desc = document.getElementById('wizGameDesc').value.trim();
+      const url = document.getElementById('wizGameUrl').value.trim();
+
+      if (!name || !url) {
+        alert('Please provide both a Game Name and a valid Game URL.');
+        jumpToWizardStep(1);
+        return;
+      }
+
+      const btn = document.getElementById('btnSubmitReview');
+      if (btn) {
+        btn.textContent = 'Submitting to Review Queue...';
+        btn.disabled = true;
+      }
+
+      let realGameId = name.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-|-$/g, '').slice(0, 40) || 'game-' + Date.now();
+      let platformUrl = `https://gametok.co/game/${realGameId}`;
+
+      // Call real backend API to store in PostgreSQL games table
+      try {
+        const res = await fetch(`${API_BASE}/games/publish-web`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            gameTitle: name,
+            gameDesc: desc,
+            targetUrl: url,
+            handle: handle || 'creator',
+            orientation: 'landscape'
+          })
+        });
+        if (res.ok) {
+          const data = await res.json();
+          if (data.gameId) {
+            realGameId = data.gameId;
+            platformUrl = data.url || platformUrl;
+          }
+        }
+      } catch (err) {
+        console.warn('[Publish API] Network note:', err.message);
+      }
 
       const newG = {
-        id: name.toLowerCase().replace(/[^a-z0-9]/g, '-'),
+        id: realGameId,
         name: name,
         version: 'v1.0.0',
-        orientation: orientation.charAt(0).toUpperCase() + orientation.slice(1),
-        players: 1,
-        plays: 1,
-        earnings: 0.05,
-        status: 'published',
+        players: 0,
+        plays: 0,
+        earnings: 0.00,
+        status: 'in_review',
         cover: 'assets/neon-drift-hero.jpg',
         desc: desc,
-        tags: ['New', 'Instant', 'GameTok'],
+        tags: ['In Review', 'Web', 'Submitted'],
         gameId: 'g_' + Math.random().toString(36).substring(2, 10),
-        created: 'Today',
-        updated: 'Today',
-        fileSize: '3.4 MB',
-        engine: 'HTML5 WebGL',
-        embedUrl: url
+        created: 'Just now',
+        updated: 'Just now',
+        fileSize: 'External URL',
+        engine: 'HTML5 Web',
+        embedUrl: url,
+        platformUrl: platformUrl
       };
 
       myGames.unshift(newG);
       renderDashboardTable();
       renderGamesCatalog();
       closeNewGameWizard();
-      showToast(`🎉 "${name}" published live to GameTok!`);
+
+      if (btn) {
+        btn.textContent = '🚀 Submit Game for Review';
+        btn.disabled = false;
+      }
+
+      showToast(`📋 "${name}" submitted for review! Showing in review status.`);
     }
 
     // Developer Prompt Inspector
@@ -2999,29 +3049,101 @@ Follow the official SDK requirements:
       });
     }
 
+    async function loadUserProfile() {
+      const token = localStorage.getItem('gametok_auth_token');
+      const cachedName = localStorage.getItem('gametok_user_name');
+      const cachedHandle = localStorage.getItem('gametok_creator_handle');
+      const cachedEmail = localStorage.getItem('gametok_user_email');
+
+      if (cachedName || cachedHandle || cachedEmail) {
+        applyUserData({
+          displayName: cachedName || (cachedHandle ? '@' + cachedHandle : 'Creator'),
+          username: cachedHandle || 'creator',
+          email: cachedEmail || ''
+        });
+      }
+
+      // Fetch live user profile from GameTok backend if authenticated
+      if (token) {
+        try {
+          const res = await fetch(`${API_BASE}/auth/me`, {
+            headers: { 'Authorization': `Bearer ${token}` }
+          });
+          if (res.ok) {
+            const data = await res.json();
+            if (data.user) {
+              const u = data.user;
+              if (u.displayName) localStorage.setItem('gametok_user_name', u.displayName);
+              if (u.username) localStorage.setItem('gametok_creator_handle', u.username);
+              if (u.email) localStorage.setItem('gametok_user_email', u.email);
+              applyUserData(u);
+            }
+          }
+        } catch (err) {
+          console.warn('[Profile Sync] Failed to fetch /auth/me:', err);
+        }
+      }
+    }
+
+    function applyUserData(u) {
+      const name = u.displayName || u.name || u.username || 'Creator';
+      const username = (u.username || handle || 'creator').replace(/^@/, '');
+      const email = u.email || (username ? `${username}@gametok.co` : '');
+
+      // Time-aware dynamic greeting
+      const hour = new Date().getHours();
+      const timeGreeting = hour < 12 ? 'Good morning' : hour < 18 ? 'Good afternoon' : 'Good evening';
+      const firstName = name.split(' ')[0].replace(/^@/, '');
+      const greetingEl = document.getElementById('greetingText');
+      if (greetingEl) greetingEl.textContent = `${timeGreeting}, ${firstName} 👋`;
+
+      // Initials
+      const initials = name.split(' ').map(w => w[0]).join('').slice(0, 2).toUpperCase() || 'GT';
+      const uInit = document.getElementById('userInitials');
+      if (uInit) uInit.textContent = initials;
+      const sInit = document.getElementById('settingsAvatarInitials');
+      if (sInit) sInit.textContent = initials;
+
+      // Sidebar Profile Info
+      const dName = document.getElementById('userDisplayName');
+      if (dName) dName.textContent = name;
+      const uEmail = document.getElementById('userEmail');
+      if (uEmail) uEmail.textContent = email || `@${username}`;
+
+      // Settings Fields
+      const pName = document.getElementById('setProfileName');
+      if (pName) pName.value = name;
+      const pEmail = document.getElementById('setProfileEmail');
+      if (pEmail) pEmail.value = email;
+      const pHandle = document.getElementById('setProfileHandle');
+      if (pHandle) pHandle.value = '@' + username;
+    }
+
     function saveUserSettings() {
-      const name = document.getElementById('setProfileName').value;
-      const email = document.getElementById('setProfileEmail').value;
-      const handleVal = document.getElementById('setProfileHandle').value.replace(/^@/, '');
+      const name = document.getElementById('setProfileName').value.trim();
+      const email = document.getElementById('setProfileEmail').value.trim();
+      const handleVal = document.getElementById('setProfileHandle').value.trim().replace(/^@/, '');
 
-      document.getElementById('userDisplayName').textContent = name;
-      document.getElementById('userEmail').textContent = email;
-      const initials = name.split(' ').map(w => w[0]).join('').slice(0, 2).toUpperCase() || 'JD';
-      document.getElementById('userInitials').textContent = initials;
-      document.getElementById('settingsAvatarInitials').textContent = initials;
-
+      localStorage.setItem('gametok_user_name', name);
+      localStorage.setItem('gametok_user_email', email);
       localStorage.setItem('gametok_creator_handle', handleVal);
+
+      applyUserData({ displayName: name, username: handleVal, email: email });
       showToast('✓ Profile and developer settings saved successfully');
     }
 
     function logout() {
+      localStorage.removeItem('gametok_auth_token');
       localStorage.removeItem('gametok_creator_handle');
+      localStorage.removeItem('gametok_user_name');
+      localStorage.removeItem('gametok_user_email');
       showToast('Signed out from GameTok Studio');
-      setTimeout(() => { window.location.href = '/'; }, 1000);
+      setTimeout(() => { window.location.href = '/'; }, 600);
     }
 
     // Initialize Viewport
     window.addEventListener('DOMContentLoaded', () => {
+      loadUserProfile();
       renderDashboardTable();
       renderGamesCatalog('all');
       renderPayoutsTable(1);
