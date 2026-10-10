@@ -2582,7 +2582,7 @@ window.addEventListener('gametok:pause', () => pauseGameLoop());</div>
 Follow the official SDK requirements:
 
 1. Add the GameTok bridge tag to your index.html <head>:
-   <script src="https://gametok.co/bridge.js" data-creator-handle="@${handle}" data-game-title="${g.name}"></script>
+   <script src="https://gametok.co/bridge.js" data-creator-handle="@${handle}" data-game-title="${g.name}"><\/script>
 
 2. Implement runtime lifecycle handlers:
    window.addEventListener('gametok:pause', () => pauseGame());
