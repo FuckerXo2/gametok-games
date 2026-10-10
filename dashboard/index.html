@@ -3083,6 +3083,12 @@ Follow the official SDK requirements:
           console.warn('[Profile Sync] Failed to fetch /auth/me:', err);
         }
       }
+
+      // Fetch games strictly tied to this developer account
+      const activeHandle = (realUser && realUser.username) || cachedHandle || handle;
+      if (activeHandle) {
+        fetchDeveloperGames(activeHandle);
+      }
     }
 
     function applyUserData(u) {
@@ -3119,17 +3125,73 @@ Follow the official SDK requirements:
       if (pHandle) pHandle.value = '@' + username;
     }
 
-    function saveUserSettings() {
+    async function saveUserSettings() {
       const name = document.getElementById('setProfileName').value.trim();
       const email = document.getElementById('setProfileEmail').value.trim();
       const handleVal = document.getElementById('setProfileHandle').value.trim().replace(/^@/, '');
+      const token = localStorage.getItem('gametok_auth_token');
 
       localStorage.setItem('gametok_user_name', name);
       localStorage.setItem('gametok_user_email', email);
       localStorage.setItem('gametok_creator_handle', handleVal);
 
       applyUserData({ displayName: name, username: handleVal, email: email });
-      showToast('✓ Profile and developer settings saved successfully');
+
+      // Synchronize with backend database across all GameTok platforms
+      try {
+        const res = await fetch(`${API_BASE}/publish/creator/${handleVal}`, {
+          method: 'PATCH',
+          headers: {
+            'Content-Type': 'application/json',
+            ...(token ? { 'Authorization': `Bearer ${token}` } : {})
+          },
+          body: JSON.stringify({ displayName: name })
+        });
+        if (res.ok) {
+          showToast('✓ Profile name updated and synced across all GameTok platforms!');
+          return;
+        }
+      } catch (err) {
+        console.warn('[Profile Sync] Failed to sync with backend:', err);
+      }
+      showToast('✓ Profile and developer settings saved');
+    }
+
+    async function fetchDeveloperGames(devHandle) {
+      const token = localStorage.getItem('gametok_auth_token');
+      try {
+        const url = token ? `${API_BASE}/developer/games` : `${API_BASE}/developer/games?handle=@${devHandle}`;
+        const res = await fetch(url, {
+          headers: token ? { 'Authorization': `Bearer ${token}` } : {}
+        });
+        if (res.ok) {
+          const data = await res.json();
+          if (Array.isArray(data.games) && data.games.length > 0) {
+            myGames = data.games.map(g => ({
+              id: g.id,
+              name: g.name || g.title,
+              version: g.version || 'v1.0.0',
+              players: g.uniquePlayers || g.players || 0,
+              plays: g.plays || 0,
+              earnings: parseFloat(g.earnings || 0),
+              status: g.status === 'in_review' ? 'in_review' : (g.status === 'published' ? 'published' : 'in_review'),
+              cover: g.thumbnail || g.cover || 'assets/neon-drift-hero.jpg',
+              desc: g.description || '',
+              tags: [g.category || 'Arcade', 'Web'],
+              gameId: 'g_' + String(g.id).slice(0, 8),
+              created: g.created_at ? new Date(g.created_at).toLocaleDateString() : 'Recent',
+              updated: g.updated_at ? new Date(g.updated_at).toLocaleDateString() : 'Recent',
+              fileSize: g.embed_url ? 'External URL' : 'HTML5 Web',
+              engine: 'HTML5 Web',
+              embedUrl: g.embed_url || `/game/${g.id}`
+            }));
+            renderDashboardTable();
+            renderGamesCatalog('all');
+          }
+        }
+      } catch (err) {
+        console.warn('[Games Sync] Notice:', err.message);
+      }
     }
 
     function logout() {
