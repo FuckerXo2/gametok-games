@@ -2977,7 +2977,7 @@ GameTok automatically renders the 1-click payment drawer, charges the player, an
     function copyAiPrompt() {
       const text = document.getElementById('wizAiPromptText')?.innerText || 
 `Add GameTok SDK integration to this web game:
-1. Add <script src="https://games.gametok.co/sdk/v1.js"></script> into index.html <head>.
+1. Add <script src="https://games.gametok.co/sdk/v1.js"><\/script> into index.html <head>.
 2. When the game finishes loading, call window.GameTok.ready().
 3. For any in-game shop items, purchases, or skins, call:
    await window.GameTok.payments.purchase({ itemId: 'item_id', title: 'Item Name', amount: 0.99 });
@@ -3079,7 +3079,7 @@ GameTok automatically renders the 1-click payment drawer, charges the player, an
 Follow the official SDK v1.2 requirements:
 
 1. Add the GameTok SDK to your index.html <head>:
-   <script src="https://games.gametok.co/sdk/v1.js"></script>
+   <script src="https://games.gametok.co/sdk/v1.js"><\/script>
 
 2. When the game finishes loading, call ready:
    window.GameTok.ready();
