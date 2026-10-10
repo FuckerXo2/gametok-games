@@ -2052,14 +2052,46 @@ if (ad.rewarded) {
               </div>
 
               <div class="form-group">
+                <label class="form-label">Hosting Method *</label>
+                <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-bottom: 8px;">
+                  <button type="button" class="btn-outline-action active" id="btnHostLink" onclick="switchHostMode('link')" style="text-align: left; padding: 12px; border-radius: 10px; display: flex; align-items: flex-start; gap: 10px; border-color: var(--blue); background: rgba(37,99,235,0.12);">
+                    <span style="font-size: 18px;">🔗</span>
+                    <div>
+                      <div style="font-weight: 700; font-size: 13px; color: #fff;">External Web Link</div>
+                      <div style="font-size: 11px; color: var(--text-dim); margin-top: 2px;">Vercel, Netlify, Itch.io, GitHub Pages</div>
+                    </div>
+                  </button>
+                  <button type="button" class="btn-outline-action" id="btnHostFile" onclick="switchHostMode('file')" style="text-align: left; padding: 12px; border-radius: 10px; display: flex; align-items: flex-start; gap: 10px; border-color: var(--border); background: transparent;">
+                    <span style="font-size: 18px;">📦</span>
+                    <div>
+                      <div style="font-weight: 700; font-size: 13px; color: #fff;">Upload Game File</div>
+                      <div style="font-size: 11px; color: var(--text-dim); margin-top: 2px;">HTML5 bundle hosted directly on GameTok CDN</div>
+                    </div>
+                  </button>
+                </div>
+              </div>
+
+              <!-- Option A: Live Web URL -->
+              <div class="form-group" id="groupHostLink">
                 <label class="form-label">Game Link (Live Web URL) *</label>
                 <div style="position: relative;">
-                  <input type="url" id="wizGameUrl" class="form-input" placeholder="https://yourgame.vercel.app (or Netlify, itch.io, custom domain)" value="" required style="padding-left: 38px;">
+                  <input type="url" id="wizGameUrl" class="form-input" placeholder="https://yourgame.vercel.app (or Netlify, itch.io, custom domain)" value="" style="padding-left: 38px;">
                   <span style="position: absolute; left: 12px; top: 50%; transform: translateY(-50%); font-size: 15px; opacity: 0.8;">🔗</span>
                 </div>
                 <span style="font-size: 11.5px; color: var(--text-dim); margin-top: 6px; display: block;">
-                  Just paste your hosted game link. No file uploads or build dropping required — GameTok serves your game via link with auto-authentication and 1-click in-game payments.
+                  Paste your hosted URL. GameTok serves it at <b>gametok.co/game/&lt;id&gt;</b> with auto-authentication, automatic screenshot thumbnails, and 1-click in-game payments.
                 </span>
+              </div>
+
+              <!-- Option B: Direct File Upload -->
+              <div class="form-group" id="groupHostFile" style="display: none;">
+                <label class="form-label">Game Bundle (.html or single-file export) *</label>
+                <div style="border: 2px dashed rgba(255,255,255,0.18); border-radius: 12px; padding: 24px 16px; text-align: center; background: rgba(0,0,0,0.25); cursor: pointer; transition: all 0.2s;" id="dropZoneGameFile" onclick="document.getElementById('wizGameFileInput').click()">
+                  <input type="file" id="wizGameFileInput" accept=".html,.htm,.zip" style="display: none;" onchange="handleGameFileSelected(this.files)">
+                  <div style="font-size: 28px; margin-bottom: 8px;">📁</div>
+                  <div style="font-size: 13px; font-weight: 600; color: #fff;" id="fileUploadPrompt">Click to select or drag &amp; drop HTML game file</div>
+                  <div style="font-size: 11px; color: var(--text-dim); margin-top: 4px;" id="fileUploadDetails">Supports standalone HTML5, Three.js, Phaser, or Godot exports (up to 25MB)</div>
+                </div>
               </div>
 
               <div style="display: flex; justify-content: flex-end; margin-top: 24px;">
@@ -3242,9 +3274,59 @@ GameTok automatically renders the 1-click payment drawer, charges the player, an
 
     // Wizard: Create New Game (Screen 5)
     let wizardCurrentStep = 1;
+    let currentHostMode = 'link';
+    let uploadedGameHtml = '';
+    let uploadedGameFileName = '';
+
+    function switchHostMode(mode) {
+      currentHostMode = mode;
+      const btnLink = document.getElementById('btnHostLink');
+      const btnFile = document.getElementById('btnHostFile');
+      const groupLink = document.getElementById('groupHostLink');
+      const groupFile = document.getElementById('groupHostFile');
+      const inputUrl = document.getElementById('wizGameUrl');
+
+      if (mode === 'link') {
+        if (btnLink) { btnLink.style.borderColor = 'var(--blue)'; btnLink.style.background = 'rgba(37,99,235,0.12)'; }
+        if (btnFile) { btnFile.style.borderColor = 'var(--border)'; btnFile.style.background = 'transparent'; }
+        if (groupLink) groupLink.style.display = 'block';
+        if (groupFile) groupFile.style.display = 'none';
+        if (inputUrl) inputUrl.required = true;
+      } else {
+        if (btnFile) { btnFile.style.borderColor = 'var(--blue)'; btnFile.style.background = 'rgba(37,99,235,0.12)'; }
+        if (btnLink) { btnLink.style.borderColor = 'var(--border)'; btnLink.style.background = 'transparent'; }
+        if (groupLink) groupLink.style.display = 'none';
+        if (groupFile) groupFile.style.display = 'block';
+        if (inputUrl) inputUrl.required = false;
+      }
+    }
+
+    function handleGameFileSelected(files) {
+      if (!files || files.length === 0) return;
+      const file = files[0];
+      uploadedGameFileName = file.name;
+      const promptEl = document.getElementById('fileUploadPrompt');
+      const detailsEl = document.getElementById('fileUploadDetails');
+
+      if (promptEl) promptEl.textContent = `✓ Selected: ${file.name} (${Math.round(file.size / 1024)} KB)`;
+      if (detailsEl) detailsEl.textContent = 'Reading game bundle...';
+
+      const reader = new FileReader();
+      reader.onload = function(evt) {
+        uploadedGameHtml = evt.target.result;
+        if (detailsEl) detailsEl.textContent = 'Ready to host directly on GameTok CDN!';
+        showToast(`✓ Game bundle loaded (${Math.round(file.size / 1024)} KB)`);
+      };
+      reader.onerror = function() {
+        showToast('Failed to read file');
+      };
+      reader.readAsText(file);
+    }
 
     function openNewGameWizard() {
       wizardCurrentStep = 1;
+      uploadedGameHtml = '';
+      uploadedGameFileName = '';
       const n = document.getElementById('wizGameName');
       const d = document.getElementById('wizGameDesc');
       const u = document.getElementById('wizGameUrl');
@@ -3253,6 +3335,11 @@ GameTok automatically renders the 1-click payment drawer, charges the player, an
       if (u) u.value = '';
       const c = document.getElementById('descCharCount');
       if (c) c.textContent = '0/500';
+      const promptEl = document.getElementById('fileUploadPrompt');
+      if (promptEl) promptEl.textContent = 'Click to select or drag & drop HTML game file';
+      const detailsEl = document.getElementById('fileUploadDetails');
+      if (detailsEl) detailsEl.textContent = 'Supports standalone HTML5, Three.js, Phaser, or Godot exports (up to 25MB)';
+      switchHostMode('link');
       jumpToWizardStep(1);
       document.getElementById('newGameWizardModal').classList.add('active');
     }
@@ -3288,9 +3375,18 @@ GameTok automatically renders the 1-click payment drawer, charges the player, an
       const desc = document.getElementById('wizGameDesc').value.trim();
       const url = document.getElementById('wizGameUrl').value.trim();
 
+      if (currentHostMode === 'link' && !url) {
+        alert('Please provide a valid web URL for your game.');
+        return;
+      }
+      if (currentHostMode === 'file' && !uploadedGameHtml) {
+        alert('Please select an HTML game bundle file to upload.');
+        return;
+      }
+
       document.getElementById('wizSummaryName').textContent = name || 'Untitled Game';
       document.getElementById('wizSummaryDesc').textContent = desc || 'No description provided';
-      document.getElementById('wizSummaryUrl').textContent = url || 'No URL specified';
+      document.getElementById('wizSummaryUrl').textContent = currentHostMode === 'link' ? url : `GameTok Hosted (${uploadedGameFileName || 'HTML Bundle'})`;
       jumpToWizardStep(2);
     }
 
@@ -3315,8 +3411,18 @@ GameTok automatically renders the 1-click payment drawer, charges the player, an
       const desc = document.getElementById('wizGameDesc').value.trim();
       const url = document.getElementById('wizGameUrl').value.trim();
 
-      if (!name || !url) {
-        alert('Please provide both a Game Name and a valid Game URL.');
+      if (!name) {
+        alert('Please provide a Game Name.');
+        jumpToWizardStep(1);
+        return;
+      }
+      if (currentHostMode === 'link' && !url) {
+        alert('Please provide a valid Game URL.');
+        jumpToWizardStep(1);
+        return;
+      }
+      if (currentHostMode === 'file' && !uploadedGameHtml) {
+        alert('Please select an HTML game bundle file.');
         jumpToWizardStep(1);
         return;
       }
@@ -3338,7 +3444,8 @@ GameTok automatically renders the 1-click payment drawer, charges the player, an
           body: JSON.stringify({
             gameTitle: name,
             gameDesc: desc,
-            targetUrl: url,
+            targetUrl: currentHostMode === 'link' ? url : '',
+            html: currentHostMode === 'file' ? uploadedGameHtml : undefined,
             handle: handle || 'creator',
             orientation: 'landscape'
           })
