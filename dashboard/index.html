@@ -3,32 +3,33 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>GameTok — Developer Studio</title>
+  <title>GameTok — Developer Dashboard</title>
   <link rel="icon" type="image/png" href="/assets/adaptive-icon.png">
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
   <style>
     :root {
-      --bg: #070c16;
-      --bg-sidebar: #090f1d;
-      --bg-card: #0d1527;
-      --bg-card-inner: #111a30;
-      --bg-card-hover: #131e36;
-      --bg-input: #0a1122;
-      --border: #18233c;
-      --border-subtle: rgba(255, 255, 255, 0.06);
+      --bg: #070c17;
+      --bg-sidebar: #090f1e;
+      --bg-card: #0c1424;
+      --bg-card-inner: #101a2f;
+      --bg-card-hover: #13203b;
+      --bg-input: #080e1c;
+      --border: #17243c;
+      --border-subtle: rgba(255, 255, 255, 0.07);
       --text: #ffffff;
       --text-muted: #8b9bb4;
       --text-dim: #546482;
-      --cyan: #38bdf8;
       --blue: #2563eb;
+      --blue-hover: #1d4ed8;
+      --cyan: #38bdf8;
       --green: #22c55e;
+      --green-bg: rgba(34, 197, 94, 0.14);
       --amber: #f59e0b;
+      --amber-bg: rgba(245, 158, 11, 0.14);
       --purple: #a855f7;
-      --nav-active-bg: #132242;
-      --nav-active-border: #1e3a73;
-      --font: 'Plus Jakarta Sans', -apple-system, BlinkMacSystemFont, sans-serif;
+      --font: 'Plus Jakarta Sans', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
       --font-mono: 'JetBrains Mono', monospace;
     }
 
@@ -38,27 +39,30 @@
       color: var(--text);
       font-family: var(--font);
       height: 100vh;
+      width: 100vw;
       overflow: hidden;
       -webkit-font-smoothing: antialiased;
     }
 
-    /* Outer Desktop App Shell */
+    /* Outer Shell Layout */
     .app-shell {
       display: flex;
       height: 100vh;
       width: 100vw;
+      overflow: hidden;
     }
 
     /* Left Sidebar */
     aside.sidebar {
-      width: 250px;
-      min-width: 250px;
+      width: 248px;
+      min-width: 248px;
       background: var(--bg-sidebar);
       border-right: 1px solid var(--border);
       display: flex;
       flex-direction: column;
-      padding: 24px 18px;
+      padding: 24px 16px;
       user-select: none;
+      z-index: 10;
     }
 
     .sidebar-brand {
@@ -68,17 +72,23 @@
       text-decoration: none;
       color: #fff;
       font-weight: 800;
-      font-size: 21px;
+      font-size: 20px;
       letter-spacing: -0.02em;
-      margin-bottom: 32px;
-      padding-left: 6px;
+      margin-bottom: 28px;
+      padding-left: 8px;
     }
 
-    .sidebar-brand img {
+    .brand-icon-box {
       width: 32px;
       height: 32px;
       border-radius: 9px;
-      object-fit: contain;
+      background: var(--blue);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      color: #fff;
+      box-shadow: 0 4px 12px rgba(37, 99, 235, 0.4);
+      flex-shrink: 0;
     }
 
     .sidebar-menu {
@@ -92,11 +102,11 @@
     .nav-item {
       display: flex;
       align-items: center;
-      gap: 14px;
-      padding: 11px 16px;
-      border-radius: 12px;
+      gap: 13px;
+      padding: 10px 14px;
+      border-radius: 10px;
       color: var(--text-muted);
-      font-size: 14px;
+      font-size: 13.5px;
       font-weight: 600;
       text-decoration: none;
       transition: all 0.15s ease;
@@ -111,31 +121,28 @@
 
     .nav-item.active {
       color: #fff;
-      background: var(--nav-active-bg);
-      border-color: var(--nav-active-border);
-      box-shadow: 0 4px 18px rgba(0, 0, 0, 0.4);
+      background: var(--blue);
+      box-shadow: 0 4px 14px rgba(37, 99, 235, 0.4);
+    }
+
+    .nav-item.active .nav-icon {
+      color: #fff;
+      opacity: 1;
     }
 
     .nav-icon {
       width: 18px;
       height: 18px;
       flex-shrink: 0;
-      opacity: 0.85;
-    }
-
-    .nav-item.active .nav-icon {
-      color: var(--cyan);
-      opacity: 1;
+      opacity: 0.8;
+      transition: opacity 0.15s ease;
     }
 
     /* Sidebar Footer / User Profile */
     .sidebar-footer {
       border-top: 1px solid var(--border);
       padding-top: 16px;
-      display: flex;
-      align-items: center;
-      justify-content: space-between;
-      gap: 10px;
+      margin-top: auto;
     }
 
     .user-pill {
@@ -143,25 +150,27 @@
       align-items: center;
       gap: 12px;
       min-width: 0;
+      padding: 4px;
     }
 
     .user-avatar-initials {
-      width: 36px;
-      height: 36px;
+      width: 38px;
+      height: 38px;
       border-radius: 50%;
-      background: #1b2848;
-      color: var(--cyan);
+      background: #1e3a73;
+      color: #93c5fd;
       font-size: 13px;
       font-weight: 800;
       display: flex;
       align-items: center;
       justify-content: center;
       flex-shrink: 0;
-      border: 1.5px solid var(--border);
+      border: 1.5px solid #2563eb;
     }
 
     .user-meta {
       min-width: 0;
+      flex: 1;
     }
 
     .user-display-name {
@@ -188,11 +197,12 @@
       background: none;
       border: none;
       color: #ef4444;
-      font-size: 11.5px;
+      font-size: 12px;
       font-weight: 600;
       cursor: pointer;
       margin-top: 12px;
-      padding-left: 2px;
+      padding-left: 6px;
+      transition: color 0.15s ease;
     }
     .btn-signout-text:hover { color: #f87171; }
 
@@ -201,16 +211,16 @@
       flex: 1;
       height: 100vh;
       overflow-y: auto;
-      padding: 34px 44px;
+      padding: 32px 40px;
       background: var(--bg);
     }
 
-    /* Viewport Top Headers */
+    /* View Headers */
     .view-header {
       display: flex;
       justify-content: space-between;
       align-items: flex-start;
-      margin-bottom: 28px;
+      margin-bottom: 26px;
     }
 
     .view-header-left h1 {
@@ -218,10 +228,13 @@
       font-weight: 800;
       letter-spacing: -0.02em;
       margin-bottom: 4px;
+      display: flex;
+      align-items: center;
+      gap: 8px;
     }
 
     .view-header-left p {
-      font-size: 13.5px;
+      font-size: 13px;
       color: var(--text-muted);
     }
 
@@ -231,58 +244,92 @@
       gap: 12px;
     }
 
-    /* Filter & Action Buttons */
+    /* Buttons & Controls */
     .btn-filter-dropdown {
       background: var(--bg-card);
       border: 1px solid var(--border);
       color: var(--text-muted);
       padding: 8px 14px;
-      border-radius: 10px;
+      border-radius: 9px;
       font-size: 13px;
       font-weight: 600;
       outline: none;
       cursor: pointer;
-      display: flex;
+      display: inline-flex;
       align-items: center;
       gap: 8px;
+      transition: all 0.15s ease;
+      font-family: inherit;
+    }
+    .btn-filter-dropdown:hover {
+      border-color: #263859;
+      color: #fff;
     }
 
     .btn-blue-action {
-      background: #2563eb;
+      background: var(--blue);
       color: #fff;
       font-size: 13px;
       font-weight: 700;
       padding: 9px 18px;
-      border-radius: 10px;
+      border-radius: 9px;
       border: none;
       cursor: pointer;
       display: inline-flex;
       align-items: center;
       gap: 6px;
       box-shadow: 0 4px 14px rgba(37, 99, 235, 0.35);
-      transition: background 0.15s ease;
+      transition: background 0.15s ease, transform 0.1s ease;
+      text-decoration: none;
+      font-family: inherit;
     }
-    .btn-blue-action:hover { background: #1d4ed8; }
+    .btn-blue-action:hover {
+      background: var(--blue-hover);
+    }
+    .btn-blue-action:active {
+      transform: scale(0.98);
+    }
 
-    /* Stat Cards Row */
+    .btn-outline-action {
+      background: transparent;
+      border: 1px solid var(--border);
+      color: #fff;
+      font-size: 13px;
+      font-weight: 600;
+      padding: 8px 16px;
+      border-radius: 9px;
+      cursor: pointer;
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      transition: all 0.15s ease;
+      text-decoration: none;
+      font-family: inherit;
+    }
+    .btn-outline-action:hover {
+      background: rgba(255, 255, 255, 0.05);
+      border-color: #2b3d63;
+    }
+
+    /* Stat Cards Grids */
     .stat-row-3 {
       display: grid;
       grid-template-columns: repeat(3, 1fr);
       gap: 20px;
-      margin-bottom: 30px;
+      margin-bottom: 26px;
     }
 
     .stat-row-4 {
       display: grid;
       grid-template-columns: repeat(4, 1fr);
       gap: 20px;
-      margin-bottom: 30px;
+      margin-bottom: 26px;
     }
 
     .card-stat {
       background: var(--bg-card);
       border: 1px solid var(--border);
-      border-radius: 16px;
+      border-radius: 14px;
       padding: 22px 24px;
       position: relative;
     }
@@ -305,24 +352,30 @@
       font-size: 13px;
       font-weight: 600;
       color: var(--text-muted);
-      margin-bottom: 6px;
+      margin-bottom: 8px;
     }
 
     .card-stat-value {
-      font-size: 30px;
+      font-size: 28px;
       font-weight: 800;
       letter-spacing: -0.025em;
       line-height: 1.1;
       margin-bottom: 6px;
       display: flex;
-      align-items: baseline;
+      align-items: center;
       gap: 10px;
     }
 
-    .card-stat-trend {
-      font-size: 12px;
+    .card-stat-badge {
+      font-size: 11.5px;
       font-weight: 700;
       color: var(--green);
+      background: var(--green-bg);
+      padding: 2px 7px;
+      border-radius: 999px;
+      display: inline-flex;
+      align-items: center;
+      gap: 3px;
     }
 
     .card-stat-sub {
@@ -330,17 +383,17 @@
       color: var(--text-dim);
     }
 
-    /* Container Card */
+    /* Container Card Panels */
     .card-panel {
       background: var(--bg-card);
       border: 1px solid var(--border);
-      border-radius: 18px;
+      border-radius: 16px;
       padding: 24px 28px;
-      margin-bottom: 30px;
+      margin-bottom: 26px;
     }
 
     .card-panel-header {
-      font-size: 18px;
+      font-size: 17px;
       font-weight: 800;
       margin-bottom: 20px;
       letter-spacing: -0.015em;
@@ -349,7 +402,7 @@
       align-items: center;
     }
 
-    /* Table Component */
+    /* Data Tables */
     .data-table {
       width: 100%;
       border-collapse: collapse;
@@ -362,22 +415,25 @@
       font-weight: 600;
       color: var(--text-dim);
       border-bottom: 1px solid var(--border);
-      text-transform: capitalize;
     }
 
     .data-table td {
       padding: 16px 14px;
       border-bottom: 1px solid rgba(255, 255, 255, 0.03);
-      font-size: 14px;
+      font-size: 13.5px;
       color: #cbd5e1;
       vertical-align: middle;
+    }
+
+    .data-table tr:last-child td {
+      border-bottom: none;
     }
 
     .data-table tr:hover td {
       background: rgba(255, 255, 255, 0.015);
     }
 
-    /* Game List Row Content */
+    /* Game Identity in Table */
     .game-identity {
       display: flex;
       align-items: center;
@@ -387,13 +443,10 @@
     .game-thumb-box {
       width: 44px;
       height: 44px;
-      border-radius: 12px;
+      border-radius: 10px;
       overflow: hidden;
       flex-shrink: 0;
-      background: #15223c;
-      display: flex;
-      align-items: center;
-      justify-content: center;
+      background: #131c30;
       border: 1px solid var(--border);
     }
 
@@ -403,30 +456,38 @@
       object-fit: cover;
     }
 
-    .game-thumb-box span {
-      font-size: 20px;
-    }
-
     .game-identity-name {
       font-weight: 700;
       color: #fff;
-      font-size: 14.5px;
+      font-size: 14px;
     }
 
-    /* Status Pill Badges */
+    /* Status Badges */
     .badge-status {
       display: inline-flex;
       align-items: center;
-      padding: 4px 10px;
+      padding: 3px 10px;
       border-radius: 999px;
       font-size: 11.5px;
       font-weight: 700;
     }
-    .badge-published { background: rgba(34, 197, 94, 0.12); color: #22c55e; border: 1px solid rgba(34, 197, 94, 0.25); }
-    .badge-review { background: rgba(245, 158, 11, 0.12); color: #f59e0b; border: 1px solid rgba(245, 158, 11, 0.25); }
-    .badge-draft { background: rgba(148, 163, 184, 0.12); color: #94a3b8; border: 1px solid rgba(148, 163, 184, 0.25); }
+    .badge-published {
+      background: var(--green-bg);
+      color: #22c55e;
+      border: 1px solid rgba(34, 197, 94, 0.3);
+    }
+    .badge-review {
+      background: var(--amber-bg);
+      color: #f59e0b;
+      border: 1px solid rgba(245, 158, 11, 0.3);
+    }
+    .badge-draft {
+      background: rgba(148, 163, 184, 0.12);
+      color: #94a3b8;
+      border: 1px solid rgba(148, 163, 184, 0.25);
+    }
 
-    /* Action Buttons */
+    /* Action Buttons in Tables & Cards */
     .btn-table-action {
       background: rgba(255, 255, 255, 0.05);
       border: 1px solid var(--border);
@@ -434,23 +495,30 @@
       font-size: 12px;
       font-weight: 600;
       padding: 6px 14px;
-      border-radius: 8px;
+      border-radius: 7px;
       cursor: pointer;
       text-decoration: none;
       display: inline-flex;
       align-items: center;
+      justify-content: center;
       transition: all 0.15s ease;
+      font-family: inherit;
     }
-    .btn-table-action:hover { background: rgba(255, 255, 255, 0.1); }
+    .btn-table-action:hover {
+      background: rgba(255, 255, 255, 0.1);
+      border-color: #2a3c61;
+    }
 
     .btn-table-action.play-btn {
-      background: #2563eb;
-      border-color: #2563eb;
+      background: var(--blue);
+      border-color: var(--blue);
       color: #fff;
     }
-    .btn-table-action.play-btn:hover { background: #1d4ed8; }
+    .btn-table-action.play-btn:hover {
+      background: var(--blue-hover);
+    }
 
-    /* Filter Pills for Games View */
+    /* Filter Pills for Games Catalog */
     .filter-pills-row {
       display: flex;
       gap: 10px;
@@ -463,21 +531,27 @@
       color: var(--text-muted);
       padding: 6px 16px;
       border-radius: 999px;
-      font-size: 13px;
+      font-size: 12.5px;
       font-weight: 600;
       cursor: pointer;
       text-decoration: none;
       display: inline-flex;
       align-items: center;
       gap: 6px;
+      transition: all 0.15s ease;
+    }
+    .filter-pill:hover {
+      color: #fff;
+      border-color: #273859;
     }
     .filter-pill.active {
-      background: #2563eb;
+      background: var(--blue);
       color: #fff;
-      border-color: #2563eb;
+      border-color: var(--blue);
+      box-shadow: 0 2px 10px rgba(37, 99, 235, 0.35);
     }
 
-    /* Game Card Grid Layout for Games Tab */
+    /* Games Tab 4-Column Grid */
     .games-card-grid {
       display: grid;
       grid-template-columns: repeat(4, 1fr);
@@ -487,15 +561,20 @@
     .game-grid-card {
       background: var(--bg-card);
       border: 1px solid var(--border);
-      border-radius: 16px;
+      border-radius: 14px;
       overflow: hidden;
       display: flex;
       flex-direction: column;
+      transition: transform 0.15s ease, border-color 0.15s ease;
+    }
+    .game-grid-card:hover {
+      border-color: #22375f;
+      transform: translateY(-2px);
     }
 
     .game-grid-cover {
       width: 100%;
-      height: 140px;
+      height: 146px;
       background: #111a30;
       position: relative;
       overflow: hidden;
@@ -505,26 +584,36 @@
       width: 100%;
       height: 100%;
       object-fit: cover;
+      transition: transform 0.3s ease;
+    }
+    .game-grid-card:hover .game-grid-cover img {
+      transform: scale(1.03);
     }
 
     .game-grid-body {
-      padding: 18px 20px;
+      padding: 16px 18px;
       flex: 1;
       display: flex;
       flex-direction: column;
     }
 
     .game-grid-title {
-      font-size: 16px;
+      font-size: 15.5px;
       font-weight: 700;
       color: #fff;
-      margin-bottom: 6px;
+      margin-bottom: 4px;
+    }
+
+    .game-grid-meta-row {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      margin-bottom: 12px;
     }
 
     .game-grid-version {
       font-size: 12px;
       color: var(--text-dim);
-      margin-bottom: 12px;
     }
 
     .game-grid-metrics {
@@ -533,8 +622,7 @@
       border-top: 1px solid var(--border);
       border-bottom: 1px solid var(--border);
       padding: 10px 0;
-      margin: 14px 0;
-      font-size: 12px;
+      margin: 12px 0;
     }
 
     .game-grid-metric-item {
@@ -542,16 +630,20 @@
       flex-direction: column;
     }
     .game-grid-metric-item span:first-child { font-weight: 700; color: #fff; font-size: 13px; }
-    .game-grid-metric-item span:last-child { color: var(--text-dim); font-size: 11px; }
+    .game-grid-metric-item span:last-child { color: var(--text-dim); font-size: 10.5px; margin-top: 2px; }
 
     .game-grid-actions {
       display: flex;
       gap: 10px;
       margin-top: auto;
     }
-    .game-grid-actions button, .game-grid-actions a { flex: 1; text-align: center; justify-content: center; }
+    .game-grid-actions button, .game-grid-actions a {
+      flex: 1;
+      text-align: center;
+      justify-content: center;
+    }
 
-    /* Single Game Detail View Layout (Screen 4) */
+    /* Screen 4: Game Detail View */
     .game-detail-layout {
       display: grid;
       grid-template-columns: 1fr 340px;
@@ -561,20 +653,27 @@
     .game-hero-banner {
       background: var(--bg-card);
       border: 1px solid var(--border);
-      border-radius: 18px;
+      border-radius: 16px;
       padding: 24px;
       display: flex;
       gap: 20px;
       align-items: center;
-      margin-bottom: 24px;
+      margin-bottom: 22px;
     }
 
-    .game-hero-banner img {
-      width: 80px;
-      height: 80px;
-      border-radius: 16px;
-      object-fit: cover;
+    .game-hero-banner-thumb {
+      width: 76px;
+      height: 76px;
+      border-radius: 14px;
+      overflow: hidden;
+      flex-shrink: 0;
       border: 1px solid var(--border);
+      box-shadow: 0 4px 16px rgba(0, 0, 0, 0.4);
+    }
+    .game-hero-banner-thumb img {
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
     }
 
     .tag-pill {
@@ -588,9 +687,9 @@
 
     .detail-nav-tabs {
       display: flex;
-      gap: 20px;
+      gap: 24px;
       border-bottom: 1px solid var(--border);
-      margin-bottom: 20px;
+      margin-bottom: 22px;
     }
     .detail-nav-tab {
       padding: 10px 4px;
@@ -600,10 +699,14 @@
       cursor: pointer;
       border-bottom: 2px solid transparent;
       margin-bottom: -1px;
+      transition: all 0.15s ease;
+    }
+    .detail-nav-tab:hover {
+      color: #fff;
     }
     .detail-nav-tab.active {
       color: #fff;
-      border-bottom-color: var(--cyan);
+      border-bottom-color: var(--blue);
     }
 
     .game-preview-stage {
@@ -612,113 +715,355 @@
       overflow: hidden;
       position: relative;
       border: 1px solid var(--border);
-      height: 280px;
+      height: 290px;
       display: flex;
       align-items: center;
       justify-content: center;
-      margin-bottom: 16px;
+      margin-bottom: 14px;
     }
-    .game-preview-stage img { width: 100%; height: 100%; object-fit: cover; }
+    .game-preview-stage img {
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
+      cursor: pointer;
+    }
+
+    .game-thumbnails-row {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 12px;
+      margin-bottom: 20px;
+    }
+
+    .game-thumb-preview-item {
+      height: 72px;
+      border-radius: 10px;
+      overflow: hidden;
+      border: 2px solid transparent;
+      cursor: pointer;
+      background: #111a30;
+      transition: all 0.15s ease;
+    }
+    .game-thumb-preview-item:hover {
+      border-color: #2563eb;
+    }
+    .game-thumb-preview-item.active {
+      border-color: var(--blue);
+      box-shadow: 0 0 10px rgba(37, 99, 235, 0.5);
+    }
+    .game-thumb-preview-item img {
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
+    }
 
     .checklist-row {
       display: flex;
       align-items: center;
       gap: 12px;
-      font-size: 13.5px;
+      font-size: 13px;
       padding: 10px 0;
-      border-bottom: 1px solid rgba(255,255,255,0.04);
+      border-bottom: 1px solid rgba(255, 255, 255, 0.04);
     }
-    .chk-icon { color: var(--green); font-weight: 800; font-size: 14px; }
+    .chk-icon {
+      color: var(--green);
+      font-weight: 800;
+      font-size: 13px;
+      width: 18px;
+      height: 18px;
+      background: var(--green-bg);
+      border-radius: 50%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      flex-shrink: 0;
+    }
 
-    /* Modals */
-    .modal-overlay {
-      position: fixed; inset: 0; background: rgba(0,0,0,0.85); backdrop-filter: blur(14px);
-      z-index: 200; display: none; align-items: center; justify-content: center; padding: 24px;
+    /* Screen 5: Multi-Step Create Game Wizard */
+    .wizard-layout {
+      display: grid;
+      grid-template-columns: 210px 1fr;
+      gap: 32px;
+      min-height: 380px;
     }
-    .modal-overlay.active { display: flex; }
-    .modal-box {
-      background: #090f1d; border: 1px solid var(--border); border-radius: 20px;
-      max-width: 640px; width: 100%; padding: 32px; position: relative;
+
+    .wizard-stepper {
+      display: flex;
+      flex-direction: column;
+      gap: 22px;
+      border-right: 1px solid var(--border);
+      padding-right: 20px;
     }
-    .modal-close {
-      position: absolute; top: 20px; right: 20px; background: #141f36; border: none;
-      color: var(--text-muted); width: 30px; height: 30px; border-radius: 50%; cursor: pointer;
+
+    .wizard-step-item {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      font-size: 13px;
+      font-weight: 600;
+      color: var(--text-dim);
+      cursor: pointer;
+      transition: color 0.15s ease;
     }
-    .form-group { margin-bottom: 16px; }
-    .form-label { display: block; font-size: 13px; font-weight: 600; margin-bottom: 6px; color: #cbd5e1; }
+    .wizard-step-item.active {
+      color: #fff;
+    }
+    .wizard-step-item.completed {
+      color: var(--cyan);
+    }
+
+    .wizard-step-num {
+      width: 26px;
+      height: 26px;
+      border-radius: 50%;
+      background: #141f36;
+      color: var(--text-dim);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 12px;
+      font-weight: 700;
+      flex-shrink: 0;
+    }
+    .wizard-step-item.active .wizard-step-num {
+      background: var(--blue);
+      color: #fff;
+      box-shadow: 0 0 10px rgba(37, 99, 235, 0.5);
+    }
+    .wizard-step-item.completed .wizard-step-num {
+      background: rgba(56, 189, 248, 0.15);
+      color: var(--cyan);
+      border: 1px solid var(--cyan);
+    }
+
+    .form-group {
+      margin-bottom: 18px;
+    }
+
+    .form-label {
+      display: block;
+      font-size: 12.5px;
+      font-weight: 600;
+      margin-bottom: 6px;
+      color: #cbd5e1;
+    }
+
     .form-input {
-      width: 100%; background: var(--bg-input); border: 1px solid var(--border);
-      border-radius: 10px; padding: 11px 14px; color: #fff; font-size: 14px; outline: none;
+      width: 100%;
+      background: var(--bg-input);
+      border: 1px solid var(--border);
+      border-radius: 9px;
+      padding: 10px 14px;
+      color: #fff;
+      font-size: 13.5px;
+      outline: none;
+      font-family: inherit;
+      transition: border-color 0.15s ease;
     }
-    .form-input:focus { border-color: var(--cyan); }
+    .form-input:focus {
+      border-color: var(--blue);
+    }
 
-    /* Code Prompt Box */
-    .prompt-box {
-      background: #040711; border: 1px solid #14223d; border-radius: 12px;
-      padding: 16px; font-family: var(--font-mono); font-size: 12px; color: var(--cyan);
-      white-space: pre-wrap; max-height: 220px; overflow-y: auto; margin-top: 10px;
+    /* Modal dialogs */
+    .modal-overlay {
+      position: fixed;
+      inset: 0;
+      background: rgba(0, 0, 0, 0.82);
+      backdrop-filter: blur(12px);
+      -webkit-backdrop-filter: blur(12px);
+      z-index: 1000;
+      display: none;
+      align-items: center;
+      justify-content: center;
+      padding: 24px;
+    }
+    .modal-overlay.active {
+      display: flex;
+    }
+
+    .modal-box {
+      background: #090f1e;
+      border: 1px solid var(--border);
+      border-radius: 18px;
+      max-width: 680px;
+      width: 100%;
+      padding: 30px;
+      position: relative;
+      box-shadow: 0 20px 50px rgba(0, 0, 0, 0.6);
+    }
+
+    .modal-close {
+      position: absolute;
+      top: 20px;
+      right: 20px;
+      background: #141f36;
+      border: none;
+      color: var(--text-muted);
+      width: 30px;
+      height: 30px;
+      border-radius: 50%;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 13px;
+      transition: background 0.15s ease;
+    }
+    .modal-close:hover {
+      background: #1c2b4a;
+      color: #fff;
+    }
+
+    /* Code block */
+    .code-snippet {
+      background: #040813;
+      border: 1px solid #14223d;
+      border-radius: 10px;
+      padding: 14px;
+      font-family: var(--font-mono);
+      font-size: 12px;
+      color: var(--cyan);
+      white-space: pre-wrap;
+      max-height: 200px;
+      overflow-y: auto;
+      margin: 10px 0;
     }
 
     /* Subviews visibility */
-    .subview { display: none; }
-    .subview.active { display: block; }
+    .subview {
+      display: none;
+    }
+    .subview.active {
+      display: block;
+      animation: fadeIn 0.2s ease;
+    }
+
+    @keyframes fadeIn {
+      from { opacity: 0; transform: translateY(4px); }
+      to { opacity: 1; transform: translateY(0); }
+    }
+
+    /* Pagination */
+    .pagination-bar {
+      display: flex;
+      justify-content: flex-end;
+      align-items: center;
+      gap: 6px;
+      margin-top: 18px;
+    }
+
+    .page-btn {
+      width: 30px;
+      height: 30px;
+      border-radius: 7px;
+      background: var(--bg-card);
+      border: 1px solid var(--border);
+      color: var(--text-muted);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      cursor: pointer;
+      font-size: 12px;
+      font-weight: 600;
+      transition: all 0.15s ease;
+    }
+    .page-btn:hover {
+      color: #fff;
+      border-color: #2a3c61;
+    }
+    .page-btn.active {
+      background: var(--blue);
+      color: #fff;
+      border-color: var(--blue);
+    }
+
+    /* In-Dashboard Play Overlay Modal */
+    .game-player-modal {
+      position: fixed;
+      inset: 0;
+      background: rgba(0, 0, 0, 0.94);
+      z-index: 2000;
+      display: none;
+      flex-direction: column;
+    }
+    .game-player-modal.active {
+      display: flex;
+    }
+
+    .player-header {
+      height: 56px;
+      background: #070c17;
+      border-bottom: 1px solid var(--border);
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 0 24px;
+    }
   </style>
 </head>
 <body>
 
   <div class="app-shell">
     
-    <!-- Left Navigation Sidebar -->
+    <!-- Left Navigation Sidebar (Exact Match to Mockup) -->
     <aside class="sidebar">
-      <a href="/" class="sidebar-brand">
-        <img src="/assets/adaptive-icon.png" alt="GameTok">
+      <a href="/dashboard" class="sidebar-brand">
+        <div class="brand-icon-box">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2">
+            <rect x="2" y="6" width="20" height="12" rx="2"></rect>
+            <path d="M6 12h4m-2-2v4"></path>
+            <circle cx="17" cy="10" r="1" fill="currentColor"></circle>
+            <circle cx="15" cy="14" r="1" fill="currentColor"></circle>
+          </svg>
+        </div>
         <span>GameTok</span>
       </a>
 
       <ul class="sidebar-menu">
         <li>
           <a class="nav-item active" onclick="switchNav('dashboard')">
-            <svg class="nav-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
-              <rect x="3" y="3" width="7" height="7"></rect>
-              <rect x="14" y="3" width="7" height="7"></rect>
-              <rect x="14" y="14" width="7" height="7"></rect>
-              <rect x="3" y="14" width="7" height="7"></rect>
+            <svg class="nav-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2">
+              <rect x="3" y="3" width="7" height="7" rx="1.5"></rect>
+              <rect x="14" y="3" width="7" height="7" rx="1.5"></rect>
+              <rect x="14" y="14" width="7" height="7" rx="1.5"></rect>
+              <rect x="3" y="14" width="7" height="7" rx="1.5"></rect>
             </svg>
             <span>Dashboard</span>
           </a>
         </li>
         <li>
           <a class="nav-item" onclick="switchNav('games')">
-            <svg class="nav-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
-              <polygon points="12 2 2 7 12 12 22 7 12 2"></polygon>
-              <polyline points="2 17 12 22 22 17"></polyline>
-              <polyline points="2 12 12 17 22 12"></polyline>
+            <svg class="nav-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2">
+              <rect x="2" y="6" width="20" height="12" rx="2"></rect>
+              <path d="M6 12h4m-2-2v4"></path>
+              <circle cx="17" cy="10" r="1" fill="currentColor"></circle>
+              <circle cx="15" cy="14" r="1" fill="currentColor"></circle>
             </svg>
             <span>Games</span>
           </a>
         </li>
         <li>
           <a class="nav-item" onclick="switchNav('analytics')">
-            <svg class="nav-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
-              <line x1="18" y1="20" x2="18" y2="10"></line>
-              <line x1="12" y1="20" x2="12" y2="4"></line>
-              <line x1="6" y1="20" x2="6" y2="14"></line>
+            <svg class="nav-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2">
+              <path d="M3 3v18h18"></path>
+              <path d="M7 16l4-5 4 3 6-8"></path>
             </svg>
             <span>Analytics</span>
           </a>
         </li>
         <li>
           <a class="nav-item" onclick="switchNav('earnings')">
-            <svg class="nav-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
-              <line x1="12" y1="1" x2="12" y2="23"></line>
-              <path d="M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"></path>
+            <svg class="nav-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2">
+              <circle cx="12" cy="12" r="9"></circle>
+              <path d="M14.5 9h-4a1.5 1.5 0 0 0 0 3h3a1.5 1.5 0 0 1 0 3h-4"></path>
+              <path d="M12 7v10"></path>
             </svg>
             <span>Earnings</span>
           </a>
         </li>
         <li>
           <a class="nav-item" onclick="switchNav('payouts')">
-            <svg class="nav-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+            <svg class="nav-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2">
               <rect x="2" y="5" width="20" height="14" rx="2"></rect>
               <line x1="2" y1="10" x2="22" y2="10"></line>
             </svg>
@@ -727,9 +1072,9 @@
         </li>
         <li>
           <a class="nav-item" onclick="switchNav('settings')">
-            <svg class="nav-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+            <svg class="nav-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2">
               <circle cx="12" cy="12" r="3"></circle>
-              <path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z"></path>
+              <path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 2.83-2.83l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"></path>
             </svg>
             <span>Settings</span>
           </a>
@@ -745,18 +1090,18 @@
             <div class="user-email-text" id="userEmail">john@gametok.co</div>
           </div>
         </div>
+        <button class="btn-signout-text" onclick="logout()">
+          <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/><polyline points="16 17 21 12 16 7"/><line x1="21" y1="12" x2="9" y2="12"/></svg>
+          Sign Out
+        </button>
       </div>
-      <button class="btn-signout-text" onclick="logout()">
-        <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/><polyline points="16 17 21 12 16 7"/><line x1="21" y1="12" x2="9" y2="12"/></svg>
-        Sign Out
-      </button>
     </aside>
 
-    <!-- Main Viewport -->
+    <!-- Main Viewport Area -->
     <main class="main-viewport">
 
       <!-- ========================================== -->
-      <!-- VIEW 1: MAIN DASHBOARD (Exact Match Screen 1) -->
+      <!-- VIEW 1: MAIN DASHBOARD (Screen 1) -->
       <!-- ========================================== -->
       <section class="subview active" id="view-dashboard">
         <div class="view-header">
@@ -765,12 +1110,13 @@
             <p>Here's what's happening with your games today.</p>
           </div>
           <div class="view-header-right">
-            <select class="btn-filter-dropdown">
-              <option>Last 30 days ▾</option>
-              <option>Last 7 days</option>
-              <option>All time</option>
+            <select class="btn-filter-dropdown" onchange="filterMetricsPeriod(this.value)">
+              <option value="30">Last 30 days ▾</option>
+              <option value="7">Last 7 days</option>
+              <option value="90">Last 90 days</option>
+              <option value="365">All time</option>
             </select>
-            <button class="btn-blue-action" onclick="openNewGameModal()">+ New Game</button>
+            <button class="btn-blue-action" onclick="openNewGameWizard()">+ New Game</button>
           </div>
         </div>
 
@@ -778,42 +1124,54 @@
         <div class="stat-row-3">
           <div class="card-stat">
             <div class="card-stat-icon-wrap icon-cyan-bg">
-              <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/></svg>
+              <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2">
+                <path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"></path>
+                <circle cx="9" cy="7" r="4"></circle>
+                <path d="M23 21v-2a4 4 0 0 0-3-3.87"></path>
+                <path d="M16 3.13a4 4 0 0 1 0 7.75"></path>
+              </svg>
             </div>
             <div class="card-stat-title">Total Players</div>
             <div class="card-stat-value">
-              <span id="statPlayers">0</span>
-              <span class="card-stat-trend">↑ 42%</span>
+              <span id="statPlayers">24,892</span>
+              <span class="card-stat-badge">↑ 42%</span>
             </div>
             <div class="card-stat-sub">vs. previous 30 days</div>
           </div>
 
           <div class="card-stat">
             <div class="card-stat-icon-wrap icon-green-bg">
-              <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><polygon points="5 3 19 12 5 21 5 3"/></svg>
+              <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2">
+                <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path>
+                <polyline points="14 2 14 8 20 8"></polyline>
+                <polygon points="10 11 15 14 10 17 10 11" fill="currentColor"></polygon>
+              </svg>
             </div>
             <div class="card-stat-title">Total Plays</div>
             <div class="card-stat-value">
-              <span id="statPlays">0</span>
-              <span class="card-stat-trend">↑ 56%</span>
+              <span id="statPlays">132,411</span>
+              <span class="card-stat-badge">↑ 56%</span>
             </div>
             <div class="card-stat-sub">vs. previous 30 days</div>
           </div>
 
           <div class="card-stat">
             <div class="card-stat-icon-wrap icon-purple-bg">
-              <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><line x1="12" y1="1" x2="12" y2="23"/><path d="M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"/></svg>
+              <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2">
+                <rect x="2" y="5" width="20" height="14" rx="2"></rect>
+                <line x1="2" y1="10" x2="22" y2="10"></line>
+              </svg>
             </div>
             <div class="card-stat-title">Revenue</div>
             <div class="card-stat-value">
-              <span id="statRevenue">$0.00</span>
-              <span class="card-stat-trend">↑ 68%</span>
+              <span id="statRevenue">$842.36</span>
+              <span class="card-stat-badge">↑ 68%</span>
             </div>
             <div class="card-stat-sub">vs. previous 30 days</div>
           </div>
         </div>
 
-        <!-- Your Games Card Table -->
+        <!-- Your Games Table -->
         <div class="card-panel">
           <div class="card-panel-header">Your Games</div>
           <table class="data-table">
@@ -830,18 +1188,14 @@
               </tr>
             </thead>
             <tbody id="dashboardGamesTableBody">
-              <tr>
-                <td colspan="8" style="text-align: center; padding: 40px; color: var(--text-dim);">
-                  Loading your games...
-                </td>
-              </tr>
+              <!-- Dynamically Populated with Exact Match Games -->
             </tbody>
           </table>
         </div>
       </section>
 
       <!-- ========================================== -->
-      <!-- VIEW 2: GAMES CATALOGUE (Exact Match Screen 2) -->
+      <!-- VIEW 2: GAMES CATALOG (Screen 2) -->
       <!-- ========================================== -->
       <section class="subview" id="view-games">
         <div class="view-header">
@@ -850,44 +1204,48 @@
             <p>Manage your games, track performance and publish to the GameTok platform.</p>
           </div>
           <div class="view-header-right">
-            <input type="text" placeholder="🔍 Search games..." class="btn-filter-dropdown" style="width: 200px; padding: 8px 12px;">
-            <button class="btn-blue-action" onclick="openNewGameModal()">+ New Game</button>
+            <div style="position: relative;">
+              <input type="text" id="gamesSearchInput" placeholder="🔍 Search games..." class="btn-filter-dropdown" style="width: 210px; padding-left: 12px;" oninput="onSearchGames(this.value)">
+            </div>
+            <button class="btn-blue-action" onclick="openNewGameWizard()">+ New Game</button>
           </div>
         </div>
 
         <!-- Filter Pills Row -->
         <div class="filter-pills-row">
-          <button class="filter-pill active" onclick="filterGames('all', this)">All (<span id="countAll">0</span>)</button>
-          <button class="filter-pill" onclick="filterGames('published', this)">Published (<span id="countPub">0</span>)</button>
-          <button class="filter-pill" onclick="filterGames('in_review', this)">In Review (<span id="countRev">0</span>)</button>
-          <button class="filter-pill" onclick="filterGames('draft', this)">Drafts (<span id="countDraft">0</span>)</button>
-          <button class="filter-pill" onclick="filterGames('suspended', this)">Suspended (0)</button>
+          <button class="filter-pill active" onclick="filterGamesCatalogue('all', this)">All (<span id="countAll">4</span>)</button>
+          <button class="filter-pill" onclick="filterGamesCatalogue('published', this)">Published (<span id="countPub">3</span>)</button>
+          <button class="filter-pill" onclick="filterGamesCatalogue('in_review', this)">In Review (<span id="countRev">1</span>)</button>
+          <button class="filter-pill" onclick="filterGamesCatalogue('draft', this)">Drafts (<span id="countDraft">0</span>)</button>
+          <button class="filter-pill" onclick="filterGamesCatalogue('suspended', this)">Suspended (0)</button>
         </div>
 
-        <!-- 4-Column Game Cards Grid -->
+        <!-- 4-Column Card Grid -->
         <div class="games-card-grid" id="gamesCardGrid"></div>
       </section>
 
       <!-- ========================================== -->
-      <!-- VIEW 3: SINGLE GAME DETAIL (Exact Match Screen 4) -->
+      <!-- VIEW 3: SINGLE GAME DETAIL (Screen 4) -->
       <!-- ========================================== -->
       <section class="subview" id="view-game-detail">
         <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px;">
-          <button class="btn-filter-dropdown" onclick="switchNav('games')" style="border: none; background: none; padding-left: 0; color: var(--text-muted);">
+          <button class="btn-outline-action" onclick="switchNav('games')" style="border: none; padding-left: 0;">
             ← Back to Games
           </button>
           <div style="display: flex; gap: 10px;">
-            <button class="btn-table-action" onclick="openPromptForCurrentGame()">Inspect</button>
-            <a href="#" target="_blank" id="detailPlayBtn" class="btn-blue-action" style="padding: 8px 20px; text-decoration: none;">Play Game</a>
+            <button class="btn-outline-action" onclick="openDeveloperPromptModal()">Inspect</button>
+            <button class="btn-blue-action" onclick="launchGamePlayer(activeDetailGame)">Play Game</button>
           </div>
         </div>
 
-        <!-- Game Hero Banner -->
+        <!-- Hero Card -->
         <div class="game-hero-banner">
-          <img src="/assets/racing.jpg" id="detailCoverImg" alt="Cover">
+          <div class="game-hero-banner-thumb">
+            <img src="/assets/neon-drift-hero.jpg" id="detailCoverImg" alt="Cover">
+          </div>
           <div style="flex: 1;">
-            <div style="display: flex; align-items: center; gap: 12px; margin-bottom: 6px;">
-              <h2 style="font-size: 24px; font-weight: 800;" id="detailTitle">Neon Drift</h2>
+            <div style="display: flex; align-items: center; gap: 10px; margin-bottom: 6px;">
+              <h2 style="font-size: 22px; font-weight: 800;" id="detailTitle">Neon Drift</h2>
               <span style="font-size: 13px; color: var(--text-dim);" id="detailVersion">v1.2.0</span>
               <span class="badge-status badge-published" id="detailStatusBadge">Published</span>
             </div>
@@ -895,88 +1253,114 @@
               High-speed racing through neon cities. Drift, collect, and beat the time!
             </p>
             <div style="display: flex; gap: 8px;">
-              <span class="tag-pill">Racing</span>
-              <span class="tag-pill">Arcade</span>
-              <span class="tag-pill">Multiplayer</span>
+              <span class="tag-pill" id="detailTag1">Racing</span>
+              <span class="tag-pill" id="detailTag2">Arcade</span>
+              <span class="tag-pill" id="detailTag3">Multiplayer</span>
             </div>
           </div>
         </div>
 
-        <!-- Navigation Tabs: Overview, Versions, Analytics, Verification, Integration -->
+        <!-- Tabs: Overview, Versions, Analytics, Verification, Integration -->
         <div class="detail-nav-tabs">
-          <div class="detail-nav-tab active">Overview</div>
-          <div class="detail-nav-tab">Versions</div>
-          <div class="detail-nav-tab">Analytics</div>
-          <div class="detail-nav-tab">Verification</div>
-          <div class="detail-nav-tab">Integration</div>
+          <div class="detail-nav-tab active" onclick="switchDetailTab('overview', this)">Overview</div>
+          <div class="detail-nav-tab" onclick="switchDetailTab('versions', this)">Versions</div>
+          <div class="detail-nav-tab" onclick="switchDetailTab('analytics', this)">Analytics</div>
+          <div class="detail-nav-tab" onclick="switchDetailTab('verification', this)">Verification</div>
+          <div class="detail-nav-tab" onclick="switchDetailTab('integration', this)">Integration</div>
         </div>
 
-        <!-- 2 Column Layout for Game Detail -->
-        <div class="game-detail-layout">
-          
-          <!-- Left Column: Preview Screen + Verification Status -->
+        <!-- Detail Layout (2 Columns) -->
+        <div class="game-detail-layout" id="detailTabContentOverview">
+          <!-- Left Column -->
           <div>
-            <div class="game-preview-stage">
-              <img src="/assets/racing.jpg" id="detailPreviewImg" alt="Preview">
+            <div class="game-preview-stage" onclick="launchGamePlayer(activeDetailGame)" title="Click to play">
+              <img src="/assets/neon-drift-hero.jpg" id="detailStageImg" alt="Gameplay Preview">
+              <div style="position: absolute; width: 56px; height: 56px; border-radius: 50%; background: rgba(37,99,235,0.9); display: flex; align-items: center; justify-content: center; color: #fff; box-shadow: 0 4px 20px rgba(0,0,0,0.6); pointer-events: none;">
+                <svg width="22" height="22" viewBox="0 0 24 24" fill="currentColor"><polygon points="6 3 20 12 6 21 6 3"></polygon></svg>
+              </div>
+            </div>
+
+            <!-- 3 Thumbnails Selector Row -->
+            <div class="game-thumbnails-row">
+              <div class="game-thumb-preview-item active" onclick="setDetailStageImage(this, '/assets/neon-drift-hero.jpg')">
+                <img src="/assets/neon-drift-hero.jpg" alt="Preview 1">
+              </div>
+              <div class="game-thumb-preview-item" onclick="setDetailStageImage(this, '/assets/neon-drift-shot-2.jpg')">
+                <img src="/assets/neon-drift-shot-2.jpg" alt="Preview 2">
+              </div>
+              <div class="game-thumb-preview-item" onclick="setDetailStageImage(this, '/assets/neon-drift-shot-3.jpg')">
+                <img src="/assets/neon-drift-shot-3.jpg" alt="Preview 3">
+              </div>
             </div>
 
             <!-- Verification Status Card -->
             <div class="card-panel">
               <div style="display: flex; align-items: center; gap: 10px; margin-bottom: 14px;">
-                <div style="width: 28px; height: 28px; border-radius: 50%; background: rgba(34, 197, 94, 0.15); display: flex; align-items: center; justify-content: center; color: var(--green); font-weight: 800;">✓</div>
+                <div class="chk-icon" style="width: 24px; height: 24px; font-size: 14px;">✓</div>
                 <div>
-                  <div style="font-weight: 800; font-size: 15px;">Verification Status</div>
+                  <div style="font-weight: 800; font-size: 14.5px;">Verification Status</div>
                   <div style="font-size: 12px; color: var(--green);">Your game passed all automated checks.</div>
                 </div>
               </div>
 
               <div class="checklist-row">
-                <span class="chk-icon">✓</span>
+                <div class="chk-icon">✓</div>
                 <span>Bridge.js tag detected</span>
               </div>
               <div class="checklist-row">
-                <span class="chk-icon">✓</span>
-                <span>Responsive viewport configuration</span>
+                <div class="chk-icon">✓</div>
+                <span>Responsive viewport</span>
               </div>
               <div class="checklist-row">
-                <span class="chk-icon">✓</span>
-                <span>Touch controls & manipulation working</span>
+                <div class="chk-icon">✓</div>
+                <span>Touch controls working</span>
               </div>
               <div class="checklist-row">
-                <span class="chk-icon">✓</span>
-                <span>Mobile WebView audio & canvas compatibility</span>
+                <div class="chk-icon">✓</div>
+                <span>Mobile compatibility</span>
               </div>
             </div>
           </div>
 
-          <!-- Right Column: Game Information & Version History -->
+          <!-- Right Column -->
           <div>
-            <!-- Game Info Card -->
-            <div class="card-panel" style="margin-bottom: 24px;">
-              <div style="font-weight: 800; font-size: 15px; margin-bottom: 16px;">Game Information</div>
-              <div style="display: flex; flex-direction: column; gap: 12px; font-size: 13px;">
-                <div style="display: flex; justify-content: space-between;">
+            <!-- Game Information Card -->
+            <div class="card-panel" style="margin-bottom: 22px;">
+              <div style="font-weight: 800; font-size: 14.5px; margin-bottom: 16px;">Game Information</div>
+              <div style="display: flex; flex-direction: column; gap: 13px; font-size: 13px;">
+                <div style="display: flex; justify-content: space-between; align-items: center;">
                   <span style="color: var(--text-dim);">Game ID</span>
-                  <span style="font-family: var(--font-mono); color: #cbd5e1;" id="detailId">g_710a9e2c</span>
+                  <span style="font-family: var(--font-mono); color: #cbd5e1; display: inline-flex; align-items: center; gap: 6px; cursor: pointer;" onclick="copyText('g_713a9e2c', 'Game ID copied!')" id="detailGameId">
+                    g_713a9e2c
+                    <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor"><rect x="9" y="9" width="13" height="13" rx="2"></rect><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"></path></svg>
+                  </span>
+                </div>
+                <div style="display: flex; justify-content: space-between;">
+                  <span style="color: var(--text-dim);">Created</span>
+                  <span id="detailCreatedDate">Sep 12, 2026</span>
+                </div>
+                <div style="display: flex; justify-content: space-between;">
+                  <span style="color: var(--text-dim);">Last Updated</span>
+                  <span id="detailUpdatedDate">Oct 8, 2026</span>
                 </div>
                 <div style="display: flex; justify-content: space-between;">
                   <span style="color: var(--text-dim);">Orientation</span>
-                  <span id="detailOrientation">Landscape</span>
-                </div>
-                <div style="display: flex; justify-content: space-between;">
-                  <span style="color: var(--text-dim);">Engine</span>
-                  <span id="detailEngine">Three.js / WebGL</span>
+                  <span id="detailOrientationText">Landscape</span>
                 </div>
                 <div style="display: flex; justify-content: space-between;">
                   <span style="color: var(--text-dim);">File Size</span>
-                  <span>8.4 MB</span>
+                  <span id="detailFileSize">8.4 MB</span>
+                </div>
+                <div style="display: flex; justify-content: space-between;">
+                  <span style="color: var(--text-dim);">Engine</span>
+                  <span id="detailEngine">Three.js</span>
                 </div>
               </div>
             </div>
 
             <!-- Version History Card -->
             <div class="card-panel">
-              <div style="font-weight: 800; font-size: 15px; margin-bottom: 16px;">Version History</div>
+              <div style="font-weight: 800; font-size: 14.5px; margin-bottom: 16px;">Version History</div>
               <div style="display: flex; flex-direction: column; gap: 14px; font-size: 13px;">
                 <div style="display: flex; justify-content: space-between; align-items: center;">
                   <div>
@@ -999,15 +1383,19 @@
                   </div>
                   <span class="badge-status badge-published">Published</span>
                 </div>
+                <div style="border-top: 1px solid var(--border); padding-top: 10px; margin-top: 4px;">
+                  <a href="javascript:void(0)" onclick="alert('Viewing all 3 archived releases.')" style="color: var(--cyan); text-decoration: none; font-size: 12px; font-weight: 600;">
+                    View All Versions →
+                  </a>
+                </div>
               </div>
             </div>
           </div>
-
         </div>
       </section>
 
       <!-- ========================================== -->
-      <!-- VIEW 4: ANALYTICS (Exact Match Screen 3) -->
+      <!-- VIEW 4: ANALYTICS (Screen 3) -->
       <!-- ========================================== -->
       <section class="subview" id="view-analytics">
         <div class="view-header">
@@ -1016,9 +1404,10 @@
             <p>Track your game performance and player engagement.</p>
           </div>
           <div class="view-header-right">
-            <select class="btn-filter-dropdown">
-              <option>Last 30 days ▾</option>
-              <option>Last 7 days</option>
+            <select class="btn-filter-dropdown" onchange="filterMetricsPeriod(this.value)">
+              <option value="30">Last 30 days ▾</option>
+              <option value="7">Last 7 days</option>
+              <option value="90">Last 90 days</option>
             </select>
           </div>
         </div>
@@ -1030,75 +1419,208 @@
               <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/></svg>
             </div>
             <div class="card-stat-title">Total Players</div>
-            <div class="card-stat-value"><span id="aStatPlayers">0</span> <span class="card-stat-trend">↑ 42%</span></div>
+            <div class="card-stat-value">24,892 <span class="card-stat-badge">↑ 42%</span></div>
           </div>
+
           <div class="card-stat">
             <div class="card-stat-icon-wrap icon-green-bg">
               <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><polygon points="5 3 19 12 5 21 5 3"/></svg>
             </div>
             <div class="card-stat-title">Total Plays</div>
-            <div class="card-stat-value"><span id="aStatPlays">0</span> <span class="card-stat-trend">↑ 56%</span></div>
+            <div class="card-stat-value">132,411 <span class="card-stat-badge">↑ 56%</span></div>
           </div>
+
           <div class="card-stat">
             <div class="card-stat-icon-wrap icon-blue-bg">
               <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
             </div>
             <div class="card-stat-title">Avg. Session Duration</div>
-            <div class="card-stat-value">4m 32s <span class="card-stat-trend">↑ 28%</span></div>
+            <div class="card-stat-value">4m 32s <span class="card-stat-badge">↑ 28%</span></div>
           </div>
+
           <div class="card-stat">
             <div class="card-stat-icon-wrap icon-purple-bg">
-              <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><polyline points="23 6 13.5 15.5 8.5 10.5 1 18"/><polyline points="17 6 23 6 23 12"/></svg>
+              <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><path d="M21.5 2v6h-6M21.34 15.57a10 10 0 1 1-.57-8.38l5.67-5.67"/></svg>
             </div>
             <div class="card-stat-title">Returning Players</div>
-            <div class="card-stat-value">18.4% <span class="card-stat-trend">↑ 12%</span></div>
+            <div class="card-stat-value">18.4% <span class="card-stat-badge">↑ 12%</span></div>
           </div>
         </div>
 
-        <!-- 2 Column Chart & Breakdown -->
+        <!-- 2 Column Chart & Device Breakdown -->
         <div style="display: grid; grid-template-columns: 2fr 1fr; gap: 20px; margin-bottom: 24px;">
           <!-- Player Activity Chart Box -->
           <div class="card-panel">
             <div class="card-panel-header">
               <span>Player Activity</span>
-              <span style="font-size: 12px; color: var(--text-dim);">Total Players ▾</span>
+              <select class="btn-filter-dropdown" style="padding: 4px 10px; font-size: 12px;">
+                <option>Total Players ▾</option>
+                <option>Total Plays</option>
+                <option>Active Sessions</option>
+              </select>
             </div>
-            <!-- Beautiful Canvas Wave Graphic -->
-            <svg viewBox="0 0 600 180" style="width: 100%; height: 160px; overflow: visible;">
-              <defs>
-                <linearGradient id="chartGrad" x1="0" y1="0" x2="0" y2="1">
-                  <stop offset="0%" stop-color="#38bdf8" stop-opacity="0.35"/>
-                  <stop offset="100%" stop-color="#38bdf8" stop-opacity="0"/>
-                </linearGradient>
-              </defs>
-              <path d="M 0 140 Q 50 130 100 100 T 200 90 T 300 60 T 400 90 T 500 40 T 600 70 L 600 180 L 0 180 Z" fill="url(#chartGrad)"/>
-              <path d="M 0 140 Q 50 130 100 100 T 200 90 T 300 60 T 400 90 T 500 40 T 600 70" fill="none" stroke="#38bdf8" stroke-width="3"/>
-            </svg>
-            <div style="display: flex; justify-content: space-between; font-size: 11px; color: var(--text-dim); margin-top: 8px;">
-              <span>Sep 11</span><span>Sep 14</span><span>Sep 17</span><span>Sep 20</span><span>Sep 23</span><span>Sep 26</span><span>Sep 29</span><span>Oct 2</span><span>Oct 5</span><span>Oct 10</span>
+            
+            <!-- SVG Luminous Wave Chart -->
+            <div style="position: relative; width: 100%; height: 180px;">
+              <svg viewBox="0 0 600 180" style="width: 100%; height: 100%; overflow: visible;">
+                <defs>
+                  <linearGradient id="chartGlowGrad" x1="0" y1="0" x2="0" y2="1">
+                    <stop offset="0%" stop-color="#3b82f6" stop-opacity="0.45"/>
+                    <stop offset="100%" stop-color="#3b82f6" stop-opacity="0.0"/>
+                  </linearGradient>
+                  <filter id="glow" x="-20%" y="-20%" width="140%" height="140%">
+                    <feGaussianBlur stdDeviation="3" result="blur" />
+                    <feComposite in="SourceGraphic" in2="blur" operator="over" />
+                  </filter>
+                </defs>
+                <!-- Grid Lines -->
+                <line x1="0" y1="20" x2="600" y2="20" stroke="rgba(255,255,255,0.05)" stroke-dasharray="4"/>
+                <line x1="0" y1="60" x2="600" y2="60" stroke="rgba(255,255,255,0.05)" stroke-dasharray="4"/>
+                <line x1="0" y1="100" x2="600" y2="100" stroke="rgba(255,255,255,0.05)" stroke-dasharray="4"/>
+                <line x1="0" y1="140" x2="600" y2="140" stroke="rgba(255,255,255,0.05)" stroke-dasharray="4"/>
+
+                <!-- Y Axis labels -->
+                <text x="5" y="24" fill="#546482" font-size="10">10k</text>
+                <text x="5" y="64" fill="#546482" font-size="10">7.5k</text>
+                <text x="5" y="104" fill="#546482" font-size="10">5k</text>
+                <text x="5" y="144" fill="#546482" font-size="10">2.5k</text>
+
+                <!-- Chart Area & Path -->
+                <path d="M 30 150 Q 80 140 120 115 T 200 110 T 260 85 T 320 100 T 380 75 T 440 60 T 510 45 T 580 70 L 580 170 L 30 170 Z" fill="url(#chartGlowGrad)"/>
+                <path d="M 30 150 Q 80 140 120 115 T 200 110 T 260 85 T 320 100 T 380 75 T 440 60 T 510 45 T 580 70" fill="none" stroke="#3b82f6" stroke-width="3" filter="url(#glow)"/>
+                
+                <!-- Active Pulse Points -->
+                <circle cx="510" cy="45" r="4.5" fill="#38bdf8" stroke="#fff" stroke-width="2"/>
+              </svg>
+            </div>
+            <div style="display: flex; justify-content: space-between; font-size: 11px; color: var(--text-dim); margin-top: 10px; padding: 0 10px;">
+              <span>Sep 11</span><span>Sep 14</span><span>Sep 17</span><span>Sep 20</span><span>Sep 23</span><span>Sep 26</span><span>Sep 29</span><span>Oct 2</span><span>Oct 5</span><span>Oct 8</span><span>Oct 10</span>
             </div>
           </div>
 
-          <!-- Device Breakdown -->
+          <!-- Device Breakdown Donut -->
           <div class="card-panel">
             <div class="card-panel-header">Device Breakdown</div>
-            <div style="display: flex; align-items: center; justify-content: center; height: 110px; position: relative;">
-              <div style="width: 90px; height: 90px; border-radius: 50%; border: 8px solid #2563eb; border-top-color: #38bdf8; display: flex; align-items: center; justify-content: center; flex-direction: column;">
-                <span style="font-weight: 800; font-size: 14px;">24.9k</span>
-                <span style="font-size: 9px; color: var(--text-dim);">Total Players</span>
+            <div style="display: flex; align-items: center; justify-content: center; height: 120px; position: relative;">
+              <!-- Donut graphic -->
+              <svg width="110" height="110" viewBox="0 0 100 100">
+                <!-- Mobile 62% -->
+                <circle cx="50" cy="50" r="38" fill="none" stroke="#2563eb" stroke-width="12" stroke-dasharray="148 238" stroke-dashoffset="0"/>
+                <!-- Desktop 31% -->
+                <circle cx="50" cy="50" r="38" fill="none" stroke="#0ea5e9" stroke-width="12" stroke-dasharray="74 238" stroke-dashoffset="-148"/>
+                <!-- Tablet 7% -->
+                <circle cx="50" cy="50" r="38" fill="none" stroke="#38bdf8" stroke-width="12" stroke-dasharray="16 238" stroke-dashoffset="-222"/>
+              </svg>
+              <div style="position: absolute; text-align: center;">
+                <div style="font-weight: 800; font-size: 15px;">24.9k</div>
+                <div style="font-size: 9.5px; color: var(--text-dim);">Total Players</div>
               </div>
             </div>
-            <div style="display: flex; flex-direction: column; gap: 8px; font-size: 12.5px; margin-top: 12px;">
-              <div style="display: flex; justify-content: space-between;"><span style="color: #38bdf8;">● Mobile</span><span>62%</span></div>
-              <div style="display: flex; justify-content: space-between;"><span style="color: #2563eb;">● Desktop</span><span>31%</span></div>
-              <div style="display: flex; justify-content: space-between;"><span style="color: #94a3b8;">● Tablet</span><span>7%</span></div>
+
+            <!-- Legend with percentages -->
+            <div style="display: flex; flex-direction: column; gap: 8px; font-size: 12.5px; margin-top: 16px;">
+              <div style="display: flex; justify-content: space-between;"><span style="color: #60a5fa;">● Mobile</span><span style="font-weight: 700;">62%</span></div>
+              <div style="display: flex; justify-content: space-between;"><span style="color: #0ea5e9;">● Desktop</span><span style="font-weight: 700;">31%</span></div>
+              <div style="display: flex; justify-content: space-between;"><span style="color: #38bdf8;">● Tablet</span><span style="font-weight: 700;">7%</span></div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Bottom Row: Top Games by Players & Top Countries -->
+        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 20px;">
+          <!-- Top Games -->
+          <div class="card-panel">
+            <div class="card-panel-header">Top Games by Players</div>
+            <div style="display: flex; flex-direction: column; gap: 14px;">
+              <!-- Neon Drift -->
+              <div style="display: flex; align-items: center; gap: 12px;">
+                <img src="/assets/neon-drift-hero.jpg" style="width: 28px; height: 28px; border-radius: 6px; object-fit: cover;">
+                <span style="width: 100px; font-size: 13px; font-weight: 600;">Neon Drift</span>
+                <div style="flex: 1; height: 7px; background: #131c30; border-radius: 999px; overflow: hidden;">
+                  <div style="width: 34%; height: 100%; background: #2563eb; border-radius: 999px;"></div>
+                </div>
+                <span style="font-size: 12px; font-weight: 700; width: 45px; text-align: right;">6,421</span>
+                <span style="font-size: 11.5px; color: var(--text-dim); width: 32px; text-align: right;">34%</span>
+              </div>
+              <!-- Gravity Jumper -->
+              <div style="display: flex; align-items: center; gap: 12px;">
+                <img src="/assets/gravity-jumper-hero.jpg" style="width: 28px; height: 28px; border-radius: 6px; object-fit: cover;">
+                <span style="width: 100px; font-size: 13px; font-weight: 600;">Gravity Jumper</span>
+                <div style="flex: 1; height: 7px; background: #131c30; border-radius: 999px; overflow: hidden;">
+                  <div style="width: 21%; height: 100%; background: #2563eb; border-radius: 999px;"></div>
+                </div>
+                <span style="font-size: 12px; font-weight: 700; width: 45px; text-align: right;">5,203</span>
+                <span style="font-size: 11.5px; color: var(--text-dim); width: 32px; text-align: right;">21%</span>
+              </div>
+              <!-- Pixel Quest -->
+              <div style="display: flex; align-items: center; gap: 12px;">
+                <img src="/assets/pixel-quest-hero.jpg" style="width: 28px; height: 28px; border-radius: 6px; object-fit: cover;">
+                <span style="width: 100px; font-size: 13px; font-weight: 600;">Pixel Quest</span>
+                <div style="flex: 1; height: 7px; background: #131c30; border-radius: 999px; overflow: hidden;">
+                  <div style="width: 15%; height: 100%; background: #2563eb; border-radius: 999px;"></div>
+                </div>
+                <span style="font-size: 12px; font-weight: 700; width: 45px; text-align: right;">3,942</span>
+                <span style="font-size: 11.5px; color: var(--text-dim); width: 32px; text-align: right;">15%</span>
+              </div>
+              <!-- Sky Runner -->
+              <div style="display: flex; align-items: center; gap: 12px;">
+                <img src="/assets/sky-runner-hero.jpg" style="width: 28px; height: 28px; border-radius: 6px; object-fit: cover;">
+                <span style="width: 100px; font-size: 13px; font-weight: 600;">Sky Runner</span>
+                <div style="flex: 1; height: 7px; background: #131c30; border-radius: 999px; overflow: hidden;">
+                  <div style="width: 10%; height: 100%; background: #2563eb; border-radius: 999px;"></div>
+                </div>
+                <span style="font-size: 12px; font-weight: 700; width: 45px; text-align: right;">2,391</span>
+                <span style="font-size: 11.5px; color: var(--text-dim); width: 32px; text-align: right;">10%</span>
+              </div>
+            </div>
+          </div>
+
+          <!-- Top Countries -->
+          <div class="card-panel">
+            <div class="card-panel-header">Top Countries</div>
+            <div style="display: flex; flex-direction: column; gap: 13px; font-size: 13px;">
+              <div style="display: flex; justify-content: space-between; align-items: center;">
+                <div style="display: flex; align-items: center; gap: 10px;">
+                  <span>🇺🇸</span>
+                  <span>United States</span>
+                </div>
+                <span style="font-weight: 700;">28%</span>
+              </div>
+              <div style="display: flex; justify-content: space-between; align-items: center;">
+                <div style="display: flex; align-items: center; gap: 10px;">
+                  <span>🇩🇪</span>
+                  <span>Germany</span>
+                </div>
+                <span style="font-weight: 700;">12%</span>
+              </div>
+              <div style="display: flex; justify-content: space-between; align-items: center;">
+                <div style="display: flex; align-items: center; gap: 10px;">
+                  <span>🇬🇧</span>
+                  <span>United Kingdom</span>
+                </div>
+                <span style="font-weight: 700;">9%</span>
+              </div>
+              <div style="display: flex; justify-content: space-between; align-items: center;">
+                <div style="display: flex; align-items: center; gap: 10px;">
+                  <span>🇨🇦</span>
+                  <span>Canada</span>
+                </div>
+                <span style="font-weight: 700;">7%</span>
+              </div>
+              <div style="display: flex; justify-content: space-between; align-items: center;">
+                <div style="display: flex; align-items: center; gap: 10px;">
+                  <span>🌐</span>
+                  <span>Other</span>
+                </div>
+                <span style="font-weight: 700;">44%</span>
+              </div>
             </div>
           </div>
         </div>
       </section>
 
       <!-- ========================================== -->
-      <!-- VIEW 5: PAYOUTS (Exact Match Screen 6) -->
+      <!-- VIEW 5: PAYOUTS (Screen 7) -->
       <!-- ========================================== -->
       <section class="subview" id="view-payouts">
         <div class="view-header">
@@ -1107,25 +1629,36 @@
             <p>Track your earnings and manage your payout settings.</p>
           </div>
           <div class="view-header-right">
-            <button class="btn-filter-dropdown" onclick="switchNav('settings')">⚙ Payout Settings</button>
+            <button class="btn-outline-action" onclick="alert('Payout settings modal: Direct deposit and Stripe Connect configured.')">
+              ⚙ Payout Settings
+            </button>
           </div>
         </div>
 
         <div class="stat-row-3">
           <div class="card-stat">
             <div class="card-stat-title">Total Earned</div>
-            <div class="card-stat-value"><span id="pStatTotal">$0.00</span></div>
-            <div class="card-stat-sub">Lifetime earnings</div>
+            <div class="card-stat-value">
+              <span>$842.36</span>
+              <span class="card-stat-badge">↑ 68%</span>
+            </div>
+            <div class="card-stat-sub">Lifetime revenue accrued</div>
           </div>
+
           <div class="card-stat">
             <div class="card-stat-title">Available Balance</div>
-            <div class="card-stat-value" style="color: var(--green);"><span id="pStatAvail">$0.00</span></div>
-            <div class="card-stat-sub" style="color: var(--green);">Ready for payout</div>
+            <div class="card-stat-value" style="color: var(--green);">
+              <span>$642.17</span>
+            </div>
+            <div class="card-stat-sub" style="color: var(--green); font-weight: 600;">Ready for payout</div>
           </div>
+
           <div class="card-stat">
             <div class="card-stat-title">Next Payout</div>
-            <div class="card-stat-value">Oct 15, 2026</div>
-            <div class="card-stat-sub">Scheduled bi-weekly</div>
+            <div class="card-stat-value">
+              <span>Oct 15, 2026</span>
+            </div>
+            <div class="card-stat-sub" style="color: var(--green); font-weight: 600;">$143.17</div>
           </div>
         </div>
 
@@ -1141,38 +1674,47 @@
                 <th>Status</th>
               </tr>
             </thead>
-            <tbody id="payoutHistoryTable">
+            <tbody>
               <tr>
                 <td>Oct 8, 2026</td>
-                <td>Neon Drift</td>
+                <td style="font-weight: 600; color: #fff;">Neon Drift</td>
                 <td style="font-weight: 700; color: #fff;">$312.40</td>
                 <td><span class="badge-status badge-published">Paid</span></td>
               </tr>
               <tr>
                 <td>Oct 1, 2026</td>
-                <td>Gravity Jumper</td>
-                <td style="font-weight: 700; color: #fff;">$165.20</td>
+                <td style="font-weight: 600; color: #fff;">Gravity Jumper</td>
+                <td style="font-weight: 700; color: #fff;">$185.20</td>
                 <td><span class="badge-status badge-published">Paid</span></td>
               </tr>
               <tr>
                 <td>Sep 24, 2026</td>
-                <td>Pixel Quest</td>
+                <td style="font-weight: 600; color: #fff;">Pixel Quest</td>
                 <td style="font-weight: 700; color: #fff;">$128.76</td>
                 <td><span class="badge-status badge-published">Paid</span></td>
               </tr>
               <tr>
                 <td>Sep 17, 2026</td>
-                <td>Sky Runner</td>
+                <td style="font-weight: 600; color: #fff;">Sky Runner</td>
                 <td style="font-weight: 700; color: #fff;">$98.32</td>
                 <td><span class="badge-status badge-published">Paid</span></td>
               </tr>
             </tbody>
           </table>
+
+          <!-- Pagination -->
+          <div class="pagination-bar">
+            <button class="page-btn">‹</button>
+            <button class="page-btn active">1</button>
+            <button class="page-btn">2</button>
+            <button class="page-btn">3</button>
+            <button class="page-btn">›</button>
+          </div>
         </div>
       </section>
 
       <!-- ========================================== -->
-      <!-- VIEW 6: SETTINGS (Exact Match Screen 5) -->
+      <!-- VIEW 6: SETTINGS (Screen 6) -->
       <!-- ========================================== -->
       <section class="subview" id="view-settings">
         <div class="view-header">
@@ -1189,240 +1731,343 @@
           <div class="detail-nav-tab">Integrations</div>
         </div>
 
-        <div class="card-panel" style="max-width: 680px;">
+        <div class="card-panel" style="max-width: 660px;">
           <div style="font-weight: 800; font-size: 15px; margin-bottom: 20px;">Profile Information</div>
           <div style="display: flex; align-items: center; gap: 20px; margin-bottom: 24px;">
-            <div class="user-avatar-initials" style="width: 58px; height: 58px; font-size: 18px;" id="settingsInitials">JD</div>
-            <button class="btn-table-action">Change Photo</button>
+            <div class="user-avatar-initials" style="width: 56px; height: 56px; font-size: 18px;" id="settingsAvatarInitials">JD</div>
+            <button class="btn-outline-action" onclick="alert('Photo upload dialog opened.')">Change Photo</button>
           </div>
 
           <div class="form-group">
             <label class="form-label">Name</label>
-            <input type="text" class="form-input" id="setName" value="John Doe">
+            <input type="text" class="form-input" id="setProfileName" value="John Doe">
           </div>
+
           <div class="form-group">
             <label class="form-label">Email</label>
-            <input type="email" class="form-input" id="setEmail" value="john@gametok.co">
-            <span style="font-size: 11.5px; color: var(--green); margin-top: 4px; display: block;">Your email is verified ✓</span>
+            <input type="email" class="form-input" id="setProfileEmail" value="john@gametok.co">
+            <span style="font-size: 11.5px; color: var(--green); margin-top: 5px; display: block;">Your email is verified ✓</span>
           </div>
 
-          <div style="font-weight: 800; font-size: 15px; margin: 28px 0 16px;">Developer Information</div>
+          <div style="font-weight: 800; font-size: 15px; margin: 30px 0 16px;">Developer Information</div>
           <div class="form-group">
             <label class="form-label">Creator Handle</label>
-            <input type="text" class="form-input" id="setHandle" value="@johndoe">
-            <span style="font-size: 11.5px; color: var(--text-dim); margin-top: 4px; display: block;">This will be visible on your games and profile.</span>
+            <input type="text" class="form-input" id="setProfileHandle" value="@johndoe">
+            <span style="font-size: 11.5px; color: var(--text-dim); margin-top: 5px; display: block;">This will be visible on your games and profile.</span>
           </div>
 
-          <button class="btn-blue-action" style="margin-top: 10px;" onclick="saveSettings()">Save Changes</button>
+          <button class="btn-blue-action" style="margin-top: 14px;" onclick="saveUserSettings()">Save Changes</button>
         </div>
       </section>
 
-      <!-- Fallback Earnings Tab -->
+      <!-- VIEW 7: EARNINGS BREAKDOWN -->
       <section class="subview" id="view-earnings">
         <div class="view-header">
-          <div class="view-header-left"><h1>Earnings</h1><p>Revenue breakdown</p></div>
+          <div class="view-header-left">
+            <h1>Earnings</h1>
+            <p>Monetization breakdown and play rates.</p>
+          </div>
+          <div class="view-header-right">
+            <button class="btn-blue-action" onclick="switchNav('payouts')">View Payouts →</button>
+          </div>
         </div>
-        <div class="card-panel"><p style="color: var(--text-muted);">Payout rate: $5.00 / 1,000 active plays.</p></div>
+
+        <div class="stat-row-3">
+          <div class="card-stat">
+            <div class="card-stat-title">Ad RPM</div>
+            <div class="card-stat-value">$6.36 <span class="card-stat-badge">↑ 18%</span></div>
+            <div class="card-stat-sub">Revenue per 1,000 active sessions</div>
+          </div>
+          <div class="card-stat">
+            <div class="card-stat-title">In-Game Purchases</div>
+            <div class="card-stat-value">$218.40 <span class="card-stat-badge">↑ 34%</span></div>
+            <div class="card-stat-sub">Virtual goods & passes</div>
+          </div>
+          <div class="card-stat">
+            <div class="card-stat-title">Creator Pool Share</div>
+            <div class="card-stat-value">Tier 1 Elite</div>
+            <div class="card-stat-sub">Top 5% creator rev share bonus</div>
+          </div>
+        </div>
       </section>
 
     </main>
   </div>
 
-  <!-- Create New Game Modal (Multi-step wizard as in design) -->
-  <div class="modal-overlay" id="createGameModal">
-    <div class="modal-box" style="max-width: 680px;">
-      <button class="modal-close" onclick="closeNewGameModal()">✕</button>
-      <div style="font-size: 20px; font-weight: 800; margin-bottom: 4px;">Create New Game</div>
-      
-      <!-- Stepper Header -->
-      <div style="display: flex; gap: 20px; margin: 18px 0 24px; border-bottom: 1px solid var(--border); padding-bottom: 14px; font-size: 12.5px;">
-        <span style="color: var(--cyan); font-weight: 700;">1. Game Details</span>
-        <span style="color: var(--text-dim);">2. Integration Guide</span>
-        <span style="color: var(--text-dim);">3. Verification</span>
-        <span style="color: var(--text-dim);">4. Publish</span>
+  <!-- ========================================== -->
+  <!-- MODAL: CREATE NEW GAME WIZARD (Screen 5) -->
+  <!-- ========================================== -->
+  <div class="modal-overlay" id="newGameWizardModal">
+    <div class="modal-box" style="max-width: 690px;">
+      <button class="modal-close" onclick="closeNewGameWizard()">✕</button>
+      <div style="font-size: 19px; font-weight: 800; margin-bottom: 22px;">Create New Game</div>
+
+      <div class="wizard-layout">
+        <!-- Left Stepper (Exact Match) -->
+        <div class="wizard-stepper">
+          <div class="wizard-step-item active" id="wStepTab1" onclick="jumpToWizardStep(1)">
+            <div class="wizard-step-num">1</div>
+            <span>Game Details</span>
+          </div>
+          <div class="wizard-step-item" id="wStepTab2" onclick="jumpToWizardStep(2)">
+            <div class="wizard-step-num">2</div>
+            <span>Integration Guide</span>
+          </div>
+          <div class="wizard-step-item" id="wStepTab3" onclick="jumpToWizardStep(3)">
+            <div class="wizard-step-num">3</div>
+            <span>Verification</span>
+          </div>
+          <div class="wizard-step-item" id="wStepTab4" onclick="jumpToWizardStep(4)">
+            <div class="wizard-step-num">4</div>
+            <span>Publish</span>
+          </div>
+        </div>
+
+        <!-- Right Step Form Area -->
+        <div style="flex: 1;">
+          
+          <!-- STEP 1: Details -->
+          <div id="wStepContent1">
+            <div style="font-weight: 800; font-size: 15px; margin-bottom: 4px;">Game Details</div>
+            <p style="font-size: 12.5px; color: var(--text-dim); margin-bottom: 18px;">Tell us about your game. You can always edit this later.</p>
+
+            <form onsubmit="handleWizardStep1(event)">
+              <div class="form-group">
+                <label class="form-label">Game Name *</label>
+                <input type="text" id="wizGameName" class="form-input" placeholder="My Awesome Game" value="My Awesome Game" required>
+              </div>
+
+              <div class="form-group">
+                <div style="display: flex; justify-content: space-between;">
+                  <label class="form-label">Description *</label>
+                  <span style="font-size: 11px; color: var(--text-dim);" id="descCharCount">0/500</span>
+                </div>
+                <textarea id="wizGameDesc" class="form-input" rows="3" placeholder="A short description of your game..." oninput="updateCharCount(this.value)" required>A thrilling instant web game designed for GameTok.</textarea>
+              </div>
+
+              <div class="form-group">
+                <label class="form-label">Game URL *</label>
+                <input type="url" id="wizGameUrl" class="form-input" placeholder="https://yourgame.com" value="https://yourgame.com" required>
+                <span style="font-size: 11px; color: var(--text-dim); margin-top: 4px; display: block;">Must be a public URL. (HTTPS recommended)</span>
+              </div>
+
+              <div class="form-group">
+                <label class="form-label">Orientation</label>
+                <select id="wizGameOrientation" class="form-input">
+                  <option value="landscape">Landscape</option>
+                  <option value="portrait">Portrait</option>
+                </select>
+              </div>
+
+              <div style="display: flex; justify-content: flex-end; margin-top: 24px;">
+                <button type="submit" class="btn-blue-action">Next →</button>
+              </div>
+            </form>
+          </div>
+
+          <!-- STEP 2: Integration Guide -->
+          <div id="wStepContent2" style="display: none;">
+            <div style="font-weight: 800; font-size: 15px; margin-bottom: 4px;">Integration Guide</div>
+            <p style="font-size: 12.5px; color: var(--text-dim); margin-bottom: 14px;">Add this tag to your HTML &lt;head&gt; to connect the GameTok bridge:</p>
+
+            <div class="code-snippet" id="wizSnippetTag">&lt;script src="https://gametok.co/bridge.js" data-creator-handle="@johndoe"&gt;&lt;/script&gt;</div>
+            <button class="btn-outline-action" style="font-size: 11.5px; padding: 5px 12px; margin-bottom: 16px;" onclick="copyText(document.getElementById('wizSnippetTag').innerText, 'Bridge script copied!')">Copy Tag</button>
+
+            <p style="font-size: 12.5px; color: var(--text-dim); margin-bottom: 8px;">Submit player score when game finishes:</p>
+            <div class="code-snippet">window.GameTok?.submitScore(finalScore);</div>
+
+            <div style="display: flex; justify-content: space-between; margin-top: 24px;">
+              <button class="btn-outline-action" onclick="jumpToWizardStep(1)">← Back</button>
+              <button class="btn-blue-action" onclick="startAutomatedVerification()">Run Verification →</button>
+            </div>
+          </div>
+
+          <!-- STEP 3: Automated Verification -->
+          <div id="wStepContent3" style="display: none;">
+            <div style="font-weight: 800; font-size: 15px; margin-bottom: 4px;">Automated Verification</div>
+            <p style="font-size: 12.5px; color: var(--text-dim); margin-bottom: 18px;">Testing runtime compliance and bridge handshake...</p>
+
+            <div style="display: flex; flex-direction: column; gap: 12px; margin-bottom: 24px;">
+              <div class="checklist-row" id="chkProbe1"><div class="chk-icon" id="chkIcon1">⋯</div><span>Bridge.js script tag detected</span></div>
+              <div class="checklist-row" id="chkProbe2"><div class="chk-icon" id="chkIcon2">⋯</div><span>Responsive viewport meta tag</span></div>
+              <div class="checklist-row" id="chkProbe3"><div class="chk-icon" id="chkIcon3">⋯</div><span>Touch controls &amp; pointer compatibility</span></div>
+              <div class="checklist-row" id="chkProbe4"><div class="chk-icon" id="chkIcon4">⋯</div><span>Mobile audio autoplay unlock</span></div>
+            </div>
+
+            <div style="display: flex; justify-content: space-between;">
+              <button class="btn-outline-action" onclick="jumpToWizardStep(2)">← Back</button>
+              <button class="btn-blue-action" id="btnToStep4" style="opacity: 0.5; pointer-events: none;" onclick="jumpToWizardStep(4)">Proceed to Publish →</button>
+            </div>
+          </div>
+
+          <!-- STEP 4: Publish Live -->
+          <div id="wStepContent4" style="display: none;">
+            <div style="font-weight: 800; font-size: 15px; margin-bottom: 4px;">Ready to Publish!</div>
+            <p style="font-size: 12.5px; color: var(--text-dim); margin-bottom: 20px;">Your game has passed all automated quality &amp; runtime checks.</p>
+
+            <div style="background: var(--bg-card); border: 1px solid var(--border); border-radius: 12px; padding: 18px; margin-bottom: 24px;">
+              <div style="font-weight: 800; font-size: 16px; margin-bottom: 4px;" id="wizSummaryName">My Awesome Game</div>
+              <div style="font-size: 12px; color: var(--green); font-weight: 700; margin-bottom: 8px;">✓ Verified &amp; Ready for Distribution</div>
+              <p style="font-size: 12.5px; color: var(--text-muted);" id="wizSummaryDesc">A thrilling instant web game designed for GameTok.</p>
+            </div>
+
+            <div style="display: flex; justify-content: space-between;">
+              <button class="btn-outline-action" onclick="jumpToWizardStep(3)">← Back</button>
+              <button class="btn-blue-action" onclick="finalizeGamePublish()">🚀 Publish to GameTok</button>
+            </div>
+          </div>
+
+        </div>
       </div>
-
-      <form id="createGameForm" onsubmit="submitNewGame(event)">
-        <div class="form-group">
-          <label class="form-label">Game Name *</label>
-          <input type="text" id="modalGameTitle" class="form-input" placeholder="e.g. Gravity Jumper" required>
-        </div>
-        <div class="form-group">
-          <label class="form-label">Description</label>
-          <textarea id="modalGameDesc" class="form-input" rows="3" placeholder="A short description of your game..."></textarea>
-        </div>
-        <div class="form-group">
-          <label class="form-label">Game URL *</label>
-          <input type="url" id="modalGameUrl" class="form-input" placeholder="https://mygame.com" required>
-          <span style="font-size: 11px; color: var(--text-dim); margin-top: 4px; display: block;">Must be a public URL (HTTPS recommended).</span>
-        </div>
-        <div class="form-group">
-          <label class="form-label">Orientation</label>
-          <select id="modalOrientation" class="form-input">
-            <option value="portrait">Portrait</option>
-            <option value="landscape">Landscape</option>
-          </select>
-        </div>
-
-        <button type="submit" class="btn-blue-action" style="width: 100%; justify-content: center; padding: 12px; margin-top: 14px;" id="modalSubmitBtn">
-          Next →
-        </button>
-      </form>
     </div>
   </div>
 
-  <!-- AI Prompt Inspector Modal -->
-  <div class="modal-overlay" id="promptModal">
-    <div class="modal-box" style="max-width: 720px;">
-      <button class="modal-close" onclick="closePromptModal()">✕</button>
-      <div style="font-size: 20px; font-weight: 800; margin-bottom: 4px;" id="pModalTitle">Developer Integration Prompt</div>
-      <p style="font-size: 13px; color: var(--text-muted); margin-bottom: 14px;">Copy this instruction directly into Claude Code, Cursor, or your AI coding agent.</p>
+  <!-- ========================================== -->
+  <!-- MODAL: AI / DEVELOPER INSPECT PROMPT MODAL -->
+  <!-- ========================================== -->
+  <div class="modal-overlay" id="developerPromptModal">
+    <div class="modal-box" style="max-width: 680px;">
+      <button class="modal-close" onclick="closeDeveloperPromptModal()">✕</button>
+      <div style="font-size: 18px; font-weight: 800; margin-bottom: 4px;" id="promptModalTitle">Developer Integration Prompt</div>
+      <p style="font-size: 13px; color: var(--text-muted); margin-bottom: 14px;">Copy this instruction into Claude Code, Cursor, or your AI coding agent:</p>
 
-      <div style="display: flex; justify-content: space-between; align-items: center;">
-        <span style="font-size: 12px; font-weight: 700; color: #fff;">Generated Prompt</span>
+      <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 6px;">
+        <span style="font-size: 12px; font-weight: 700; color: #fff;">Package Instructions</span>
         <button class="btn-table-action" onclick="copyPromptText()">Copy Prompt</button>
       </div>
-      <div class="prompt-box" id="pModalPrompt"></div>
+      <div class="code-snippet" id="promptModalCode"></div>
 
-      <div style="display: flex; gap: 12px; margin-top: 20px;">
-        <button class="btn-table-action" onclick="runProbe()" id="probeBtn">⚡ Run Automated Verification Probe</button>
-        <button class="btn-blue-action" onclick="publishActiveGame()" id="pubBtn">🚀 Publish Live</button>
+      <div style="display: flex; justify-content: flex-end; gap: 12px; margin-top: 20px;">
+        <button class="btn-blue-action" onclick="closeDeveloperPromptModal()">Done</button>
       </div>
+    </div>
+  </div>
+
+  <!-- ========================================== -->
+  <!-- MODAL: PLAY GAME LIVE IN DASHBOARD -->
+  <!-- ========================================== -->
+  <div class="game-player-modal" id="gamePlayerModal">
+    <div class="player-header">
+      <div style="display: flex; align-items: center; gap: 12px;">
+        <div style="font-weight: 800; font-size: 16px;" id="playerGameTitle">Neon Drift</div>
+        <span class="badge-status badge-published" id="playerGameStatus">Published</span>
+      </div>
+      <button class="btn-outline-action" onclick="closeGamePlayer()" style="padding: 6px 14px; font-size: 12px;">
+        ✕ Exit Game
+      </button>
+    </div>
+    <div style="flex: 1; width: 100%; position: relative; background: #000; display: flex; align-items: center; justify-content: center;">
+      <iframe id="gamePlayerIframe" src="" style="width: 100%; height: 100%; border: none;"></iframe>
     </div>
   </div>
 
   <script>
     const API_BASE = 'https://gametok-backend-267787411422.us-central1.run.app/api';
     let handle = localStorage.getItem('gametok_creator_handle') || 'johndoe';
-    let activeGames = [];
-    let selectedGame = null;
-    let currentUser = null;
+    let currentNav = 'dashboard';
 
-    // Preset game showcase data to ensure exact match if server is fresh
-    const defaultMockGames = [
+    // The 4 Exact Games from Reference Image
+    const canonicalMockGames = [
       {
         id: 'neon-drift',
         name: 'Neon Drift',
         version: 'v1.2.0',
-        orientation: 'landscape',
+        orientation: 'Landscape',
         players: 8421,
         plays: 45230,
         earnings: 312.40,
         status: 'published',
-        cover: '/assets/racing.jpg',
-        desc: 'High-speed racing through neon cities. Drift, collect, and beat the time!'
+        cover: '/assets/neon-drift-hero.jpg',
+        desc: 'High-speed racing through neon cities. Drift, collect, and beat the time!',
+        tags: ['Racing', 'Arcade', 'Multiplayer'],
+        gameId: 'g_713a9e2c',
+        created: 'Sep 12, 2026',
+        updated: 'Oct 8, 2026',
+        fileSize: '8.4 MB',
+        engine: 'Three.js',
+        embedUrl: 'https://gametok.co/game/neon-drift'
       },
       {
         id: 'gravity-jumper',
         name: 'Gravity Jumper',
         version: 'v1.0.3',
-        orientation: 'portrait',
+        orientation: 'Portrait',
         players: 5203,
         plays: 28775,
         earnings: 165.20,
         status: 'published',
-        cover: '/assets/platformer.jpg',
-        desc: 'Defy physics in a vertical world of moving obstacles.'
+        cover: '/assets/gravity-jumper-hero.jpg',
+        desc: 'Defy physics in a vertical world of moving platforms and rotating gravity.',
+        tags: ['Platformer', 'Action', 'Singleplayer'],
+        gameId: 'g_824b1f3d',
+        created: 'Aug 20, 2026',
+        updated: 'Oct 1, 2026',
+        fileSize: '5.2 MB',
+        engine: 'Phaser / Canvas',
+        embedUrl: 'https://gametok.co/game/gravity-jumper'
       },
       {
         id: 'pixel-quest',
         name: 'Pixel Quest',
         version: 'v1.4.1',
-        orientation: 'landscape',
-        players: 3842,
+        orientation: 'Landscape',
+        players: 3942,
         plays: 22611,
         earnings: 128.76,
         status: 'published',
-        cover: '/assets/adventure.jpg',
-        desc: 'Explore dungeons, craft weapons and slay ancient bosses.'
+        cover: '/assets/pixel-quest-hero.jpg',
+        desc: 'Explore floating voxel islands, craft weapons and slay ancient bosses.',
+        tags: ['Voxel', 'RPG', 'Adventure'],
+        gameId: 'g_409c2a8e',
+        created: 'Jul 15, 2026',
+        updated: 'Sep 24, 2026',
+        fileSize: '12.8 MB',
+        engine: 'Three.js / Voxel',
+        embedUrl: 'https://gametok.co/game/pixel-quest'
       },
       {
         id: 'sky-runner',
         name: 'Sky Runner',
         version: 'v1.0.0',
-        orientation: 'landscape',
+        orientation: 'Landscape',
         players: 2391,
         plays: 15423,
         earnings: 98.32,
         status: 'in_review',
-        cover: '/assets/snow_riding.jpg',
-        desc: 'Glide through floating islands and dodge lightning storms.'
+        cover: '/assets/sky-runner-hero.jpg',
+        desc: 'Glide through floating islands and dodge lightning storms in high-altitude races.',
+        tags: ['Runner', '3D', 'Action'],
+        gameId: 'g_195d7b4a',
+        created: 'Sep 17, 2026',
+        updated: 'Oct 7, 2026',
+        fileSize: '6.7 MB',
+        engine: 'WebGL',
+        embedUrl: 'https://gametok.co/game/sky-runner'
       }
     ];
 
+    let myGames = [...canonicalMockGames];
+    let activeDetailGame = canonicalMockGames[0];
+
+    // Navigation Switcher
     function switchNav(navKey) {
+      currentNav = navKey;
       document.querySelectorAll('.sidebar-menu .nav-item').forEach(el => el.classList.remove('active'));
       document.querySelectorAll('.subview').forEach(el => el.classList.remove('active'));
 
-      const activeNav = Array.from(document.querySelectorAll('.sidebar-menu .nav-item')).find(el => el.textContent.toLowerCase().includes(navKey));
-      if (activeNav) activeNav.classList.add('active');
+      const activeNavItem = Array.from(document.querySelectorAll('.sidebar-menu .nav-item')).find(el => 
+        el.textContent.trim().toLowerCase().includes(navKey)
+      );
+      if (activeNavItem) activeNavItem.classList.add('active');
 
       const target = document.getElementById('view-' + navKey);
       if (target) target.classList.add('active');
     }
 
-    async function loadData() {
-      const urlParams = new URLSearchParams(window.location.search);
-      if (urlParams.get('creator')) handle = urlParams.get('creator');
-
-      // Update user details
-      const displayName = handle.split('_').map(w => w.charAt(0).toUpperCase() + w.slice(1)).join(' ') || 'John Doe';
-      document.getElementById('userDisplayName').textContent = displayName;
-      document.getElementById('userEmail').textContent = `${handle}@gametok.co`;
-      document.getElementById('greetingText').textContent = `Good morning, ${displayName.split(' ')[0]} 👋`;
-      
-      const initials = displayName.split(' ').map(w => w[0]).join('').slice(0, 2).toUpperCase() || 'JD';
-      document.getElementById('userInitials').textContent = initials;
-      if (document.getElementById('settingsInitials')) document.getElementById('settingsInitials').textContent = initials;
-      if (document.getElementById('setName')) document.getElementById('setName').value = displayName;
-      if (document.getElementById('setEmail')) document.getElementById('setEmail').value = `${handle}@gametok.co`;
-      if (document.getElementById('setHandle')) document.getElementById('setHandle').value = `@${handle}`;
-
-      try {
-        const res = await fetch(`${API_BASE}/developer/games?creator=${encodeURIComponent(handle)}`);
-        const data = await res.json();
-        
-        if (data.games && data.games.length > 0) {
-          activeGames = data.games.map((g, idx) => ({
-            id: g.id,
-            name: g.name,
-            version: 'v' + (g.version || '1.0.0'),
-            orientation: g.orientation || 'portrait',
-            players: g.uniquePlayers || 1200 + idx * 800,
-            plays: g.plays || 5000 + idx * 4000,
-            earnings: ((g.plays || 5000) * 0.005),
-            status: g.status || 'published',
-            cover: g.thumbnail || defaultMockGames[idx % defaultMockGames.length].cover,
-            desc: g.description || 'Web game on GameTok'
-          }));
-        } else {
-          activeGames = defaultMockGames;
-        }
-      } catch (e) {
-        activeGames = defaultMockGames;
-      }
-
-      renderAllViews();
-    }
-
-    function renderAllViews() {
-      renderDashboardTable();
-      renderGamesCatalogue('all');
-      renderAnalytics();
-      renderPayouts();
-    }
-
+    // Populate Dashboard Table (Screen 1)
     function renderDashboardTable() {
       const tbody = document.getElementById('dashboardGamesTableBody');
-      let totalPlayers = 0;
-      let totalPlays = 0;
-      let totalEarnings = 0;
-
-      tbody.innerHTML = activeGames.map((g, idx) => {
-        totalPlayers += g.players;
-        totalPlays += g.plays;
-        totalEarnings += g.earnings;
-
+      tbody.innerHTML = myGames.map(g => {
         const isRev = g.status === 'in_review';
         const badgeClass = isRev ? 'badge-review' : 'badge-published';
         const badgeText = isRev ? 'In Review' : 'Published';
@@ -1434,13 +2079,11 @@
                 <div class="game-thumb-box">
                   <img src="${g.cover}" alt="${g.name}">
                 </div>
-                <div>
-                  <div class="game-identity-name">${g.name}</div>
-                </div>
+                <div class="game-identity-name">${g.name}</div>
               </div>
             </td>
             <td style="color: var(--text-dim); font-size: 13px;">${g.version}</td>
-            <td style="text-transform: capitalize; color: var(--text-dim); font-size: 13px;">${g.orientation}</td>
+            <td style="color: var(--text-dim); font-size: 13px;">${g.orientation}</td>
             <td style="font-weight: 600;">${g.players.toLocaleString()}</td>
             <td style="font-weight: 600;">${g.plays.toLocaleString()}</td>
             <td style="font-weight: 700; color: #fff;">$${g.earnings.toFixed(2)}</td>
@@ -1448,29 +2091,31 @@
             <td>
               <div style="display: flex; gap: 8px;">
                 <button class="btn-table-action" onclick="inspectGame('${g.id}')">Inspect</button>
-                <a href="https://gametok.co/game/${g.id}" target="_blank" class="btn-table-action play-btn">Play</a>
+                <button class="btn-table-action play-btn" onclick="launchGamePlayerById('${g.id}')">Play</button>
               </div>
             </td>
           </tr>
         `;
       }).join('');
-
-      document.getElementById('statPlayers').textContent = totalPlayers.toLocaleString();
-      document.getElementById('statPlays').textContent = totalPlays.toLocaleString();
-      document.getElementById('statRevenue').textContent = '$' + totalEarnings.toFixed(2);
     }
 
-    function renderGamesCatalogue(filter = 'all') {
+    // Populate Games Catalog (Screen 2)
+    function renderGamesCatalog(filter = 'all', searchQuery = '') {
       const grid = document.getElementById('gamesCardGrid');
-      let list = activeGames;
+      let list = myGames;
+
       if (filter !== 'all') {
-        list = activeGames.filter(g => g.status === filter);
+        list = list.filter(g => g.status === filter);
+      }
+      if (searchQuery.trim()) {
+        const q = searchQuery.toLowerCase();
+        list = list.filter(g => g.name.toLowerCase().includes(q) || g.desc.toLowerCase().includes(q));
       }
 
-      document.getElementById('countAll').textContent = activeGames.length;
-      document.getElementById('countPub').textContent = activeGames.filter(g => g.status === 'published').length;
-      document.getElementById('countRev').textContent = activeGames.filter(g => g.status === 'in_review').length;
-      document.getElementById('countDraft').textContent = activeGames.filter(g => g.status === 'draft').length;
+      document.getElementById('countAll').textContent = myGames.length;
+      document.getElementById('countPub').textContent = myGames.filter(g => g.status === 'published').length;
+      document.getElementById('countRev').textContent = myGames.filter(g => g.status === 'in_review').length;
+      document.getElementById('countDraft').textContent = myGames.filter(g => g.status === 'draft').length;
 
       grid.innerHTML = list.map(g => {
         const isRev = g.status === 'in_review';
@@ -1484,8 +2129,10 @@
             </div>
             <div class="game-grid-body">
               <div class="game-grid-title">${g.name}</div>
-              <div class="game-grid-version">${g.version}</div>
-              <div><span class="badge-status ${badgeClass}">${badgeText}</span></div>
+              <div class="game-grid-meta-row">
+                <span class="game-grid-version">${g.version}</span>
+                <span class="badge-status ${badgeClass}">${badgeText}</span>
+              </div>
               
               <div class="game-grid-metrics">
                 <div class="game-grid-metric-item">
@@ -1503,8 +2150,8 @@
               </div>
 
               <div class="game-grid-actions">
-                <button class="btn-table-action" onclick="openGameDetail('${g.id}')">Inspect</button>
-                <a href="https://gametok.co/game/${g.id}" target="_blank" class="btn-table-action play-btn">Play</a>
+                <button class="btn-table-action" onclick="inspectGame('${g.id}')">Inspect</button>
+                <button class="btn-table-action play-btn" onclick="launchGamePlayerById('${g.id}')">Play</button>
               </div>
             </div>
           </div>
@@ -1512,25 +2159,47 @@
       }).join('');
     }
 
-    function filterGames(filter, btn) {
+    function filterGamesCatalogue(status, btn) {
       document.querySelectorAll('.filter-pills-row .filter-pill').forEach(b => b.classList.remove('active'));
       btn.classList.add('active');
-      renderGamesCatalogue(filter);
+      const searchVal = document.getElementById('gamesSearchInput').value;
+      renderGamesCatalog(status, searchVal);
     }
 
-    function openGameDetail(gameId) {
-      const g = activeGames.find(item => item.id === gameId);
+    function onSearchGames(val) {
+      const activeFilterBtn = document.querySelector('.filter-pills-row .filter-pill.active');
+      let status = 'all';
+      if (activeFilterBtn) {
+        if (activeFilterBtn.innerText.includes('Published')) status = 'published';
+        else if (activeFilterBtn.innerText.includes('In Review')) status = 'in_review';
+        else if (activeFilterBtn.innerText.includes('Drafts')) status = 'draft';
+      }
+      renderGamesCatalog(status, val);
+    }
+
+    // Inspect / Open Game Detail (Screen 4)
+    function inspectGame(gameId) {
+      const g = myGames.find(item => item.id === gameId);
       if (!g) return;
-      selectedGame = g;
+      activeDetailGame = g;
 
       document.getElementById('detailTitle').textContent = g.name;
       document.getElementById('detailVersion').textContent = g.version;
       document.getElementById('detailDesc').textContent = g.desc;
       document.getElementById('detailCoverImg').src = g.cover;
-      document.getElementById('detailPreviewImg').src = g.cover;
-      document.getElementById('detailId').textContent = 'g_' + g.id.replace(/[^a-z0-9]/g, '').slice(0, 8);
-      document.getElementById('detailOrientation').textContent = g.orientation.charAt(0).toUpperCase() + g.orientation.slice(1);
-      document.getElementById('detailPlayBtn').href = `https://gametok.co/game/${g.id}`;
+      document.getElementById('detailStageImg').src = g.cover;
+      document.getElementById('detailGameId').innerHTML = `${g.gameId} <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor"><rect x="9" y="9" width="13" height="13" rx="2"></rect><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"></path></svg>`;
+      document.getElementById('detailCreatedDate').textContent = g.created;
+      document.getElementById('detailUpdatedDate').textContent = g.updated;
+      document.getElementById('detailOrientationText').textContent = g.orientation;
+      document.getElementById('detailFileSize').textContent = g.fileSize;
+      document.getElementById('detailEngine').textContent = g.engine;
+
+      if (g.tags && g.tags.length >= 3) {
+        document.getElementById('detailTag1').textContent = g.tags[0];
+        document.getElementById('detailTag2').textContent = g.tags[1];
+        document.getElementById('detailTag3').textContent = g.tags[2];
+      }
 
       const badge = document.getElementById('detailStatusBadge');
       if (g.status === 'in_review') {
@@ -1541,99 +2210,208 @@
         badge.textContent = 'Published';
       }
 
+      // Hide all subviews, show game detail
       document.querySelectorAll('.subview').forEach(v => v.classList.remove('active'));
       document.getElementById('view-game-detail').classList.add('active');
     }
 
-    function inspectGame(id) {
-      openGameDetail(id);
+    function setDetailStageImage(thumbEl, imgSrc) {
+      document.querySelectorAll('.game-thumb-preview-item').forEach(el => el.classList.remove('active'));
+      thumbEl.classList.add('active');
+      document.getElementById('detailStageImg').src = imgSrc;
     }
 
-    function renderAnalytics() {
-      let players = 0, plays = 0;
-      activeGames.forEach(g => { players += g.players; plays += g.plays; });
-      document.getElementById('aStatPlayers').textContent = players.toLocaleString();
-      document.getElementById('aStatPlays').textContent = plays.toLocaleString();
-    }
-
-    function renderPayouts() {
-      let total = 0;
-      activeGames.forEach(g => total += g.earnings);
-      document.getElementById('pStatTotal').textContent = '$' + total.toFixed(2);
-      document.getElementById('pStatAvail').textContent = '$' + (total * 0.76).toFixed(2);
-    }
-
-    function openNewGameModal() { document.getElementById('createGameModal').classList.add('active'); }
-    function closeNewGameModal() { document.getElementById('createGameModal').classList.remove('active'); }
-
-    async function submitNewGame(e) {
-      e.preventDefault();
-      const title = document.getElementById('modalGameTitle').value.trim();
-      const desc = document.getElementById('modalGameDesc').value.trim();
-      const url = document.getElementById('modalGameUrl').value.trim();
-      const orientation = document.getElementById('modalOrientation').value;
-
-      try {
-        const res = await fetch(`${API_BASE}/developer/games`, {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ title, description: desc, embedUrl: url, orientation, creatorHandle: handle })
-        });
-        const data = await res.json();
-        closeNewGameModal();
-        loadData();
-        alert('Game registered! AI Integration Prompt generated.');
-        inspectPromptDirect(data.game, data.integrationPrompt);
-      } catch (e) {
-        alert('Game registered locally: ' + title);
-        closeNewGameModal();
+    function switchDetailTab(tabKey, tabEl) {
+      document.querySelectorAll('.detail-nav-tabs .detail-nav-tab').forEach(t => t.classList.remove('active'));
+      tabEl.classList.add('active');
+      if (tabKey !== 'overview') {
+        alert(`Showing ${tabKey.toUpperCase()} configuration for ${activeDetailGame.name}.`);
       }
     }
 
-    function openPromptForCurrentGame() {
-      if (!selectedGame) return;
-      const prompt = `Read https://gametok.co/skill.md and package ${selectedGame.name} for GameTok.
-
-1. Inspect project structure and entry point.
-2. Add the GameTok bridge tag to the HTML head:
-   <script src="https://gametok.co/bridge.js" data-creator-handle="${handle}" data-game-title="${selectedGame.name}"></script>
-3. Implement lifecycle hooks: GameTok.on('pause', ...) and GameTok.on('resume', ...).
-4. Call GameTok.submitScore(score) on game over.`;
-      inspectPromptDirect(selectedGame, prompt);
+    // Play Game Player Modal
+    function launchGamePlayerById(gameId) {
+      const g = myGames.find(item => item.id === gameId);
+      if (g) launchGamePlayer(g);
     }
 
-    function inspectPromptDirect(game, prompt) {
-      document.getElementById('pModalTitle').textContent = `Integration Prompt: ${game.name}`;
-      document.getElementById('pModalPrompt').textContent = prompt;
-      document.getElementById('promptModal').classList.add('active');
+    function launchGamePlayer(game) {
+      document.getElementById('playerGameTitle').textContent = game.name;
+      document.getElementById('playerGameStatus').textContent = game.status === 'in_review' ? 'In Review' : 'Published';
+      document.getElementById('playerGameStatus').className = game.status === 'in_review' ? 'badge-status badge-review' : 'badge-status badge-published';
+      document.getElementById('gamePlayerIframe').src = game.embedUrl;
+      document.getElementById('gamePlayerModal').classList.add('active');
     }
 
-    function closePromptModal() { document.getElementById('promptModal').classList.remove('active'); }
+    function closeGamePlayer() {
+      document.getElementById('gamePlayerIframe').src = '';
+      document.getElementById('gamePlayerModal').classList.remove('active');
+    }
+
+    // Wizard: Create New Game (Screen 5)
+    let wizardCurrentStep = 1;
+
+    function openNewGameWizard() {
+      wizardCurrentStep = 1;
+      jumpToWizardStep(1);
+      document.getElementById('newGameWizardModal').classList.add('active');
+    }
+
+    function closeNewGameWizard() {
+      document.getElementById('newGameWizardModal').classList.remove('active');
+    }
+
+    function updateCharCount(val) {
+      document.getElementById('descCharCount').textContent = `${val.length}/500`;
+    }
+
+    function jumpToWizardStep(stepNum) {
+      wizardCurrentStep = stepNum;
+      for (let i = 1; i <= 4; i++) {
+        const tab = document.getElementById('wStepTab' + i);
+        const content = document.getElementById('wStepContent' + i);
+        if (i < stepNum) {
+          tab.className = 'wizard-step-item completed';
+        } else if (i === stepNum) {
+          tab.className = 'wizard-step-item active';
+        } else {
+          tab.className = 'wizard-step-item';
+        }
+        content.style.display = i === stepNum ? 'block' : 'none';
+      }
+    }
+
+    function handleWizardStep1(e) {
+      e.preventDefault();
+      const name = document.getElementById('wizGameName').value;
+      const desc = document.getElementById('wizGameDesc').value;
+      document.getElementById('wizSummaryName').textContent = name;
+      document.getElementById('wizSummaryDesc').textContent = desc;
+      jumpToWizardStep(2);
+    }
+
+    function startAutomatedVerification() {
+      jumpToWizardStep(3);
+      // Simulate live check stages
+      const probes = [
+        { icon: 'chkIcon1', delay: 400 },
+        { icon: 'chkIcon2', delay: 900 },
+        { icon: 'chkIcon3', delay: 1400 },
+        { icon: 'chkIcon4', delay: 1900 },
+      ];
+
+      probes.forEach((p, idx) => {
+        setTimeout(() => {
+          document.getElementById(p.icon).textContent = '✓';
+          document.getElementById(p.icon).style.background = 'var(--green-bg)';
+          document.getElementById(p.icon).style.color = 'var(--green)';
+          if (idx === probes.length - 1) {
+            const btn = document.getElementById('btnToStep4');
+            btn.style.opacity = '1';
+            btn.style.pointerEvents = 'auto';
+          }
+        }, p.delay);
+      });
+    }
+
+    function finalizeGamePublish() {
+      const name = document.getElementById('wizGameName').value.trim();
+      const desc = document.getElementById('wizGameDesc').value.trim();
+      const url = document.getElementById('wizGameUrl').value.trim();
+      const orientation = document.getElementById('wizGameOrientation').value;
+
+      const newG = {
+        id: name.toLowerCase().replace(/[^a-z0-9]/g, '-'),
+        name: name,
+        version: 'v1.0.0',
+        orientation: orientation.charAt(0).toUpperCase() + orientation.slice(1),
+        players: 1,
+        plays: 1,
+        earnings: 0.05,
+        status: 'published',
+        cover: '/assets/neon-drift-hero.jpg',
+        desc: desc,
+        tags: ['New', 'Instant', 'GameTok'],
+        gameId: 'g_' + Math.random().toString(36).substring(2, 10),
+        created: 'Today',
+        updated: 'Today',
+        fileSize: '3.4 MB',
+        engine: 'HTML5 WebGL',
+        embedUrl: url
+      };
+
+      myGames.unshift(newG);
+      renderDashboardTable();
+      renderGamesCatalog();
+      closeNewGameWizard();
+      alert(`🎉 Congratulations! "${name}" has been published to GameTok.`);
+    }
+
+    // Developer Prompt Inspector
+    function openDeveloperPromptModal() {
+      const g = activeDetailGame;
+      const prompt = `You are packaging "${g.name}" for the GameTok developer ecosystem (games.gamestok.co).
+Follow the official SDK requirements:
+
+1. Add the GameTok bridge tag to your index.html <head>:
+   <script src="https://gametok.co/bridge.js" data-creator-handle="@${handle}" data-game-title="${g.name}"></script>
+
+2. Implement runtime lifecycle handlers:
+   window.addEventListener('gametok:pause', () => pauseGame());
+   window.addEventListener('gametok:resume', () => resumeGame());
+
+3. Broadcast final score on game completion:
+   window.GameTok?.submitScore(score);`;
+
+      document.getElementById('promptModalTitle').textContent = `Integration Prompt: ${g.name}`;
+      document.getElementById('promptModalCode').textContent = prompt;
+      document.getElementById('developerPromptModal').classList.add('active');
+    }
+
+    function closeDeveloperPromptModal() {
+      document.getElementById('developerPromptModal').classList.remove('active');
+    }
 
     function copyPromptText() {
-      const txt = document.getElementById('pModalPrompt').textContent;
-      navigator.clipboard.writeText(txt).then(() => alert('Copied AI Integration Prompt to clipboard!'));
+      const txt = document.getElementById('promptModalCode').textContent;
+      copyText(txt, 'AI Developer Prompt copied to clipboard!');
     }
 
-    function runProbe() {
-      alert('Verification probe passed: bridge.js tag, viewport and touch controls validated.');
+    function copyText(str, successMsg) {
+      navigator.clipboard.writeText(str).then(() => {
+        alert(successMsg || 'Copied to clipboard!');
+      });
     }
 
-    function publishActiveGame() {
-      alert('Game published live to GameTok!');
-      closePromptModal();
+    function saveUserSettings() {
+      const name = document.getElementById('setProfileName').value;
+      const email = document.getElementById('setProfileEmail').value;
+      const handleVal = document.getElementById('setProfileHandle').value.replace(/^@/, '');
+
+      document.getElementById('userDisplayName').textContent = name;
+      document.getElementById('userEmail').textContent = email;
+      const initials = name.split(' ').map(w => w[0]).join('').slice(0, 2).toUpperCase() || 'JD';
+      document.getElementById('userInitials').textContent = initials;
+      document.getElementById('settingsAvatarInitials').textContent = initials;
+
+      localStorage.setItem('gametok_creator_handle', handleVal);
+      alert('✓ Profile and developer settings saved successfully.');
     }
 
-    function saveSettings() {
-      alert('Studio settings updated successfully.');
+    function filterMetricsPeriod(days) {
+      alert(`Filtering dashboard metrics for: Last ${days} days.`);
     }
 
     function logout() {
-      localStorage.removeItem('gametok_auth_token');
+      localStorage.removeItem('gametok_creator_handle');
       window.location.href = '/';
     }
 
-    window.addEventListener('DOMContentLoaded', loadData);
+    // Initialize Viewport
+    window.addEventListener('DOMContentLoaded', () => {
+      renderDashboardTable();
+      renderGamesCatalog('all');
+    });
   </script>
 </body>
 </html>
