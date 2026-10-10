@@ -1622,6 +1622,15 @@
     }
 
     function openPublisherModal() {
+      const token = localStorage.getItem('gametok_auth_token');
+      if (token) {
+        toggleDashboardView(true);
+      } else {
+        openAuthModal();
+      }
+    }
+
+    function openDirectPublishModal() {
       document.getElementById('publisherModal').classList.add('active');
     }
 
@@ -1817,6 +1826,34 @@
 
     
     // Google Identity Services (GIS) Client ID
+    
+    // Cross-Domain Google Auth Bridge to gametok.co
+    function startGoogleAuthBridge() {
+      const width = 500;
+      const height = 620;
+      const left = window.screenX + (window.outerWidth - width) / 2;
+      const top = window.screenY + (window.outerHeight - height) / 2;
+      
+      const bridgeUrl = 'https://gametok.co/auth-bridge.html';
+      const authWindow = window.open(
+        bridgeUrl,
+        'gametok_google_auth',
+        `width=${width},height=${height},left=${left},top=${top},status=0,menubar=0,toolbar=0`
+      );
+
+      if (!authWindow) {
+        alert('Please allow popups to sign in with Google.');
+      }
+    }
+
+    // Listen for credential posted from auth-bridge on gametok.co
+    window.addEventListener('message', function(event) {
+      if (!event.data) return;
+      if (event.data.type === 'GAMETOK_GOOGLE_CREDENTIAL' && event.data.credential) {
+        handleGoogleCredentialResponse({ credential: event.data.credential });
+      }
+    });
+
     const GOOGLE_CLIENT_ID = '516560435127-l6db4akjqei5q57j764kgu3aoaedu45l.apps.googleusercontent.com';
 
     function initGoogleAuth() {
@@ -1998,8 +2035,16 @@
           <div style="flex: 1; height: 1px; background: rgba(255,255,255,0.1);"></div>
         </div>
 
-        <!-- Google One-Tap & Standard Button Container -->
-        <div id="googleBtnContainer" style="display: flex; justify-content: center; min-height: 44px; margin-bottom: 8px;"></div>
+        <!-- Google Sign-In Button (Cross-Domain Bridge to gametok.co) -->
+        <button type="button" onclick="startGoogleAuthBridge()" style="width: 100%; display: flex; align-items: center; justify-content: center; gap: 12px; background: #0f1420; border: 1px solid #1f2738; color: #fff; padding: 11px 16px; border-radius: 999px; font-size: 14px; font-weight: 600; cursor: pointer; transition: background 0.15s ease;">
+          <svg width="18" height="18" viewBox="0 0 24 24">
+            <path fill="#4285F4" d="M23.745 12.27c0-.7-.06-1.4-.19-2.07H12v4.51h6.6c-.29 1.52-1.14 2.8-2.4 3.66v3.05h3.88c2.27-2.09 3.66-5.17 3.66-9.15z"/>
+            <path fill="#34A853" d="M12 24c3.24 0 5.95-1.08 7.93-2.91l-3.88-3.05c-1.08.72-2.45 1.16-4.05 1.16-3.12 0-5.77-2.1-6.72-4.94H1.24v3.15C3.26 21.36 7.34 24 12 24z"/>
+            <path fill="#FBBC05" d="M5.28 14.26c-.25-.72-.38-1.49-.38-2.26s.13-1.54.38-2.26V6.59H1.24C.45 8.16 0 9.98 0 12s.45 3.84 1.24 5.41l4.04-3.15z"/>
+            <path fill="#EA4335" d="M12 4.75c1.77 0 3.35.61 4.6 1.8l3.42-3.42C17.95 1.19 15.24 0 12 0 7.34 0 3.26 2.64 1.24 6.59l4.04 3.15c.95-2.84 3.6-4.99 6.72-4.99z"/>
+          </svg>
+          Continue with Google
+        </button>
 
 
         <div style="margin-top: 20px; text-align: center; font-size: 13.5px; color: var(--text-muted);">
