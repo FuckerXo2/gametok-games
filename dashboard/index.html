@@ -1862,7 +1862,7 @@ if (ad.rewarded) {
           <div class="detail-nav-tab active" onclick="switchSettingsTab('account', this)">Account</div>
           <div class="detail-nav-tab" onclick="switchSettingsTab('security', this)">Security</div>
           <div class="detail-nav-tab" onclick="switchSettingsTab('notifications', this)">Notifications</div>
-          <div class="detail-nav-tab" onclick="switchSettingsTab('integrations', this)">Integrations</div>
+          <div class="detail-nav-tab" onclick="switchSettingsTab('integrations', this)">API Keys</div>
         </div>
 
         <!-- TAB 1: ACCOUNT -->
@@ -1957,7 +1957,7 @@ if (ad.rewarded) {
 
         <!-- TAB 4: INTEGRATIONS -->
         <div class="card-panel" id="settingsTabIntegrations" style="max-width: 660px; display: none;">
-          <div style="font-weight: 800; font-size: 15px; margin-bottom: 20px;">Developer API &amp; Webhooks</div>
+          <div style="font-weight: 800; font-size: 15px; margin-bottom: 20px;">Developer API Key</div>
           <div class="form-group">
             <label class="form-label">GameTok Studio API Key</label>
             <div style="display: flex; gap: 10px;">
@@ -1965,12 +1965,8 @@ if (ad.rewarded) {
               <button class="btn-outline-action" onclick="toggleApiKeyVisibility()">Show</button>
               <button class="btn-outline-action" onclick="copyText('gtk_live_98a71f04bc293d047a2', 'API Key copied to clipboard!')">Copy</button>
             </div>
+            <p style="font-size: 12px; color: var(--text-dim); margin-top: 8px;">Use this secret key in your automated build scripts or CI/CD pipelines to publish and update games.</p>
           </div>
-          <div class="form-group" style="margin-top: 18px;">
-            <label class="form-label">Webhook URL (Plays &amp; High Scores)</label>
-            <input type="url" class="form-input" placeholder="https://api.yourgame.com/webhooks/gametok" value="https://api.yourgame.com/gametok-events">
-          </div>
-          <button class="btn-blue-action" onclick="showToast('Integrations updated')">Save Integrations</button>
         </div>
       </section>
 
