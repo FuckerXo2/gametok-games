@@ -893,6 +893,39 @@
       box-shadow: 0 20px 50px rgba(0, 0, 0, 0.6);
     }
 
+    /* Avatar Creator Swatches & Pills */
+    .color-swatch-btn {
+      width: 32px;
+      height: 32px;
+      border-radius: 50%;
+      border: 2px solid transparent;
+      cursor: pointer;
+      transition: all 0.15s ease;
+      outline: none;
+      flex-shrink: 0;
+    }
+    .color-swatch-btn.active, .color-swatch-btn:hover {
+      transform: scale(1.18);
+      border-color: #38bdf8;
+      box-shadow: 0 0 10px rgba(56, 189, 248, 0.5);
+    }
+    .avatar-pill-btn {
+      background: #0d1629;
+      border: 1px solid var(--border);
+      color: var(--text-muted);
+      padding: 6px 12px;
+      border-radius: 8px;
+      font-size: 12px;
+      cursor: pointer;
+      transition: all 0.15s ease;
+      font-family: inherit;
+    }
+    .avatar-pill-btn.active, .avatar-pill-btn:hover {
+      background: rgba(37, 99, 235, 0.2);
+      border-color: var(--cyan);
+      color: #fff;
+    }
+
     .modal-close {
       position: absolute;
       top: 20px;
@@ -1219,8 +1252,11 @@
       <!-- Creator Profile Bottom -->
       <div class="sidebar-footer">
         <div class="user-pill" onclick="switchNav('settings')" style="cursor: pointer;" title="Manage Account Settings">
-          <div class="user-avatar-initials" id="userInitials">GT</div>
-          <div class="user-meta">
+          <div class="user-avatar-initials" id="userAvatarWrap" style="overflow: hidden; padding: 0; background: #13343b; flex-shrink: 0; display: flex; align-items: center; justify-content: center;">
+            <img id="userAvatarImg" src="" style="width: 100%; height: 100%; object-fit: cover; border-radius: 50%; display: none;" alt="Avatar">
+            <span id="userInitials">GT</span>
+          </div>
+          <div class="user-meta" style="min-width: 0;">
             <div class="user-display-name" id="userDisplayName">Creator</div>
             <div class="user-email-text" id="userEmail">creator@gametok.co</div>
           </div>
@@ -1372,6 +1408,10 @@
             ← Back to Games
           </button>
           <div style="display: flex; gap: 10px;">
+            <button class="btn-outline-action" onclick="copyGameTokLink()">
+              <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" style="margin-right: 4px; vertical-align: middle;"><path d="M10 13a5 5 0 0 0 7.54.54l3-3a5 5 0 0 0-7.07-7.07l-1.72 1.71"></path><path d="M14 11a5 5 0 0 0-7.54-.54l-3 3a5 5 0 0 0 7.07 7.07l1.71-1.71"></path></svg>
+              Copy GameTok Link
+            </button>
             <button class="btn-outline-action" onclick="openDeveloperPromptModal()">Inspect</button>
             <button class="btn-blue-action" onclick="launchGamePlayer(activeDetailGame)">Play Game</button>
           </div>
@@ -1828,8 +1868,21 @@ if (ad.rewarded) {
         <div class="card-panel" id="settingsTabAccount" style="max-width: 660px;">
           <div style="font-weight: 800; font-size: 15px; margin-bottom: 20px;">Profile Information</div>
           <div style="display: flex; align-items: center; gap: 20px; margin-bottom: 24px;">
-            <div class="user-avatar-initials" style="width: 56px; height: 56px; font-size: 18px;" id="settingsAvatarInitials">GT</div>
-            <button class="btn-outline-action" onclick="showToast('Avatar editor opened')">Change Photo</button>
+            <div class="user-avatar-initials" style="width: 68px; height: 68px; font-size: 20px; overflow: hidden; padding: 0; background: #13343b; flex-shrink: 0; border: 2px solid var(--border); display: flex; align-items: center; justify-content: center;" id="settingsAvatarWrap">
+              <img id="settingsAvatarImg" src="" style="width: 100%; height: 100%; object-fit: cover; border-radius: 50%; display: none;" alt="Avatar">
+              <span id="settingsAvatarInitials">GT</span>
+            </div>
+            <div>
+              <div style="font-weight: 700; font-size: 15px; display: flex; align-items: center; gap: 8px;">
+                <span>GameTok Avatar</span>
+                <span class="badge-status badge-published" style="font-size: 11px; padding: 2px 8px;">Synced from App</span>
+              </div>
+              <div style="font-size: 12px; color: var(--text-dim); margin: 3px 0 10px;">Your adventurer character synced with the GameTok mobile app.</div>
+              <div style="display: flex; gap: 10px;">
+                <button type="button" class="btn-blue-action" style="font-size: 12px; padding: 6px 14px;" onclick="openAvatarEditor()">🎨 Customize Avatar</button>
+                <button type="button" class="btn-outline-action" style="font-size: 12px; padding: 6px 14px;" onclick="randomizeQuickAvatar()">🎲 Surprise Me</button>
+              </div>
+            </div>
           </div>
 
           <div class="form-group">
@@ -2108,6 +2161,73 @@ GameTok automatically renders the 1-click payment drawer, charges the player, an
 
       <div style="display: flex; justify-content: flex-end; gap: 12px; margin-top: 20px;">
         <button class="btn-blue-action" onclick="closeDeveloperPromptModal()">Done</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- ========================================== -->
+  <!-- MODAL: AVATAR STUDIO CUSTOMIZER -->
+  <!-- ========================================== -->
+  <div class="modal-overlay" id="avatarEditorModal">
+    <div class="modal-box" style="max-width: 580px;">
+      <button class="modal-close" onclick="closeAvatarEditor()">✕</button>
+      <div style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 16px;">
+        <div>
+          <div style="font-size: 19px; font-weight: 800; color: #fff;">GameTok Avatar Studio</div>
+          <div style="font-size: 12px; color: var(--text-dim);">Customize your adventurer avatar synced across all GameTok apps.</div>
+        </div>
+        <button class="btn-outline-action" onclick="randomizeModalAvatar()" style="font-size: 12px; padding: 5px 12px;">🎲 Randomize</button>
+      </div>
+
+      <div style="display: flex; flex-direction: column; align-items: center; gap: 10px; background: rgba(10,16,32,0.85); border: 1px solid var(--border); border-radius: 16px; padding: 18px; margin-bottom: 20px;">
+        <div style="width: 110px; height: 110px; border-radius: 50%; overflow: hidden; border: 3px solid #38bdf8; box-shadow: 0 0 24px rgba(56,189,248,0.3); background: #13343b;" id="modalAvatarPreviewBox">
+          <img id="avatarEditorPreviewImg" src="" style="width: 100%; height: 100%; object-fit: cover;" alt="Avatar Preview">
+        </div>
+        <div style="font-size: 11.5px; color: var(--cyan); font-weight: 600;">Adventurer Character (Live)</div>
+      </div>
+
+      <!-- Controls -->
+      <div style="display: flex; flex-direction: column; gap: 14px; max-height: 270px; overflow-y: auto; padding-right: 6px;">
+        <!-- Skin Tone -->
+        <div>
+          <div style="font-size: 12px; font-weight: 700; color: #fff; margin-bottom: 6px;">Skin Tone</div>
+          <div style="display: flex; gap: 10px;" id="skinColorRow"></div>
+        </div>
+
+        <!-- Hair Color -->
+        <div>
+          <div style="font-size: 12px; font-weight: 700; color: #fff; margin-bottom: 6px;">Hair Color</div>
+          <div style="display: flex; gap: 10px;" id="hairColorRow"></div>
+        </div>
+
+        <!-- Hair Style -->
+        <div>
+          <div style="font-size: 12px; font-weight: 700; color: #fff; margin-bottom: 6px;">Hair Style</div>
+          <div style="display: flex; gap: 8px; flex-wrap: wrap;" id="hairStyleRow"></div>
+        </div>
+
+        <!-- Glasses / Eyewear -->
+        <div>
+          <div style="font-size: 12px; font-weight: 700; color: #fff; margin-bottom: 6px;">Eyewear</div>
+          <div style="display: flex; gap: 8px; flex-wrap: wrap;" id="accessoryRow"></div>
+        </div>
+
+        <!-- Details / Blush / Facial Features -->
+        <div>
+          <div style="font-size: 12px; font-weight: 700; color: #fff; margin-bottom: 6px;">Facial Feature</div>
+          <div style="display: flex; gap: 8px; flex-wrap: wrap;" id="featureRow"></div>
+        </div>
+
+        <!-- Backdrop Scene Color -->
+        <div>
+          <div style="font-size: 12px; font-weight: 700; color: #fff; margin-bottom: 6px;">Scene Background</div>
+          <div style="display: flex; gap: 10px;" id="bgSceneRow"></div>
+        </div>
+      </div>
+
+      <div style="display: flex; justify-content: space-between; align-items: center; margin-top: 20px; border-top: 1px solid var(--border); padding-top: 16px;">
+        <button class="btn-outline-action" onclick="closeAvatarEditor()">Cancel</button>
+        <button class="btn-blue-action" onclick="saveAvatarChanges()">✓ Save &amp; Sync to Profile</button>
       </div>
     </div>
   </div>
@@ -3135,6 +3255,7 @@ Follow the official SDK v1.2 requirements:
               if (realUser.displayName) localStorage.setItem('gametok_user_name', realUser.displayName);
               if (realUser.username) localStorage.setItem('gametok_creator_handle', realUser.username);
               if (realUser.email) localStorage.setItem('gametok_user_email', realUser.email);
+              if (realUser.avatar) localStorage.setItem('gametok_user_avatar', realUser.avatar);
               applyUserData(realUser);
             }
           }
@@ -3160,12 +3281,31 @@ Follow the official SDK v1.2 requirements:
       const greetingEl = document.getElementById('greetingText');
       if (greetingEl) greetingEl.textContent = `${timeGreeting}, ${firstName} 👋`;
 
-      // Initials
+      // Initials Fallback
       const initials = name.split(' ').map(w => w[0]).join('').slice(0, 2).toUpperCase() || 'GT';
       const uInit = document.getElementById('userInitials');
       if (uInit) uInit.textContent = initials;
       const sInit = document.getElementById('settingsAvatarInitials');
       if (sInit) sInit.textContent = initials;
+
+      // Resolve & Render Adventurer Avatar Synced from Mobile App
+      const avatarRaw = u.avatar || localStorage.getItem('gametok_user_avatar');
+      currentAvatarUri = avatarRaw || `dicebear://${u.id || username}?bg=13343b&skinColor=d08b5b&hairColor=4c6a92&eyes=variant19&eyebrows=variant12&mouth=variant04&hair=short03&accessory=variant01&feature=blush&earrings=variant02`;
+      const resolvedAvatarUrl = getAvatarUrl(currentAvatarUri, username);
+
+      const uImg = document.getElementById('userAvatarImg');
+      if (uImg && resolvedAvatarUrl) {
+        uImg.src = resolvedAvatarUrl;
+        uImg.style.display = 'block';
+        if (uInit) uInit.style.display = 'none';
+      }
+
+      const sImg = document.getElementById('settingsAvatarImg');
+      if (sImg && resolvedAvatarUrl) {
+        sImg.src = resolvedAvatarUrl;
+        sImg.style.display = 'block';
+        if (sInit) sInit.style.display = 'none';
+      }
 
       // Sidebar Profile Info
       const dName = document.getElementById('userDisplayName');
@@ -3182,6 +3322,259 @@ Follow the official SDK v1.2 requirements:
       if (pHandle) pHandle.value = '@' + username;
       const cEmail = document.getElementById('settingsConnectedEmail');
       if (cEmail) cEmail.textContent = email ? `Signed in as ${email}` : 'Signed in with Google';
+    }
+
+    // ============================================
+    // GAMETOK AVATAR SYSTEM (Synced with Mobile App)
+    // ============================================
+    const AVATAR_SKIN_TONES = [
+      { id: 'f2d3b1', label: 'Fair' },
+      { id: 'eac393', label: 'Warm' },
+      { id: 'd08b5b', label: 'Tan' },
+      { id: '9c5a3c', label: 'Rich' },
+      { id: '6b3d2a', label: 'Deep' }
+    ];
+
+    const AVATAR_HAIR_COLORS = [
+      { id: '2c1b18', label: 'Espresso' },
+      { id: '5a3d2b', label: 'Mocha' },
+      { id: '8b5e3c', label: 'Chestnut' },
+      { id: 'd19a66', label: 'Honey' },
+      { id: 'f2d6b3', label: 'Platinum' },
+      { id: '8b1e3f', label: 'Wine' },
+      { id: '4c6a92', label: 'Slate Blue' }
+    ];
+
+    const AVATAR_HAIR_STYLES = [
+      { id: 'short01', label: 'Classic Crop' },
+      { id: 'short02', label: 'Neat Fade' },
+      { id: 'short03', label: 'Soft Fringe' },
+      { id: 'short04', label: 'Side Sweep' },
+      { id: 'short05', label: 'Buzz Cut' },
+      { id: 'long01', label: 'Loose Waves' },
+      { id: 'long03', label: 'Curly Drop' },
+      { id: 'long04', label: 'Straight Flow' }
+    ];
+
+    const AVATAR_ACCESSORIES = [
+      { id: 'blank', label: 'None' },
+      { id: 'variant01', label: 'Glasses' },
+      { id: 'variant02', label: 'Sunglasses' },
+      { id: 'variant03', label: 'Round Specs' }
+    ];
+
+    const AVATAR_FEATURES = [
+      { id: 'blank', label: 'Clean' },
+      { id: 'blush', label: 'Blush' },
+      { id: 'freckles', label: 'Freckles' },
+      { id: 'mustache', label: 'Mustache' }
+    ];
+
+    const AVATAR_BACKGROUNDS = [
+      { id: '13343b', color: '#13343b' },
+      { id: '20262f', color: '#20262f' },
+      { id: '2c1f38', color: '#2c1f38' },
+      { id: '1e2e27', color: '#1e2e27' },
+      { id: '312419', color: '#312419' },
+      { id: '4a2338', color: '#4a2338' },
+      { id: '1b1b1f', color: '#1b1b1f' }
+    ];
+
+    let currentAvatarUri = null;
+    let editorConfig = {
+      seed: 'gametok',
+      bg: '13343b',
+      skinColor: 'd08b5b',
+      hairColor: '4c6a92',
+      hair: 'short03',
+      eyes: 'variant19',
+      eyebrows: 'variant12',
+      mouth: 'variant04',
+      accessory: 'variant01',
+      feature: 'blush',
+      earrings: 'variant02'
+    };
+
+    function parseDicebearConfig(uri, fallbackSeed) {
+      let seed = fallbackSeed || 'gametok';
+      let params = new URLSearchParams();
+      if (uri && (uri.startsWith('dicebear://') || uri.startsWith('avatar-creator://'))) {
+        const raw = uri.replace(/^(dicebear|avatar-creator):\/\//, '');
+        const [encodedSeed, queryString = ''] = raw.split('?');
+        if (encodedSeed) seed = decodeURIComponent(encodedSeed);
+        params = new URLSearchParams(queryString);
+      }
+      return {
+        seed: seed,
+        bg: params.get('bg') || '13343b',
+        skinColor: params.get('skinColor') || 'd08b5b',
+        hairColor: params.get('hairColor') || '4c6a92',
+        hair: params.get('hair') || 'short03',
+        eyes: params.get('eyes') || 'variant19',
+        eyebrows: params.get('eyebrows') || 'variant12',
+        mouth: params.get('mouth') || 'variant04',
+        accessory: params.get('accessory') || 'variant01',
+        feature: params.get('feature') || 'blush',
+        earrings: params.get('earrings') || 'variant02'
+      };
+    }
+
+    function buildDicebearApiUrl(config) {
+      const diceParams = new URLSearchParams({
+        seed: config.seed,
+        backgroundColor: config.bg,
+        skinColor: config.skinColor,
+        hairColor: config.hairColor,
+        hair: config.hair,
+        eyes: config.eyes,
+        eyebrows: config.eyebrows,
+        mouth: config.mouth
+      });
+      if (config.accessory && config.accessory !== 'blank') {
+        diceParams.set('glasses', config.accessory);
+        diceParams.set('glassesProbability', '100');
+      }
+      if (config.feature && config.feature !== 'blank') {
+        diceParams.set('features', config.feature);
+        diceParams.set('featuresProbability', '100');
+      }
+      if (config.earrings && config.earrings !== 'blank') {
+        diceParams.set('earrings', config.earrings);
+        diceParams.set('earringsProbability', '100');
+      }
+      return `https://api.dicebear.com/9.x/adventurer/svg?${diceParams.toString()}`;
+    }
+
+    function getAvatarUrl(avatarUri, fallbackSeed) {
+      if (!avatarUri && !fallbackSeed) return null;
+      if (avatarUri && !avatarUri.startsWith('dicebear://') && !avatarUri.startsWith('avatar-creator://')) {
+        if (avatarUri.startsWith('http://') || avatarUri.startsWith('https://') || avatarUri.startsWith('data:')) {
+          return avatarUri;
+        }
+      }
+      const config = parseDicebearConfig(avatarUri, fallbackSeed);
+      return buildDicebearApiUrl(config);
+    }
+
+    function openAvatarEditor() {
+      const fallbackSeed = (realUser && (realUser.id || realUser.username)) || localStorage.getItem('gametok_creator_handle') || 'gametok';
+      editorConfig = parseDicebearConfig(currentAvatarUri, fallbackSeed);
+      renderEditorUI();
+      document.getElementById('avatarEditorModal').classList.add('active');
+    }
+
+    function closeAvatarEditor() {
+      document.getElementById('avatarEditorModal').classList.remove('active');
+    }
+
+    function renderEditorUI() {
+      const previewImg = document.getElementById('avatarEditorPreviewImg');
+      if (previewImg) {
+        previewImg.src = buildDicebearApiUrl(editorConfig);
+      }
+
+      // Skin Tone Row
+      const skinRow = document.getElementById('skinColorRow');
+      if (skinRow) {
+        skinRow.innerHTML = AVATAR_SKIN_TONES.map(s => `
+          <button type="button" class="color-swatch-btn ${editorConfig.skinColor === s.id ? 'active' : ''}" style="background: #${s.id};" title="${s.label}" onclick="updateEditorField('skinColor', '${s.id}')"></button>
+        `).join('');
+      }
+
+      // Hair Color Row
+      const hairColorRow = document.getElementById('hairColorRow');
+      if (hairColorRow) {
+        hairColorRow.innerHTML = AVATAR_HAIR_COLORS.map(c => `
+          <button type="button" class="color-swatch-btn ${editorConfig.hairColor === c.id ? 'active' : ''}" style="background: #${c.id};" title="${c.label}" onclick="updateEditorField('hairColor', '${c.id}')"></button>
+        `).join('');
+      }
+
+      // Hair Style Row
+      const hairStyleRow = document.getElementById('hairStyleRow');
+      if (hairStyleRow) {
+        hairStyleRow.innerHTML = AVATAR_HAIR_STYLES.map(h => `
+          <button type="button" class="avatar-pill-btn ${editorConfig.hair === h.id ? 'active' : ''}" onclick="updateEditorField('hair', '${h.id}')">${h.label}</button>
+        `).join('');
+      }
+
+      // Accessory Row
+      const accRow = document.getElementById('accessoryRow');
+      if (accRow) {
+        accRow.innerHTML = AVATAR_ACCESSORIES.map(a => `
+          <button type="button" class="avatar-pill-btn ${editorConfig.accessory === a.id ? 'active' : ''}" onclick="updateEditorField('accessory', '${a.id}')">${a.label}</button>
+        `).join('');
+      }
+
+      // Feature Row
+      const featRow = document.getElementById('featureRow');
+      if (featRow) {
+        featRow.innerHTML = AVATAR_FEATURES.map(f => `
+          <button type="button" class="avatar-pill-btn ${editorConfig.feature === f.id ? 'active' : ''}" onclick="updateEditorField('feature', '${f.id}')">${f.label}</button>
+        `).join('');
+      }
+
+      // Background Scene Row
+      const bgRow = document.getElementById('bgSceneRow');
+      if (bgRow) {
+        bgRow.innerHTML = AVATAR_BACKGROUNDS.map(b => `
+          <button type="button" class="color-swatch-btn ${editorConfig.bg === b.id ? 'active' : ''}" style="background: #${b.id};" onclick="updateEditorField('bg', '${b.id}')"></button>
+        `).join('');
+      }
+    }
+
+    function updateEditorField(field, val) {
+      editorConfig[field] = val;
+      renderEditorUI();
+    }
+
+    function randomizeModalAvatar() {
+      editorConfig.skinColor = AVATAR_SKIN_TONES[Math.floor(Math.random() * AVATAR_SKIN_TONES.length)].id;
+      editorConfig.hairColor = AVATAR_HAIR_COLORS[Math.floor(Math.random() * AVATAR_HAIR_COLORS.length)].id;
+      editorConfig.hair = AVATAR_HAIR_STYLES[Math.floor(Math.random() * AVATAR_HAIR_STYLES.length)].id;
+      editorConfig.accessory = AVATAR_ACCESSORIES[Math.floor(Math.random() * AVATAR_ACCESSORIES.length)].id;
+      editorConfig.feature = AVATAR_FEATURES[Math.floor(Math.random() * AVATAR_FEATURES.length)].id;
+      editorConfig.bg = AVATAR_BACKGROUNDS[Math.floor(Math.random() * AVATAR_BACKGROUNDS.length)].id;
+      renderEditorUI();
+    }
+
+    async function randomizeQuickAvatar() {
+      const fallbackSeed = (realUser && (realUser.id || realUser.username)) || localStorage.getItem('gametok_creator_handle') || 'gametok';
+      editorConfig = parseDicebearConfig(currentAvatarUri, fallbackSeed);
+      randomizeModalAvatar();
+      await saveAvatarChanges();
+    }
+
+    async function saveAvatarChanges() {
+      const uri = `dicebear://${editorConfig.seed}?bg=${editorConfig.bg}&skinColor=${editorConfig.skinColor}&hairColor=${editorConfig.hairColor}&eyes=${editorConfig.eyes}&eyebrows=${editorConfig.eyebrows}&mouth=${editorConfig.mouth}&hair=${editorConfig.hair}&accessory=${editorConfig.accessory}&feature=${editorConfig.feature}&earrings=${editorConfig.earrings}`;
+      currentAvatarUri = uri;
+      localStorage.setItem('gametok_user_avatar', uri);
+
+      const activeHandle = (realUser && realUser.username) || localStorage.getItem('gametok_creator_handle') || 'creator';
+      const token = localStorage.getItem('gametok_auth_token');
+
+      applyUserData({
+        ...(realUser || {}),
+        avatar: uri,
+        displayName: localStorage.getItem('gametok_user_name') || 'Creator',
+        username: activeHandle
+      });
+
+      closeAvatarEditor();
+      showToast('✓ Avatar updated! Syncing across GameTok...');
+
+      try {
+        await fetch(`${API_BASE}/publish/creator/${activeHandle}`, {
+          method: 'PATCH',
+          headers: {
+            'Content-Type': 'application/json',
+            ...(token ? { 'Authorization': `Bearer ${token}` } : {})
+          },
+          body: JSON.stringify({ avatar: uri })
+        });
+        showToast('✓ Avatar synced across all GameTok platforms!');
+      } catch (err) {
+        console.warn('[Avatar Sync] Notice:', err.message);
+      }
     }
 
     async function saveUserSettings() {
