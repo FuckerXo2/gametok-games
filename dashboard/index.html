@@ -1412,6 +1412,7 @@
               <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" style="margin-right: 4px; vertical-align: middle;"><path d="M10 13a5 5 0 0 0 7.54.54l3-3a5 5 0 0 0-7.07-7.07l-1.72 1.71"></path><path d="M14 11a5 5 0 0 0-7.54-.54l-3 3a5 5 0 0 0 7.07 7.07l1.71-1.71"></path></svg>
               Copy GameTok Link
             </button>
+            <button class="btn-outline-action" id="btnRetakeScreenshot" onclick="recaptureGameScreenshot()">📸 Retake Thumbnail</button>
             <button class="btn-outline-action" onclick="openDeveloperPromptModal()">Inspect</button>
             <button class="btn-blue-action" onclick="launchGamePlayer(activeDetailGame)">Play Game</button>
           </div>
@@ -1748,9 +1749,9 @@ if (ad.rewarded) {
             </div>
 
             <div style="display: flex; flex-direction: column; gap: 8px; font-size: 12.5px; margin-top: 16px;">
-              <div style="display: flex; justify-content: space-between;"><span style="color: #60a5fa;">● Mobile</span><span style="font-weight: 700;">62%</span></div>
-              <div style="display: flex; justify-content: space-between;"><span style="color: #0ea5e9;">● Desktop</span><span style="font-weight: 700;">31%</span></div>
-              <div style="display: flex; justify-content: space-between;"><span style="color: #38bdf8;">● Tablet</span><span style="font-weight: 700;">7%</span></div>
+              <div style="display: flex; justify-content: space-between;"><span style="color: #60a5fa;">● Mobile</span><span style="font-weight: 700;" id="donutPctMobile">68%</span></div>
+              <div style="display: flex; justify-content: space-between;"><span style="color: #0ea5e9;">● Desktop</span><span style="font-weight: 700;" id="donutPctDesktop">24%</span></div>
+              <div style="display: flex; justify-content: space-between;"><span style="color: #38bdf8;">● Tablet</span><span style="font-weight: 700;" id="donutPctTablet">8%</span></div>
             </div>
           </div>
         </div>
@@ -2418,30 +2419,160 @@ GameTok automatically renders the 1-click payment drawer, charges the player, an
       renderAnalyticsTopGames();
     }
 
-    function renderAnalyticsTopGames() {
+    let currentAnalyticsPeriod = '30';
+    let activeAnalyticsData = null;
+
+    async function loadDeveloperAnalytics(period = currentAnalyticsPeriod) {
+      currentAnalyticsPeriod = period;
+      try {
+        const token = localStorage.getItem('gametok_auth_token') || '';
+        const handle = localStorage.getItem('gametok_creator_handle') || '';
+        const urlParams = new URLSearchParams(window.location.search);
+        const creatorQuery = urlParams.get('creator') || urlParams.get('handle') || handle;
+
+        let url = `${API_BASE}/developer/analytics?period=${period}`;
+        if (creatorQuery) url += `&handle=${encodeURIComponent(creatorQuery)}`;
+
+        const res = await fetch(url, {
+          headers: {
+            'Authorization': token ? `Bearer ${token}` : ''
+          }
+        });
+
+        if (!res.ok) return;
+        const data = await res.json();
+        if (!data.success) return;
+        activeAnalyticsData = data;
+
+        // Update Stat Cards
+        const aStatPlayers = document.getElementById('aStatPlayers');
+        const aStatPlays = document.getElementById('aStatPlays');
+        const aStatDuration = document.getElementById('aStatDuration');
+        const aStatReturning = document.getElementById('aStatReturning');
+        const aTrendPlayers = document.getElementById('aTrendPlayers');
+        const aTrendPlays = document.getElementById('aTrendPlays');
+        const donutTotalPlayers = document.getElementById('donutTotalPlayers');
+
+        const totalPlayers = data.summary.totalPlayers || 0;
+        const totalPlays = data.summary.totalPlays || 0;
+        const avgSec = data.summary.avgDurationSeconds || 0;
+        const returningPct = data.summary.returningPlayersPct || 0;
+
+        if (aStatPlayers) aStatPlayers.textContent = totalPlayers.toLocaleString();
+        if (aStatPlays) aStatPlays.textContent = totalPlays.toLocaleString();
+        if (aStatDuration) {
+          if (avgSec >= 60) {
+            const m = Math.floor(avgSec / 60);
+            const s = avgSec % 60;
+            aStatDuration.textContent = `${m}m ${s}s`;
+          } else {
+            aStatDuration.textContent = `${avgSec}s`;
+          }
+        }
+        if (aStatReturning) aStatReturning.textContent = `${returningPct}%`;
+        if (aTrendPlayers) aTrendPlayers.style.display = totalPlayers > 0 ? 'inline-block' : 'none';
+        if (aTrendPlays) aTrendPlays.style.display = totalPlays > 0 ? 'inline-block' : 'none';
+        if (donutTotalPlayers) donutTotalPlayers.textContent = totalPlayers >= 1000 ? `${(totalPlayers / 1000).toFixed(1)}k` : totalPlayers.toLocaleString();
+
+        // Device Breakdown
+        const mb = data.deviceBreakdown?.mobile || 68;
+        const dt = data.deviceBreakdown?.desktop || 24;
+        const tb = data.deviceBreakdown?.tablet || 8;
+        const elMb = document.getElementById('donutPctMobile');
+        const elDt = document.getElementById('donutPctDesktop');
+        const elTb = document.getElementById('donutPctTablet');
+        if (elMb) elMb.textContent = `${mb}%`;
+        if (elDt) elDt.textContent = `${dt}%`;
+        if (elTb) elTb.textContent = `${tb}%`;
+
+        // Render Dynamic Top Games
+        if (Array.isArray(data.topGames)) {
+          renderAnalyticsTopGames(data.topGames);
+        }
+
+        // Render Dynamic SVG Chart
+        if (Array.isArray(data.activityPoints) && data.activityPoints.length > 0) {
+          renderActivityChart(data.activityPoints);
+        }
+      } catch (err) {
+        console.warn('[Analytics] Failed to fetch developer analytics:', err);
+      }
+    }
+
+    function renderAnalyticsTopGames(topGamesList) {
       const container = document.getElementById('topGamesAnalyticsList');
       if (!container) return;
-      if (!myGames || myGames.length === 0) {
+      const list = topGamesList || (activeAnalyticsData && activeAnalyticsData.topGames) || myGames || [];
+      if (!list || list.length === 0) {
         container.innerHTML = `<div style="text-align: center; padding: 24px 0; color: var(--text-dim); font-size: 13px;">No game activity recorded yet</div>`;
         return;
       }
-      const totalPlayers = myGames.reduce((acc, g) => acc + (Number(g.players) || 0), 0) || 1;
-      const sorted = [...myGames].sort((a, b) => (b.players || 0) - (a.players || 0)).slice(0, 4);
+      const totalPlayers = list.reduce((acc, g) => acc + (Number(g.players) || 0), 0) || 1;
+      const sorted = [...list].sort((a, b) => (b.players || 0) - (a.players || 0)).slice(0, 4);
 
       container.innerHTML = sorted.map(g => {
-        const pct = Math.max(1, Math.round(((g.players || 0) / totalPlayers) * 100));
+        const gPlayers = Number(g.players || 0);
+        const pct = Math.max(1, Math.round((gPlayers / totalPlayers) * 100));
+        const coverUrl = g.thumbnail || g.cover || 'assets/neon-drift-hero.jpg';
         return `
           <div style="display: flex; align-items: center; gap: 12px;">
-            <img src="${g.cover}" style="width: 28px; height: 28px; border-radius: 6px; object-fit: cover;" onerror="handleImgError(this, '${g.cover.split('/').pop()}')">
+            <img src="${coverUrl}" style="width: 28px; height: 28px; border-radius: 6px; object-fit: cover;" onerror="handleImgError(this, 'neon-drift-hero.jpg')">
             <span style="width: 100px; font-size: 13px; font-weight: 600; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;">${g.name}</span>
             <div style="flex: 1; height: 7px; background: #131c30; border-radius: 999px; overflow: hidden;">
               <div style="width: ${pct}%; height: 100%; background: #2563eb; border-radius: 999px;"></div>
             </div>
-            <span style="font-size: 12px; font-weight: 700; width: 45px; text-align: right;">${(g.players || 0).toLocaleString()}</span>
+            <span style="font-size: 12px; font-weight: 700; width: 45px; text-align: right;">${gPlayers.toLocaleString()}</span>
             <span style="font-size: 11.5px; color: var(--text-dim); width: 32px; text-align: right;">${pct}%</span>
           </div>
         `;
       }).join('');
+    }
+
+    function renderActivityChart(points) {
+      if (!points || points.length === 0) return;
+      const maxVal = Math.max(...points.map(p => Math.max(Number(p.plays || 0), Number(p.players || 0), 5)));
+      const y4 = document.getElementById('yLabel4');
+      const y3 = document.getElementById('yLabel3');
+      const y2 = document.getElementById('yLabel2');
+      const y1 = document.getElementById('yLabel1');
+      if (y4) y4.textContent = maxVal >= 1000 ? `${(maxVal/1000).toFixed(1)}k` : maxVal;
+      if (y3) y3.textContent = maxVal >= 1000 ? `${((maxVal*0.75)/1000).toFixed(1)}k` : Math.round(maxVal*0.75);
+      if (y2) y2.textContent = maxVal >= 1000 ? `${((maxVal*0.5)/1000).toFixed(1)}k` : Math.round(maxVal*0.5);
+      if (y1) y1.textContent = maxVal >= 1000 ? `${((maxVal*0.25)/1000).toFixed(1)}k` : Math.round(maxVal*0.25);
+
+      const width = 600;
+      const padX = 30;
+      const padBottom = 160;
+      const topY = 25;
+      const stepX = (width - padX * 2) / Math.max(1, points.length - 1);
+
+      const coords = points.map((p, i) => {
+        const val = Number(p.players || p.plays || 0);
+        const norm = Math.min(1, Math.max(0, val / maxVal));
+        const x = padX + i * stepX;
+        const y = padBottom - (norm * (padBottom - topY));
+        return { x, y };
+      });
+
+      if (coords.length === 1) {
+        coords.unshift({ x: padX, y: coords[0].y });
+        coords[1].x = width - padX;
+      }
+
+      const lineD = 'M ' + coords.map(c => `${c.x.toFixed(1)} ${c.y.toFixed(1)}`).join(' L ');
+      const areaD = lineD + ` L ${coords[coords.length-1].x.toFixed(1)} ${padBottom} L ${coords[0].x.toFixed(1)} ${padBottom} Z`;
+
+      const linePath = document.getElementById('chartLinePath');
+      const areaPath = document.getElementById('chartAreaPath');
+      const pulseDot = document.getElementById('chartPulseDot');
+
+      if (linePath) linePath.setAttribute('d', lineD);
+      if (areaPath) areaPath.setAttribute('d', areaD);
+      if (pulseDot && coords.length > 0) {
+        const last = coords[coords.length - 1];
+        pulseDot.setAttribute('cx', last.x.toFixed(1));
+        pulseDot.setAttribute('cy', last.y.toFixed(1));
+      }
     }
 
     // Toast Utility
@@ -2466,7 +2597,9 @@ GameTok automatically renders the 1-click payment drawer, charges the player, an
       const targetView = document.getElementById('view-' + navKey);
       if (targetView) targetView.classList.add('active');
 
-      if (navKey === 'payouts') {
+      if (navKey === 'analytics') {
+        loadDeveloperAnalytics(currentAnalyticsPeriod);
+      } else if (navKey === 'payouts') {
         renderPayoutsTable(currentPayoutPage);
       }
     }
@@ -2709,25 +2842,112 @@ GameTok automatically renders the 1-click payment drawer, charges the player, an
       if (g) launchGamePlayer(g);
     }
 
+    let activeSessionGameId = null;
+    let activeSessionStartTime = null;
+
     function launchGamePlayer(game) {
       const g = game || activeDetailGame || myGames[0];
       if (!g) {
         showToast('No game available to launch');
         return;
       }
+      activeSessionGameId = g.id;
+      activeSessionStartTime = Date.now();
+
       document.getElementById('playerGameTitle').textContent = g.name;
       document.getElementById('playerGameStatus').textContent = g.status === 'in_review' ? 'In Review' : 'Published';
       document.getElementById('playerGameStatus').className = g.status === 'in_review' ? 'badge-status badge-review' : 'badge-status badge-published';
       document.getElementById('playerExternalLink').href = g.embedUrl;
       document.getElementById('gamePlayerIframe').src = g.embedUrl;
       document.getElementById('gamePlayerModal').classList.add('active');
+
+      // Record play count on server
+      fetch(`${API_BASE}/games/${g.id}/play`, {
+        method: 'POST',
+        headers: {
+          'Authorization': `Bearer ${localStorage.getItem('gametok_auth_token') || ''}`,
+          'x-client-id': localStorage.getItem('gametok_client_id') || ''
+        }
+      }).catch(() => {});
     }
 
     function closeGamePlayer() {
+      if (activeSessionGameId && activeSessionStartTime) {
+        const durationSec = Math.round((Date.now() - activeSessionStartTime) / 1000);
+        if (durationSec >= 1) {
+          fetch(`${API_BASE}/developer/analytics/session`, {
+            method: 'POST',
+            headers: {
+              'Content-Type': 'application/json',
+              'Authorization': `Bearer ${localStorage.getItem('gametok_auth_token') || ''}`
+            },
+            body: JSON.stringify({
+              gameId: activeSessionGameId,
+              clientId: localStorage.getItem('gametok_client_id') || '',
+              durationSeconds: durationSec,
+              platform: 'web'
+            })
+          }).catch(() => {});
+        }
+        activeSessionGameId = null;
+        activeSessionStartTime = null;
+      }
       document.getElementById('gametokCheckoutOverlay')?.classList.remove('active');
       document.getElementById('gametokAdOverlay')?.classList.remove('active');
       document.getElementById('gamePlayerIframe').src = '';
       document.getElementById('gamePlayerModal').classList.remove('active');
+    }
+
+    async function recaptureGameScreenshot() {
+      if (!activeDetailGame) return;
+      const btn = document.getElementById('btnRetakeScreenshot');
+      const origText = btn ? btn.innerHTML : '';
+      if (btn) {
+        btn.innerHTML = '📸 Capturing...';
+        btn.disabled = true;
+      }
+      showToast('📸 Launching Puppeteer to capture authentic game screenshot...');
+      try {
+        const token = localStorage.getItem('gametok_auth_token') || '';
+        const res = await fetch(`${API_BASE}/developer/games/${activeDetailGame.id}/screenshot`, {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            'Authorization': token ? `Bearer ${token}` : ''
+          },
+          body: JSON.stringify({
+            url: activeDetailGame.embedUrl,
+            orientation: activeDetailGame.orientation || 'landscape'
+          })
+        });
+        const data = await res.json();
+        if (data.success && data.thumbnailUrl) {
+          showToast('✓ Screenshot captured and thumbnail updated!');
+          const freshUrl = data.thumbnailUrl + '?t=' + Date.now();
+          activeDetailGame.cover = freshUrl;
+          activeDetailGame.thumbnail = data.thumbnailUrl;
+          const stageImg = document.getElementById('detailStageImg');
+          if (stageImg) stageImg.src = freshUrl;
+          const coverImg = document.getElementById('detailCoverImg');
+          if (coverImg) coverImg.src = freshUrl;
+          const found = myGames.find(g => g.id === activeDetailGame.id);
+          if (found) {
+            found.cover = freshUrl;
+            found.thumbnail = data.thumbnailUrl;
+          }
+          renderGamesTable();
+          renderGamesGrid();
+        } else {
+          showToast('Failed to capture screenshot: ' + (data.error || 'Server error'));
+        }
+      } catch (err) {
+        showToast('Screenshot error: ' + err.message);
+      } finally {
+        if (btn) {
+          btn.innerHTML = origText || '📸 Retake Thumbnail';
+          btn.disabled = false;
+        }
+      }
     }
 
     // Google Account Switcher
@@ -3012,30 +3232,14 @@ GameTok automatically renders the 1-click payment drawer, charges the player, an
     }
 
     function applyAnalyticsPeriod(val) {
-      const totalPlayers = myGames.reduce((acc, g) => acc + (Number(g.players) || 0), 0);
-      const totalPlays = myGames.reduce((acc, g) => acc + (Number(g.plays) || 0), 0);
-
-      const ap = document.getElementById('aStatPlayers');
-      const apl = document.getElementById('aStatPlays');
-      let factor = val === '7' ? 0.25 : 1.0;
-
-      if (ap) ap.textContent = Math.round(totalPlayers * factor).toLocaleString();
-      if (apl) apl.textContent = Math.round(totalPlays * factor).toLocaleString();
+      currentAnalyticsPeriod = val;
+      loadDeveloperAnalytics(val);
       showToast(`Analytics filtered for ${val} days`);
     }
 
     function switchActivityMetric(metric) {
-      const l4 = document.getElementById('yLabel4');
-      const l3 = document.getElementById('yLabel3');
-      const l2 = document.getElementById('yLabel2');
-      const l1 = document.getElementById('yLabel1');
-
-      if (metric === 'plays') {
-        l4.textContent = '50k'; l3.textContent = '35k'; l2.textContent = '20k'; l1.textContent = '10k';
-      } else if (metric === 'sessions') {
-        l4.textContent = '15k'; l3.textContent = '10k'; l2.textContent = '5k'; l1.textContent = '2.5k';
-      } else {
-        l4.textContent = '10k'; l3.textContent = '7.5k'; l2.textContent = '5k'; l1.textContent = '2.5k';
+      if (activeAnalyticsData && Array.isArray(activeAnalyticsData.activityPoints) && activeAnalyticsData.activityPoints.length > 0) {
+        renderActivityChart(activeAnalyticsData.activityPoints);
       }
       showToast(`Chart updated to: ${metric.toUpperCase()}`);
     }
