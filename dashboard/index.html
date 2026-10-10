@@ -4,7 +4,7 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>GameTok — Developer Dashboard</title>
-  <link rel="icon" type="image/png" href="/assets/adaptive-icon.png">
+  <link rel="icon" type="image/png" href="assets/adaptive-icon.png">
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
@@ -76,6 +76,7 @@
       letter-spacing: -0.02em;
       margin-bottom: 28px;
       padding-left: 8px;
+      cursor: pointer;
     }
 
     .brand-icon-box {
@@ -720,12 +721,12 @@
       align-items: center;
       justify-content: center;
       margin-bottom: 14px;
+      cursor: pointer;
     }
     .game-preview-stage img {
       width: 100%;
       height: 100%;
       object-fit: cover;
-      cursor: pointer;
     }
 
     .game-thumbnails-row {
@@ -999,15 +1000,33 @@
       justify-content: space-between;
       padding: 0 24px;
     }
+
+    /* Custom Toast */
+    #dashboardToast {
+      position: fixed;
+      bottom: 24px;
+      right: 24px;
+      background: #1e3a73;
+      border: 1px solid #3b82f6;
+      color: #fff;
+      padding: 12px 20px;
+      border-radius: 10px;
+      box-shadow: 0 10px 30px rgba(0, 0, 0, 0.6);
+      font-size: 13.5px;
+      font-weight: 600;
+      display: none;
+      z-index: 3000;
+      animation: fadeIn 0.2s ease;
+    }
   </style>
 </head>
 <body>
 
   <div class="app-shell">
     
-    <!-- Left Navigation Sidebar (Exact Match to Mockup) -->
+    <!-- Left Navigation Sidebar -->
     <aside class="sidebar">
-      <a href="/dashboard" class="sidebar-brand">
+      <a class="sidebar-brand" onclick="switchNav('dashboard')">
         <div class="brand-icon-box">
           <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2">
             <rect x="2" y="6" width="20" height="12" rx="2"></rect>
@@ -1021,7 +1040,7 @@
 
       <ul class="sidebar-menu">
         <li>
-          <a class="nav-item active" onclick="switchNav('dashboard')">
+          <a class="nav-item active" data-nav="dashboard" onclick="switchNav('dashboard')">
             <svg class="nav-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2">
               <rect x="3" y="3" width="7" height="7" rx="1.5"></rect>
               <rect x="14" y="3" width="7" height="7" rx="1.5"></rect>
@@ -1032,7 +1051,7 @@
           </a>
         </li>
         <li>
-          <a class="nav-item" onclick="switchNav('games')">
+          <a class="nav-item" data-nav="games" onclick="switchNav('games')">
             <svg class="nav-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2">
               <rect x="2" y="6" width="20" height="12" rx="2"></rect>
               <path d="M6 12h4m-2-2v4"></path>
@@ -1043,7 +1062,7 @@
           </a>
         </li>
         <li>
-          <a class="nav-item" onclick="switchNav('analytics')">
+          <a class="nav-item" data-nav="analytics" onclick="switchNav('analytics')">
             <svg class="nav-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2">
               <path d="M3 3v18h18"></path>
               <path d="M7 16l4-5 4 3 6-8"></path>
@@ -1052,7 +1071,7 @@
           </a>
         </li>
         <li>
-          <a class="nav-item" onclick="switchNav('earnings')">
+          <a class="nav-item" data-nav="earnings" onclick="switchNav('earnings')">
             <svg class="nav-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2">
               <circle cx="12" cy="12" r="9"></circle>
               <path d="M14.5 9h-4a1.5 1.5 0 0 0 0 3h3a1.5 1.5 0 0 1 0 3h-4"></path>
@@ -1062,7 +1081,7 @@
           </a>
         </li>
         <li>
-          <a class="nav-item" onclick="switchNav('payouts')">
+          <a class="nav-item" data-nav="payouts" onclick="switchNav('payouts')">
             <svg class="nav-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2">
               <rect x="2" y="5" width="20" height="14" rx="2"></rect>
               <line x1="2" y1="10" x2="22" y2="10"></line>
@@ -1071,7 +1090,7 @@
           </a>
         </li>
         <li>
-          <a class="nav-item" onclick="switchNav('settings')">
+          <a class="nav-item" data-nav="settings" onclick="switchNav('settings')">
             <svg class="nav-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2">
               <circle cx="12" cy="12" r="3"></circle>
               <path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 2.83-2.83l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"></path>
@@ -1110,11 +1129,11 @@
             <p>Here's what's happening with your games today.</p>
           </div>
           <div class="view-header-right">
-            <select class="btn-filter-dropdown" onchange="filterMetricsPeriod(this.value)">
+            <select class="btn-filter-dropdown" id="dashTimeFilter" onchange="applyTimeFilter(this.value)">
               <option value="30">Last 30 days ▾</option>
               <option value="7">Last 7 days</option>
               <option value="90">Last 90 days</option>
-              <option value="365">All time</option>
+              <option value="all">All time</option>
             </select>
             <button class="btn-blue-action" onclick="openNewGameWizard()">+ New Game</button>
           </div>
@@ -1134,9 +1153,9 @@
             <div class="card-stat-title">Total Players</div>
             <div class="card-stat-value">
               <span id="statPlayers">24,892</span>
-              <span class="card-stat-badge">↑ 42%</span>
+              <span class="card-stat-badge" id="trendPlayers">↑ 42%</span>
             </div>
-            <div class="card-stat-sub">vs. previous 30 days</div>
+            <div class="card-stat-sub" id="subPlayers">vs. previous 30 days</div>
           </div>
 
           <div class="card-stat">
@@ -1150,9 +1169,9 @@
             <div class="card-stat-title">Total Plays</div>
             <div class="card-stat-value">
               <span id="statPlays">132,411</span>
-              <span class="card-stat-badge">↑ 56%</span>
+              <span class="card-stat-badge" id="trendPlays">↑ 56%</span>
             </div>
-            <div class="card-stat-sub">vs. previous 30 days</div>
+            <div class="card-stat-sub" id="subPlays">vs. previous 30 days</div>
           </div>
 
           <div class="card-stat">
@@ -1165,9 +1184,9 @@
             <div class="card-stat-title">Revenue</div>
             <div class="card-stat-value">
               <span id="statRevenue">$842.36</span>
-              <span class="card-stat-badge">↑ 68%</span>
+              <span class="card-stat-badge" id="trendRevenue">↑ 68%</span>
             </div>
-            <div class="card-stat-sub">vs. previous 30 days</div>
+            <div class="card-stat-sub" id="subRevenue">vs. previous 30 days</div>
           </div>
         </div>
 
@@ -1187,9 +1206,7 @@
                 <th>Actions</th>
               </tr>
             </thead>
-            <tbody id="dashboardGamesTableBody">
-              <!-- Dynamically Populated with Exact Match Games -->
-            </tbody>
+            <tbody id="dashboardGamesTableBody"></tbody>
           </table>
         </div>
       </section>
@@ -1241,7 +1258,7 @@
         <!-- Hero Card -->
         <div class="game-hero-banner">
           <div class="game-hero-banner-thumb">
-            <img src="/assets/neon-drift-hero.jpg" id="detailCoverImg" alt="Cover">
+            <img src="assets/neon-drift-hero.jpg" id="detailCoverImg" alt="Cover" onerror="handleImgError(this, 'neon-drift-hero.jpg')">
           </div>
           <div style="flex: 1;">
             <div style="display: flex; align-items: center; gap: 10px; margin-bottom: 6px;">
@@ -1269,12 +1286,12 @@
           <div class="detail-nav-tab" onclick="switchDetailTab('integration', this)">Integration</div>
         </div>
 
-        <!-- Detail Layout (2 Columns) -->
-        <div class="game-detail-layout" id="detailTabContentOverview">
+        <!-- DETAIL TAB 1: OVERVIEW -->
+        <div class="game-detail-layout" id="detailTabOverview">
           <!-- Left Column -->
           <div>
             <div class="game-preview-stage" onclick="launchGamePlayer(activeDetailGame)" title="Click to play">
-              <img src="/assets/neon-drift-hero.jpg" id="detailStageImg" alt="Gameplay Preview">
+              <img src="assets/neon-drift-hero.jpg" id="detailStageImg" alt="Gameplay Preview" onerror="handleImgError(this, 'neon-drift-hero.jpg')">
               <div style="position: absolute; width: 56px; height: 56px; border-radius: 50%; background: rgba(37,99,235,0.9); display: flex; align-items: center; justify-content: center; color: #fff; box-shadow: 0 4px 20px rgba(0,0,0,0.6); pointer-events: none;">
                 <svg width="22" height="22" viewBox="0 0 24 24" fill="currentColor"><polygon points="6 3 20 12 6 21 6 3"></polygon></svg>
               </div>
@@ -1282,14 +1299,14 @@
 
             <!-- 3 Thumbnails Selector Row -->
             <div class="game-thumbnails-row">
-              <div class="game-thumb-preview-item active" onclick="setDetailStageImage(this, '/assets/neon-drift-hero.jpg')">
-                <img src="/assets/neon-drift-hero.jpg" alt="Preview 1">
+              <div class="game-thumb-preview-item active" onclick="setDetailStageImage(this, 'assets/neon-drift-hero.jpg')">
+                <img src="assets/neon-drift-hero.jpg" alt="Preview 1" onerror="handleImgError(this, 'neon-drift-hero.jpg')">
               </div>
-              <div class="game-thumb-preview-item" onclick="setDetailStageImage(this, '/assets/neon-drift-shot-2.jpg')">
-                <img src="/assets/neon-drift-shot-2.jpg" alt="Preview 2">
+              <div class="game-thumb-preview-item" onclick="setDetailStageImage(this, 'assets/neon-drift-shot-2.jpg')">
+                <img src="assets/neon-drift-shot-2.jpg" alt="Preview 2" onerror="handleImgError(this, 'neon-drift-shot-2.jpg')">
               </div>
-              <div class="game-thumb-preview-item" onclick="setDetailStageImage(this, '/assets/neon-drift-shot-3.jpg')">
-                <img src="/assets/neon-drift-shot-3.jpg" alt="Preview 3">
+              <div class="game-thumb-preview-item" onclick="setDetailStageImage(this, 'assets/neon-drift-shot-3.jpg')">
+                <img src="assets/neon-drift-shot-3.jpg" alt="Preview 3" onerror="handleImgError(this, 'neon-drift-shot-3.jpg')">
               </div>
             </div>
 
@@ -1303,22 +1320,10 @@
                 </div>
               </div>
 
-              <div class="checklist-row">
-                <div class="chk-icon">✓</div>
-                <span>Bridge.js tag detected</span>
-              </div>
-              <div class="checklist-row">
-                <div class="chk-icon">✓</div>
-                <span>Responsive viewport</span>
-              </div>
-              <div class="checklist-row">
-                <div class="chk-icon">✓</div>
-                <span>Touch controls working</span>
-              </div>
-              <div class="checklist-row">
-                <div class="chk-icon">✓</div>
-                <span>Mobile compatibility</span>
-              </div>
+              <div class="checklist-row"><div class="chk-icon">✓</div><span>Bridge.js tag detected</span></div>
+              <div class="checklist-row"><div class="chk-icon">✓</div><span>Responsive viewport</span></div>
+              <div class="checklist-row"><div class="chk-icon">✓</div><span>Touch controls working</span></div>
+              <div class="checklist-row"><div class="chk-icon">✓</div><span>Mobile compatibility</span></div>
             </div>
           </div>
 
@@ -1335,26 +1340,11 @@
                     <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor"><rect x="9" y="9" width="13" height="13" rx="2"></rect><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"></path></svg>
                   </span>
                 </div>
-                <div style="display: flex; justify-content: space-between;">
-                  <span style="color: var(--text-dim);">Created</span>
-                  <span id="detailCreatedDate">Sep 12, 2026</span>
-                </div>
-                <div style="display: flex; justify-content: space-between;">
-                  <span style="color: var(--text-dim);">Last Updated</span>
-                  <span id="detailUpdatedDate">Oct 8, 2026</span>
-                </div>
-                <div style="display: flex; justify-content: space-between;">
-                  <span style="color: var(--text-dim);">Orientation</span>
-                  <span id="detailOrientationText">Landscape</span>
-                </div>
-                <div style="display: flex; justify-content: space-between;">
-                  <span style="color: var(--text-dim);">File Size</span>
-                  <span id="detailFileSize">8.4 MB</span>
-                </div>
-                <div style="display: flex; justify-content: space-between;">
-                  <span style="color: var(--text-dim);">Engine</span>
-                  <span id="detailEngine">Three.js</span>
-                </div>
+                <div style="display: flex; justify-content: space-between;"><span style="color: var(--text-dim);">Created</span><span id="detailCreatedDate">Sep 12, 2026</span></div>
+                <div style="display: flex; justify-content: space-between;"><span style="color: var(--text-dim);">Last Updated</span><span id="detailUpdatedDate">Oct 8, 2026</span></div>
+                <div style="display: flex; justify-content: space-between;"><span style="color: var(--text-dim);">Orientation</span><span id="detailOrientationText">Landscape</span></div>
+                <div style="display: flex; justify-content: space-between;"><span style="color: var(--text-dim);">File Size</span><span id="detailFileSize">8.4 MB</span></div>
+                <div style="display: flex; justify-content: space-between;"><span style="color: var(--text-dim);">Engine</span><span id="detailEngine">Three.js</span></div>
               </div>
             </div>
 
@@ -1384,7 +1374,7 @@
                   <span class="badge-status badge-published">Published</span>
                 </div>
                 <div style="border-top: 1px solid var(--border); padding-top: 10px; margin-top: 4px;">
-                  <a href="javascript:void(0)" onclick="alert('Viewing all 3 archived releases.')" style="color: var(--cyan); text-decoration: none; font-size: 12px; font-weight: 600;">
+                  <a href="javascript:void(0)" onclick="switchDetailTab('versions', document.querySelectorAll('.detail-nav-tab')[1])" style="color: var(--cyan); text-decoration: none; font-size: 12px; font-weight: 600;">
                     View All Versions →
                   </a>
                 </div>
@@ -1392,6 +1382,59 @@
             </div>
           </div>
         </div>
+
+        <!-- DETAIL TAB 2: VERSIONS -->
+        <div id="detailTabVersions" style="display: none;">
+          <div class="card-panel">
+            <div class="card-panel-header">Release &amp; Version History</div>
+            <table class="data-table">
+              <thead>
+                <tr><th>Version</th><th>Release Date</th><th>Changelog</th><th>Status</th><th>Action</th></tr>
+              </thead>
+              <tbody>
+                <tr><td>v1.2.0 (Active)</td><td>Oct 8, 2026</td><td>Physics optimization, touch drift controls, new shaders</td><td><span class="badge-status badge-published">Published</span></td><td><button class="btn-table-action" onclick="showToast('v1.2.0 is currently live')">Active</button></td></tr>
+                <tr><td>v1.1.0</td><td>Sep 28, 2026</td><td>Added neon highway level 2, audio bridge hooks</td><td><span class="badge-status badge-published">Published</span></td><td><button class="btn-table-action" onclick="showToast('Rolled back release artifact view')">Inspect</button></td></tr>
+                <tr><td>v1.0.0</td><td>Sep 12, 2026</td><td>Initial game package submission &amp; verification</td><td><span class="badge-status badge-published">Published</span></td><td><button class="btn-table-action" onclick="showToast('Initial commit build view')">Inspect</button></td></tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
+
+        <!-- DETAIL TAB 3: GAME ANALYTICS -->
+        <div id="detailTabAnalytics" style="display: none;">
+          <div class="stat-row-3">
+            <div class="card-stat"><div class="card-stat-title">Game Plays</div><div class="card-stat-value">45,230</div><div class="card-stat-sub">34% of studio volume</div></div>
+            <div class="card-stat"><div class="card-stat-title">Retention Rate (Day 7)</div><div class="card-stat-value" style="color: var(--green);">42.8%</div><div class="card-stat-sub">High engagement index</div></div>
+            <div class="card-stat"><div class="card-stat-title">Average Score</div><div class="card-stat-value">14,920 pts</div><div class="card-stat-sub">Submitted via submitScore()</div></div>
+          </div>
+        </div>
+
+        <!-- DETAIL TAB 4: VERIFICATION -->
+        <div id="detailTabVerification" style="display: none;">
+          <div class="card-panel">
+            <div class="card-panel-header">Automated Compliance Report</div>
+            <div style="display: flex; flex-direction: column; gap: 14px; margin-bottom: 20px;">
+              <div class="checklist-row"><div class="chk-icon">✓</div><div><strong>Bridge handshake:</strong> bridge.js verified at entry point. Ready for score and session reporting.</div></div>
+              <div class="checklist-row"><div class="chk-icon">✓</div><div><strong>Responsive layout:</strong> Dynamic 100vw x 100vh canvas sizing with touch-action: none.</div></div>
+              <div class="checklist-row"><div class="chk-icon">✓</div><div><strong>Audio unlock:</strong> User-gesture WebAudio context unlock detected.</div></div>
+            </div>
+            <button class="btn-blue-action" onclick="showToast('Re-running real-time probe: 100% Passed!')">⚡ Re-run Verification Probe</button>
+          </div>
+        </div>
+
+        <!-- DETAIL TAB 5: INTEGRATION -->
+        <div id="detailTabIntegration" style="display: none;">
+          <div class="card-panel">
+            <div class="card-panel-header">SDK Integration Snippets</div>
+            <p style="font-size: 13px; color: var(--text-muted); margin-bottom: 8px;">1. Include the bridge in HTML &lt;head&gt;:</p>
+            <div class="code-snippet">&lt;script src="https://gametok.co/bridge.js" data-creator-handle="@johndoe"&gt;&lt;/script&gt;</div>
+            <p style="font-size: 13px; color: var(--text-muted); margin: 16px 0 8px;">2. Submit scores and listen for pause:</p>
+            <div class="code-snippet">window.GameTok?.submitScore(finalScore);
+window.addEventListener('gametok:pause', () => pauseGameLoop());</div>
+            <button class="btn-blue-action" onclick="copyText('window.GameTok?.submitScore(finalScore);', 'Copied SDK code snippet!')">Copy Code</button>
+          </div>
+        </div>
+
       </section>
 
       <!-- ========================================== -->
@@ -1404,7 +1447,7 @@
             <p>Track your game performance and player engagement.</p>
           </div>
           <div class="view-header-right">
-            <select class="btn-filter-dropdown" onchange="filterMetricsPeriod(this.value)">
+            <select class="btn-filter-dropdown" onchange="applyAnalyticsPeriod(this.value)">
               <option value="30">Last 30 days ▾</option>
               <option value="7">Last 7 days</option>
               <option value="90">Last 90 days</option>
@@ -1419,7 +1462,7 @@
               <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/></svg>
             </div>
             <div class="card-stat-title">Total Players</div>
-            <div class="card-stat-value">24,892 <span class="card-stat-badge">↑ 42%</span></div>
+            <div class="card-stat-value"><span id="aStatPlayers">24,892</span> <span class="card-stat-badge">↑ 42%</span></div>
           </div>
 
           <div class="card-stat">
@@ -1427,7 +1470,7 @@
               <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><polygon points="5 3 19 12 5 21 5 3"/></svg>
             </div>
             <div class="card-stat-title">Total Plays</div>
-            <div class="card-stat-value">132,411 <span class="card-stat-badge">↑ 56%</span></div>
+            <div class="card-stat-value"><span id="aStatPlays">132,411</span> <span class="card-stat-badge">↑ 56%</span></div>
           </div>
 
           <div class="card-stat">
@@ -1435,7 +1478,7 @@
               <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
             </div>
             <div class="card-stat-title">Avg. Session Duration</div>
-            <div class="card-stat-value">4m 32s <span class="card-stat-badge">↑ 28%</span></div>
+            <div class="card-stat-value"><span id="aStatDuration">4m 32s</span> <span class="card-stat-badge">↑ 28%</span></div>
           </div>
 
           <div class="card-stat">
@@ -1443,7 +1486,7 @@
               <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><path d="M21.5 2v6h-6M21.34 15.57a10 10 0 1 1-.57-8.38l5.67-5.67"/></svg>
             </div>
             <div class="card-stat-title">Returning Players</div>
-            <div class="card-stat-value">18.4% <span class="card-stat-badge">↑ 12%</span></div>
+            <div class="card-stat-value"><span id="aStatReturning">18.4%</span> <span class="card-stat-badge">↑ 12%</span></div>
           </div>
         </div>
 
@@ -1453,16 +1496,16 @@
           <div class="card-panel">
             <div class="card-panel-header">
               <span>Player Activity</span>
-              <select class="btn-filter-dropdown" style="padding: 4px 10px; font-size: 12px;">
-                <option>Total Players ▾</option>
-                <option>Total Plays</option>
-                <option>Active Sessions</option>
+              <select class="btn-filter-dropdown" style="padding: 4px 10px; font-size: 12px;" onchange="switchActivityMetric(this.value)">
+                <option value="players">Total Players ▾</option>
+                <option value="plays">Total Plays</option>
+                <option value="sessions">Active Sessions</option>
               </select>
             </div>
             
             <!-- SVG Luminous Wave Chart -->
             <div style="position: relative; width: 100%; height: 180px;">
-              <svg viewBox="0 0 600 180" style="width: 100%; height: 100%; overflow: visible;">
+              <svg viewBox="0 0 600 180" style="width: 100%; height: 100%; overflow: visible;" id="activitySvgChart">
                 <defs>
                   <linearGradient id="chartGlowGrad" x1="0" y1="0" x2="0" y2="1">
                     <stop offset="0%" stop-color="#3b82f6" stop-opacity="0.45"/>
@@ -1473,24 +1516,19 @@
                     <feComposite in="SourceGraphic" in2="blur" operator="over" />
                   </filter>
                 </defs>
-                <!-- Grid Lines -->
                 <line x1="0" y1="20" x2="600" y2="20" stroke="rgba(255,255,255,0.05)" stroke-dasharray="4"/>
                 <line x1="0" y1="60" x2="600" y2="60" stroke="rgba(255,255,255,0.05)" stroke-dasharray="4"/>
                 <line x1="0" y1="100" x2="600" y2="100" stroke="rgba(255,255,255,0.05)" stroke-dasharray="4"/>
                 <line x1="0" y1="140" x2="600" y2="140" stroke="rgba(255,255,255,0.05)" stroke-dasharray="4"/>
 
-                <!-- Y Axis labels -->
-                <text x="5" y="24" fill="#546482" font-size="10">10k</text>
-                <text x="5" y="64" fill="#546482" font-size="10">7.5k</text>
-                <text x="5" y="104" fill="#546482" font-size="10">5k</text>
-                <text x="5" y="144" fill="#546482" font-size="10">2.5k</text>
+                <text x="5" y="24" fill="#546482" font-size="10" id="yLabel4">10k</text>
+                <text x="5" y="64" fill="#546482" font-size="10" id="yLabel3">7.5k</text>
+                <text x="5" y="104" fill="#546482" font-size="10" id="yLabel2">5k</text>
+                <text x="5" y="144" fill="#546482" font-size="10" id="yLabel1">2.5k</text>
 
-                <!-- Chart Area & Path -->
-                <path d="M 30 150 Q 80 140 120 115 T 200 110 T 260 85 T 320 100 T 380 75 T 440 60 T 510 45 T 580 70 L 580 170 L 30 170 Z" fill="url(#chartGlowGrad)"/>
-                <path d="M 30 150 Q 80 140 120 115 T 200 110 T 260 85 T 320 100 T 380 75 T 440 60 T 510 45 T 580 70" fill="none" stroke="#3b82f6" stroke-width="3" filter="url(#glow)"/>
-                
-                <!-- Active Pulse Points -->
-                <circle cx="510" cy="45" r="4.5" fill="#38bdf8" stroke="#fff" stroke-width="2"/>
+                <path id="chartAreaPath" d="M 30 150 Q 80 140 120 115 T 200 110 T 260 85 T 320 100 T 380 75 T 440 60 T 510 45 T 580 70 L 580 170 L 30 170 Z" fill="url(#chartGlowGrad)"/>
+                <path id="chartLinePath" d="M 30 150 Q 80 140 120 115 T 200 110 T 260 85 T 320 100 T 380 75 T 440 60 T 510 45 T 580 70" fill="none" stroke="#3b82f6" stroke-width="3" filter="url(#glow)"/>
+                <circle id="chartPulseDot" cx="510" cy="45" r="4.5" fill="#38bdf8" stroke="#fff" stroke-width="2"/>
               </svg>
             </div>
             <div style="display: flex; justify-content: space-between; font-size: 11px; color: var(--text-dim); margin-top: 10px; padding: 0 10px;">
@@ -1502,13 +1540,9 @@
           <div class="card-panel">
             <div class="card-panel-header">Device Breakdown</div>
             <div style="display: flex; align-items: center; justify-content: center; height: 120px; position: relative;">
-              <!-- Donut graphic -->
               <svg width="110" height="110" viewBox="0 0 100 100">
-                <!-- Mobile 62% -->
                 <circle cx="50" cy="50" r="38" fill="none" stroke="#2563eb" stroke-width="12" stroke-dasharray="148 238" stroke-dashoffset="0"/>
-                <!-- Desktop 31% -->
                 <circle cx="50" cy="50" r="38" fill="none" stroke="#0ea5e9" stroke-width="12" stroke-dasharray="74 238" stroke-dashoffset="-148"/>
-                <!-- Tablet 7% -->
                 <circle cx="50" cy="50" r="38" fill="none" stroke="#38bdf8" stroke-width="12" stroke-dasharray="16 238" stroke-dashoffset="-222"/>
               </svg>
               <div style="position: absolute; text-align: center;">
@@ -1517,7 +1551,6 @@
               </div>
             </div>
 
-            <!-- Legend with percentages -->
             <div style="display: flex; flex-direction: column; gap: 8px; font-size: 12.5px; margin-top: 16px;">
               <div style="display: flex; justify-content: space-between;"><span style="color: #60a5fa;">● Mobile</span><span style="font-weight: 700;">62%</span></div>
               <div style="display: flex; justify-content: space-between;"><span style="color: #0ea5e9;">● Desktop</span><span style="font-weight: 700;">31%</span></div>
@@ -1532,9 +1565,8 @@
           <div class="card-panel">
             <div class="card-panel-header">Top Games by Players</div>
             <div style="display: flex; flex-direction: column; gap: 14px;">
-              <!-- Neon Drift -->
               <div style="display: flex; align-items: center; gap: 12px;">
-                <img src="/assets/neon-drift-hero.jpg" style="width: 28px; height: 28px; border-radius: 6px; object-fit: cover;">
+                <img src="assets/neon-drift-hero.jpg" style="width: 28px; height: 28px; border-radius: 6px; object-fit: cover;" onerror="handleImgError(this, 'neon-drift-hero.jpg')">
                 <span style="width: 100px; font-size: 13px; font-weight: 600;">Neon Drift</span>
                 <div style="flex: 1; height: 7px; background: #131c30; border-radius: 999px; overflow: hidden;">
                   <div style="width: 34%; height: 100%; background: #2563eb; border-radius: 999px;"></div>
@@ -1542,9 +1574,8 @@
                 <span style="font-size: 12px; font-weight: 700; width: 45px; text-align: right;">6,421</span>
                 <span style="font-size: 11.5px; color: var(--text-dim); width: 32px; text-align: right;">34%</span>
               </div>
-              <!-- Gravity Jumper -->
               <div style="display: flex; align-items: center; gap: 12px;">
-                <img src="/assets/gravity-jumper-hero.jpg" style="width: 28px; height: 28px; border-radius: 6px; object-fit: cover;">
+                <img src="assets/gravity-jumper-hero.jpg" style="width: 28px; height: 28px; border-radius: 6px; object-fit: cover;" onerror="handleImgError(this, 'gravity-jumper-hero.jpg')">
                 <span style="width: 100px; font-size: 13px; font-weight: 600;">Gravity Jumper</span>
                 <div style="flex: 1; height: 7px; background: #131c30; border-radius: 999px; overflow: hidden;">
                   <div style="width: 21%; height: 100%; background: #2563eb; border-radius: 999px;"></div>
@@ -1552,9 +1583,8 @@
                 <span style="font-size: 12px; font-weight: 700; width: 45px; text-align: right;">5,203</span>
                 <span style="font-size: 11.5px; color: var(--text-dim); width: 32px; text-align: right;">21%</span>
               </div>
-              <!-- Pixel Quest -->
               <div style="display: flex; align-items: center; gap: 12px;">
-                <img src="/assets/pixel-quest-hero.jpg" style="width: 28px; height: 28px; border-radius: 6px; object-fit: cover;">
+                <img src="assets/pixel-quest-hero.jpg" style="width: 28px; height: 28px; border-radius: 6px; object-fit: cover;" onerror="handleImgError(this, 'pixel-quest-hero.jpg')">
                 <span style="width: 100px; font-size: 13px; font-weight: 600;">Pixel Quest</span>
                 <div style="flex: 1; height: 7px; background: #131c30; border-radius: 999px; overflow: hidden;">
                   <div style="width: 15%; height: 100%; background: #2563eb; border-radius: 999px;"></div>
@@ -1562,9 +1592,8 @@
                 <span style="font-size: 12px; font-weight: 700; width: 45px; text-align: right;">3,942</span>
                 <span style="font-size: 11.5px; color: var(--text-dim); width: 32px; text-align: right;">15%</span>
               </div>
-              <!-- Sky Runner -->
               <div style="display: flex; align-items: center; gap: 12px;">
-                <img src="/assets/sky-runner-hero.jpg" style="width: 28px; height: 28px; border-radius: 6px; object-fit: cover;">
+                <img src="assets/sky-runner-hero.jpg" style="width: 28px; height: 28px; border-radius: 6px; object-fit: cover;" onerror="handleImgError(this, 'sky-runner-hero.jpg')">
                 <span style="width: 100px; font-size: 13px; font-weight: 600;">Sky Runner</span>
                 <div style="flex: 1; height: 7px; background: #131c30; border-radius: 999px; overflow: hidden;">
                   <div style="width: 10%; height: 100%; background: #2563eb; border-radius: 999px;"></div>
@@ -1580,38 +1609,23 @@
             <div class="card-panel-header">Top Countries</div>
             <div style="display: flex; flex-direction: column; gap: 13px; font-size: 13px;">
               <div style="display: flex; justify-content: space-between; align-items: center;">
-                <div style="display: flex; align-items: center; gap: 10px;">
-                  <span>🇺🇸</span>
-                  <span>United States</span>
-                </div>
+                <div style="display: flex; align-items: center; gap: 10px;"><span>🇺🇸</span><span>United States</span></div>
                 <span style="font-weight: 700;">28%</span>
               </div>
               <div style="display: flex; justify-content: space-between; align-items: center;">
-                <div style="display: flex; align-items: center; gap: 10px;">
-                  <span>🇩🇪</span>
-                  <span>Germany</span>
-                </div>
+                <div style="display: flex; align-items: center; gap: 10px;"><span>🇩🇪</span><span>Germany</span></div>
                 <span style="font-weight: 700;">12%</span>
               </div>
               <div style="display: flex; justify-content: space-between; align-items: center;">
-                <div style="display: flex; align-items: center; gap: 10px;">
-                  <span>🇬🇧</span>
-                  <span>United Kingdom</span>
-                </div>
+                <div style="display: flex; align-items: center; gap: 10px;"><span>🇬🇧</span><span>United Kingdom</span></div>
                 <span style="font-weight: 700;">9%</span>
               </div>
               <div style="display: flex; justify-content: space-between; align-items: center;">
-                <div style="display: flex; align-items: center; gap: 10px;">
-                  <span>🇨🇦</span>
-                  <span>Canada</span>
-                </div>
+                <div style="display: flex; align-items: center; gap: 10px;"><span>🇨🇦</span><span>Canada</span></div>
                 <span style="font-weight: 700;">7%</span>
               </div>
               <div style="display: flex; justify-content: space-between; align-items: center;">
-                <div style="display: flex; align-items: center; gap: 10px;">
-                  <span>🌐</span>
-                  <span>Other</span>
-                </div>
+                <div style="display: flex; align-items: center; gap: 10px;"><span>🌐</span><span>Other</span></div>
                 <span style="font-weight: 700;">44%</span>
               </div>
             </div>
@@ -1629,7 +1643,7 @@
             <p>Track your earnings and manage your payout settings.</p>
           </div>
           <div class="view-header-right">
-            <button class="btn-outline-action" onclick="alert('Payout settings modal: Direct deposit and Stripe Connect configured.')">
+            <button class="btn-outline-action" onclick="showToast('Payout method active: Stripe Connect Direct Transfer')">
               ⚙ Payout Settings
             </button>
           </div>
@@ -1674,41 +1688,18 @@
                 <th>Status</th>
               </tr>
             </thead>
-            <tbody>
-              <tr>
-                <td>Oct 8, 2026</td>
-                <td style="font-weight: 600; color: #fff;">Neon Drift</td>
-                <td style="font-weight: 700; color: #fff;">$312.40</td>
-                <td><span class="badge-status badge-published">Paid</span></td>
-              </tr>
-              <tr>
-                <td>Oct 1, 2026</td>
-                <td style="font-weight: 600; color: #fff;">Gravity Jumper</td>
-                <td style="font-weight: 700; color: #fff;">$185.20</td>
-                <td><span class="badge-status badge-published">Paid</span></td>
-              </tr>
-              <tr>
-                <td>Sep 24, 2026</td>
-                <td style="font-weight: 600; color: #fff;">Pixel Quest</td>
-                <td style="font-weight: 700; color: #fff;">$128.76</td>
-                <td><span class="badge-status badge-published">Paid</span></td>
-              </tr>
-              <tr>
-                <td>Sep 17, 2026</td>
-                <td style="font-weight: 600; color: #fff;">Sky Runner</td>
-                <td style="font-weight: 700; color: #fff;">$98.32</td>
-                <td><span class="badge-status badge-published">Paid</span></td>
-              </tr>
+            <tbody id="payoutsTableBody">
+              <!-- Dynamically populated by pagination -->
             </tbody>
           </table>
 
           <!-- Pagination -->
           <div class="pagination-bar">
-            <button class="page-btn">‹</button>
-            <button class="page-btn active">1</button>
-            <button class="page-btn">2</button>
-            <button class="page-btn">3</button>
-            <button class="page-btn">›</button>
+            <button class="page-btn" onclick="switchPayoutPage('prev')">‹</button>
+            <button class="page-btn active" id="pBtn1" onclick="switchPayoutPage(1)">1</button>
+            <button class="page-btn" id="pBtn2" onclick="switchPayoutPage(2)">2</button>
+            <button class="page-btn" id="pBtn3" onclick="switchPayoutPage(3)">3</button>
+            <button class="page-btn" onclick="switchPayoutPage('next')">›</button>
           </div>
         </div>
       </section>
@@ -1725,17 +1716,18 @@
         </div>
 
         <div class="detail-nav-tabs">
-          <div class="detail-nav-tab active">Account</div>
-          <div class="detail-nav-tab">Security</div>
-          <div class="detail-nav-tab">Notifications</div>
-          <div class="detail-nav-tab">Integrations</div>
+          <div class="detail-nav-tab active" onclick="switchSettingsTab('account', this)">Account</div>
+          <div class="detail-nav-tab" onclick="switchSettingsTab('security', this)">Security</div>
+          <div class="detail-nav-tab" onclick="switchSettingsTab('notifications', this)">Notifications</div>
+          <div class="detail-nav-tab" onclick="switchSettingsTab('integrations', this)">Integrations</div>
         </div>
 
-        <div class="card-panel" style="max-width: 660px;">
+        <!-- TAB 1: ACCOUNT -->
+        <div class="card-panel" id="settingsTabAccount" style="max-width: 660px;">
           <div style="font-weight: 800; font-size: 15px; margin-bottom: 20px;">Profile Information</div>
           <div style="display: flex; align-items: center; gap: 20px; margin-bottom: 24px;">
             <div class="user-avatar-initials" style="width: 56px; height: 56px; font-size: 18px;" id="settingsAvatarInitials">JD</div>
-            <button class="btn-outline-action" onclick="alert('Photo upload dialog opened.')">Change Photo</button>
+            <button class="btn-outline-action" onclick="showToast('Avatar editor opened')">Change Photo</button>
           </div>
 
           <div class="form-group">
@@ -1757,6 +1749,63 @@
           </div>
 
           <button class="btn-blue-action" style="margin-top: 14px;" onclick="saveUserSettings()">Save Changes</button>
+        </div>
+
+        <!-- TAB 2: SECURITY -->
+        <div class="card-panel" id="settingsTabSecurity" style="max-width: 660px; display: none;">
+          <div style="font-weight: 800; font-size: 15px; margin-bottom: 20px;">Authentication &amp; Security</div>
+          <div class="form-group">
+            <label class="form-label">Current Password</label>
+            <input type="password" class="form-input" placeholder="••••••••••••">
+          </div>
+          <div class="form-group">
+            <label class="form-label">New Password</label>
+            <input type="password" class="form-input" placeholder="Minimum 8 characters">
+          </div>
+          <div style="margin: 22px 0;">
+            <div style="font-weight: 700; font-size: 14px; margin-bottom: 4px;">Two-Factor Authentication</div>
+            <p style="font-size: 12px; color: var(--text-dim); margin-bottom: 10px;">Protect your creator revenue with authenticator apps.</p>
+            <button class="btn-outline-action" onclick="showToast('2FA setup QR generated')">Enable 2FA</button>
+          </div>
+          <button class="btn-blue-action" onclick="showToast('Password updated successfully')">Update Security Credentials</button>
+        </div>
+
+        <!-- TAB 3: NOTIFICATIONS -->
+        <div class="card-panel" id="settingsTabNotifications" style="max-width: 660px; display: none;">
+          <div style="font-weight: 800; font-size: 15px; margin-bottom: 20px;">Notification Preferences</div>
+          <div style="display: flex; flex-direction: column; gap: 16px; font-size: 13.5px;">
+            <label style="display: flex; align-items: center; gap: 12px; cursor: pointer;">
+              <input type="checkbox" checked style="accent-color: var(--blue); width: 16px; height: 16px;">
+              <span>Email me when games reach 10,000+ plays milestone</span>
+            </label>
+            <label style="display: flex; align-items: center; gap: 12px; cursor: pointer;">
+              <input type="checkbox" checked style="accent-color: var(--blue); width: 16px; height: 16px;">
+              <span>Payout disbursement and direct deposit confirmations</span>
+            </label>
+            <label style="display: flex; align-items: center; gap: 12px; cursor: pointer;">
+              <input type="checkbox" checked style="accent-color: var(--blue); width: 16px; height: 16px;">
+              <span>Weekly creator analytics performance digest</span>
+            </label>
+          </div>
+          <button class="btn-blue-action" style="margin-top: 24px;" onclick="showToast('Notification settings saved')">Save Preferences</button>
+        </div>
+
+        <!-- TAB 4: INTEGRATIONS -->
+        <div class="card-panel" id="settingsTabIntegrations" style="max-width: 660px; display: none;">
+          <div style="font-weight: 800; font-size: 15px; margin-bottom: 20px;">Developer API &amp; Webhooks</div>
+          <div class="form-group">
+            <label class="form-label">GameTok Studio API Key</label>
+            <div style="display: flex; gap: 10px;">
+              <input type="password" class="form-input" id="apiKeyInput" value="gtk_live_98a71f04bc293d047a2" readonly>
+              <button class="btn-outline-action" onclick="toggleApiKeyVisibility()">Show</button>
+              <button class="btn-outline-action" onclick="copyText('gtk_live_98a71f04bc293d047a2', 'API Key copied to clipboard!')">Copy</button>
+            </div>
+          </div>
+          <div class="form-group" style="margin-top: 18px;">
+            <label class="form-label">Webhook URL (Plays &amp; High Scores)</label>
+            <input type="url" class="form-input" placeholder="https://api.yourgame.com/webhooks/gametok" value="https://api.yourgame.com/gametok-events">
+          </div>
+          <button class="btn-blue-action" onclick="showToast('Integrations updated')">Save Integrations</button>
         </div>
       </section>
 
@@ -1952,21 +2001,40 @@
         <div style="font-weight: 800; font-size: 16px;" id="playerGameTitle">Neon Drift</div>
         <span class="badge-status badge-published" id="playerGameStatus">Published</span>
       </div>
-      <button class="btn-outline-action" onclick="closeGamePlayer()" style="padding: 6px 14px; font-size: 12px;">
-        ✕ Exit Game
-      </button>
+      <div style="display: flex; gap: 10px;">
+        <a id="playerExternalLink" href="#" target="_blank" class="btn-outline-action" style="padding: 6px 14px; font-size: 12px;">
+          ↗ Open in New Window
+        </a>
+        <button class="btn-outline-action" onclick="closeGamePlayer()" style="padding: 6px 14px; font-size: 12px;">
+          ✕ Exit Game
+        </button>
+      </div>
     </div>
     <div style="flex: 1; width: 100%; position: relative; background: #000; display: flex; align-items: center; justify-content: center;">
       <iframe id="gamePlayerIframe" src="" style="width: 100%; height: 100%; border: none;"></iframe>
     </div>
   </div>
 
+  <!-- Live Toast Notification -->
+  <div id="dashboardToast">Action completed</div>
+
   <script>
     const API_BASE = 'https://gametok-backend-267787411422.us-central1.run.app/api';
     let handle = localStorage.getItem('gametok_creator_handle') || 'johndoe';
     let currentNav = 'dashboard';
 
-    // The 4 Exact Games from Reference Image
+    // Universal Asset Error Handler
+    function handleImgError(img, filename) {
+      if (!img.dataset.triedFallback) {
+        img.dataset.triedFallback = '1';
+        img.src = '/assets/' + filename;
+      } else if (img.dataset.triedFallback === '1') {
+        img.dataset.triedFallback = '2';
+        img.src = '../assets/' + filename;
+      }
+    }
+
+    // The 4 Canonical Games with Exact Mockup Metrics
     const canonicalMockGames = [
       {
         id: 'neon-drift',
@@ -1977,7 +2045,7 @@
         plays: 45230,
         earnings: 312.40,
         status: 'published',
-        cover: '/assets/neon-drift-hero.jpg',
+        cover: 'assets/neon-drift-hero.jpg',
         desc: 'High-speed racing through neon cities. Drift, collect, and beat the time!',
         tags: ['Racing', 'Arcade', 'Multiplayer'],
         gameId: 'g_713a9e2c',
@@ -1996,7 +2064,7 @@
         plays: 28775,
         earnings: 165.20,
         status: 'published',
-        cover: '/assets/gravity-jumper-hero.jpg',
+        cover: 'assets/gravity-jumper-hero.jpg',
         desc: 'Defy physics in a vertical world of moving platforms and rotating gravity.',
         tags: ['Platformer', 'Action', 'Singleplayer'],
         gameId: 'g_824b1f3d',
@@ -2015,7 +2083,7 @@
         plays: 22611,
         earnings: 128.76,
         status: 'published',
-        cover: '/assets/pixel-quest-hero.jpg',
+        cover: 'assets/pixel-quest-hero.jpg',
         desc: 'Explore floating voxel islands, craft weapons and slay ancient bosses.',
         tags: ['Voxel', 'RPG', 'Adventure'],
         gameId: 'g_409c2a8e',
@@ -2034,7 +2102,7 @@
         plays: 15423,
         earnings: 98.32,
         status: 'in_review',
-        cover: '/assets/sky-runner-hero.jpg',
+        cover: 'assets/sky-runner-hero.jpg',
         desc: 'Glide through floating islands and dodge lightning storms in high-altitude races.',
         tags: ['Runner', '3D', 'Action'],
         gameId: 'g_195d7b4a',
@@ -2049,19 +2117,54 @@
     let myGames = [...canonicalMockGames];
     let activeDetailGame = canonicalMockGames[0];
 
-    // Navigation Switcher
+    // Payouts Pagination Data
+    const payoutPages = {
+      1: [
+        { date: 'Oct 8, 2026', game: 'Neon Drift', amount: 312.40, status: 'Paid' },
+        { date: 'Oct 1, 2026', game: 'Gravity Jumper', amount: 185.20, status: 'Paid' },
+        { date: 'Sep 24, 2026', game: 'Pixel Quest', amount: 128.76, status: 'Paid' },
+        { date: 'Sep 17, 2026', game: 'Sky Runner', amount: 98.32, status: 'Paid' }
+      ],
+      2: [
+        { date: 'Sep 10, 2026', game: 'Neon Drift', amount: 284.50, status: 'Paid' },
+        { date: 'Sep 3, 2026', game: 'Gravity Jumper', amount: 160.00, status: 'Paid' },
+        { date: 'Aug 27, 2026', game: 'Pixel Quest', amount: 110.15, status: 'Paid' },
+        { date: 'Aug 20, 2026', game: 'Sky Runner', amount: 85.00, status: 'Paid' }
+      ],
+      3: [
+        { date: 'Aug 13, 2026', game: 'Neon Drift', amount: 240.20, status: 'Paid' },
+        { date: 'Aug 6, 2026', game: 'Gravity Jumper', amount: 145.80, status: 'Paid' },
+        { date: 'Jul 30, 2026', game: 'Pixel Quest', amount: 95.00, status: 'Paid' },
+        { date: 'Jul 23, 2026', game: 'Sky Runner', amount: 72.40, status: 'Paid' }
+      ]
+    };
+    let currentPayoutPage = 1;
+
+    // Toast Utility
+    function showToast(msg) {
+      const t = document.getElementById('dashboardToast');
+      t.textContent = msg;
+      t.style.display = 'block';
+      setTimeout(() => { t.style.display = 'none'; }, 2600);
+    }
+
+    // Direct, Reliable Navigation Switcher
     function switchNav(navKey) {
       currentNav = navKey;
-      document.querySelectorAll('.sidebar-menu .nav-item').forEach(el => el.classList.remove('active'));
+      
+      // Update sidebar nav states
+      document.querySelectorAll('.sidebar-menu .nav-item').forEach(el => {
+        el.classList.toggle('active', el.dataset.nav === navKey);
+      });
+
+      // Update active main subviews
       document.querySelectorAll('.subview').forEach(el => el.classList.remove('active'));
+      const targetView = document.getElementById('view-' + navKey);
+      if (targetView) targetView.classList.add('active');
 
-      const activeNavItem = Array.from(document.querySelectorAll('.sidebar-menu .nav-item')).find(el => 
-        el.textContent.trim().toLowerCase().includes(navKey)
-      );
-      if (activeNavItem) activeNavItem.classList.add('active');
-
-      const target = document.getElementById('view-' + navKey);
-      if (target) target.classList.add('active');
+      if (navKey === 'payouts') {
+        renderPayoutsTable(currentPayoutPage);
+      }
     }
 
     // Populate Dashboard Table (Screen 1)
@@ -2077,7 +2180,7 @@
             <td>
               <div class="game-identity">
                 <div class="game-thumb-box">
-                  <img src="${g.cover}" alt="${g.name}">
+                  <img src="${g.cover}" alt="${g.name}" onerror="handleImgError(this, '${g.cover.split('/').pop()}')">
                 </div>
                 <div class="game-identity-name">${g.name}</div>
               </div>
@@ -2117,6 +2220,11 @@
       document.getElementById('countRev').textContent = myGames.filter(g => g.status === 'in_review').length;
       document.getElementById('countDraft').textContent = myGames.filter(g => g.status === 'draft').length;
 
+      if (list.length === 0) {
+        grid.innerHTML = `<div style="grid-column: 1 / -1; padding: 40px; text-align: center; color: var(--text-dim);">No games match your query.</div>`;
+        return;
+      }
+
       grid.innerHTML = list.map(g => {
         const isRev = g.status === 'in_review';
         const badgeClass = isRev ? 'badge-review' : 'badge-published';
@@ -2125,7 +2233,7 @@
         return `
           <div class="game-grid-card">
             <div class="game-grid-cover">
-              <img src="${g.cover}" alt="${g.name}">
+              <img src="${g.cover}" alt="${g.name}" onerror="handleImgError(this, '${g.cover.split('/').pop()}')">
             </div>
             <div class="game-grid-body">
               <div class="game-grid-title">${g.name}</div>
@@ -2177,11 +2285,16 @@
       renderGamesCatalog(status, val);
     }
 
-    // Inspect / Open Game Detail (Screen 4)
+    // Inspect Game (Screen 4)
     function inspectGame(gameId) {
       const g = myGames.find(item => item.id === gameId);
       if (!g) return;
       activeDetailGame = g;
+
+      // Highlight Games nav item
+      document.querySelectorAll('.sidebar-menu .nav-item').forEach(el => {
+        el.classList.toggle('active', el.dataset.nav === 'games');
+      });
 
       document.getElementById('detailTitle').textContent = g.name;
       document.getElementById('detailVersion').textContent = g.version;
@@ -2210,7 +2323,10 @@
         badge.textContent = 'Published';
       }
 
-      // Hide all subviews, show game detail
+      // Reset to overview tab
+      switchDetailTab('overview', document.querySelectorAll('.detail-nav-tab')[0]);
+
+      // Hide other views, show detail view
       document.querySelectorAll('.subview').forEach(v => v.classList.remove('active'));
       document.getElementById('view-game-detail').classList.add('active');
     }
@@ -2222,14 +2338,34 @@
     }
 
     function switchDetailTab(tabKey, tabEl) {
-      document.querySelectorAll('.detail-nav-tabs .detail-nav-tab').forEach(t => t.classList.remove('active'));
-      tabEl.classList.add('active');
-      if (tabKey !== 'overview') {
-        alert(`Showing ${tabKey.toUpperCase()} configuration for ${activeDetailGame.name}.`);
-      }
+      document.querySelectorAll('#view-game-detail .detail-nav-tab').forEach(t => t.classList.remove('active'));
+      if (tabEl) tabEl.classList.add('active');
+
+      const tabs = ['Overview', 'Versions', 'Analytics', 'Verification', 'Integration'];
+      tabs.forEach(t => {
+        const el = document.getElementById('detailTab' + t);
+        if (el) el.style.display = t.toLowerCase() === tabKey.toLowerCase() ? (t === 'Overview' ? 'grid' : 'block') : 'none';
+      });
     }
 
-    // Play Game Player Modal
+    // Settings Sub-Tabs
+    function switchSettingsTab(tabKey, tabEl) {
+      document.querySelectorAll('#view-settings .detail-nav-tab').forEach(t => t.classList.remove('active'));
+      if (tabEl) tabEl.classList.add('active');
+
+      const tabs = ['Account', 'Security', 'Notifications', 'Integrations'];
+      tabs.forEach(t => {
+        const el = document.getElementById('settingsTab' + t);
+        if (el) el.style.display = t.toLowerCase() === tabKey.toLowerCase() ? 'block' : 'none';
+      });
+    }
+
+    function toggleApiKeyVisibility() {
+      const input = document.getElementById('apiKeyInput');
+      input.type = input.type === 'password' ? 'text' : 'password';
+    }
+
+    // Launch Game Player
     function launchGamePlayerById(gameId) {
       const g = myGames.find(item => item.id === gameId);
       if (g) launchGamePlayer(g);
@@ -2239,6 +2375,7 @@
       document.getElementById('playerGameTitle').textContent = game.name;
       document.getElementById('playerGameStatus').textContent = game.status === 'in_review' ? 'In Review' : 'Published';
       document.getElementById('playerGameStatus').className = game.status === 'in_review' ? 'badge-status badge-review' : 'badge-status badge-published';
+      document.getElementById('playerExternalLink').href = game.embedUrl;
       document.getElementById('gamePlayerIframe').src = game.embedUrl;
       document.getElementById('gamePlayerModal').classList.add('active');
     }
@@ -2246,6 +2383,98 @@
     function closeGamePlayer() {
       document.getElementById('gamePlayerIframe').src = '';
       document.getElementById('gamePlayerModal').classList.remove('active');
+    }
+
+    // Payouts Pagination
+    function renderPayoutsTable(page) {
+      const rows = payoutPages[page] || payoutPages[1];
+      const tbody = document.getElementById('payoutsTableBody');
+      tbody.innerHTML = rows.map(r => `
+        <tr>
+          <td>${r.date}</td>
+          <td style="font-weight: 600; color: #fff;">${r.game}</td>
+          <td style="font-weight: 700; color: #fff;">$${r.amount.toFixed(2)}</td>
+          <td><span class="badge-status badge-published">${r.status}</span></td>
+        </tr>
+      `).join('');
+
+      for (let i = 1; i <= 3; i++) {
+        const btn = document.getElementById('pBtn' + i);
+        if (btn) btn.classList.toggle('active', i === page);
+      }
+    }
+
+    function switchPayoutPage(direction) {
+      if (direction === 'prev') {
+        currentPayoutPage = Math.max(1, currentPayoutPage - 1);
+      } else if (direction === 'next') {
+        currentPayoutPage = Math.min(3, currentPayoutPage + 1);
+      } else {
+        currentPayoutPage = direction;
+      }
+      renderPayoutsTable(currentPayoutPage);
+      showToast(`Showing Payouts page ${currentPayoutPage}`);
+    }
+
+    // Time Period Filters
+    function applyTimeFilter(val) {
+      const p = document.getElementById('statPlayers');
+      const pl = document.getElementById('statPlays');
+      const r = document.getElementById('statRevenue');
+      const tP = document.getElementById('trendPlayers');
+      const tPl = document.getElementById('trendPlays');
+      const tR = document.getElementById('trendRevenue');
+
+      if (val === '7') {
+        p.textContent = '6,120'; tP.textContent = '↑ 18%';
+        pl.textContent = '32,840'; tPl.textContent = '↑ 24%';
+        r.textContent = '$210.45'; tR.textContent = '↑ 31%';
+      } else if (val === '90') {
+        p.textContent = '68,430'; tP.textContent = '↑ 74%';
+        pl.textContent = '384,100'; tPl.textContent = '↑ 81%';
+        r.textContent = '$2,490.10'; tR.textContent = '↑ 85%';
+      } else if (val === 'all') {
+        p.textContent = '184,200'; tP.textContent = '↑ 140%';
+        pl.textContent = '1,120,400'; tPl.textContent = '↑ 165%';
+        r.textContent = '$7,310.50'; tR.textContent = '↑ 190%';
+      } else {
+        p.textContent = '24,892'; tP.textContent = '↑ 42%';
+        pl.textContent = '132,411'; tPl.textContent = '↑ 56%';
+        r.textContent = '$842.36'; tR.textContent = '↑ 68%';
+      }
+      showToast(`Dashboard calculated for ${val === 'all' ? 'All time' : 'Last ' + val + ' days'}`);
+    }
+
+    function applyAnalyticsPeriod(val) {
+      const ap = document.getElementById('aStatPlayers');
+      const apl = document.getElementById('aStatPlays');
+      if (val === '7') {
+        ap.textContent = '6,120';
+        apl.textContent = '32,840';
+      } else if (val === '90') {
+        ap.textContent = '68,430';
+        apl.textContent = '384,100';
+      } else {
+        ap.textContent = '24,892';
+        apl.textContent = '132,411';
+      }
+      showToast(`Analytics filtered for ${val} days`);
+    }
+
+    function switchActivityMetric(metric) {
+      const l4 = document.getElementById('yLabel4');
+      const l3 = document.getElementById('yLabel3');
+      const l2 = document.getElementById('yLabel2');
+      const l1 = document.getElementById('yLabel1');
+
+      if (metric === 'plays') {
+        l4.textContent = '50k'; l3.textContent = '35k'; l2.textContent = '20k'; l1.textContent = '10k';
+      } else if (metric === 'sessions') {
+        l4.textContent = '15k'; l3.textContent = '10k'; l2.textContent = '5k'; l1.textContent = '2.5k';
+      } else {
+        l4.textContent = '10k'; l3.textContent = '7.5k'; l2.textContent = '5k'; l1.textContent = '2.5k';
+      }
+      showToast(`Chart updated to: ${metric.toUpperCase()}`);
     }
 
     // Wizard: Create New Game (Screen 5)
@@ -2292,12 +2521,11 @@
 
     function startAutomatedVerification() {
       jumpToWizardStep(3);
-      // Simulate live check stages
       const probes = [
-        { icon: 'chkIcon1', delay: 400 },
-        { icon: 'chkIcon2', delay: 900 },
-        { icon: 'chkIcon3', delay: 1400 },
-        { icon: 'chkIcon4', delay: 1900 },
+        { icon: 'chkIcon1', delay: 350 },
+        { icon: 'chkIcon2', delay: 750 },
+        { icon: 'chkIcon3', delay: 1150 },
+        { icon: 'chkIcon4', delay: 1550 },
       ];
 
       probes.forEach((p, idx) => {
@@ -2329,7 +2557,7 @@
         plays: 1,
         earnings: 0.05,
         status: 'published',
-        cover: '/assets/neon-drift-hero.jpg',
+        cover: 'assets/neon-drift-hero.jpg',
         desc: desc,
         tags: ['New', 'Instant', 'GameTok'],
         gameId: 'g_' + Math.random().toString(36).substring(2, 10),
@@ -2344,7 +2572,7 @@
       renderDashboardTable();
       renderGamesCatalog();
       closeNewGameWizard();
-      alert(`🎉 Congratulations! "${name}" has been published to GameTok.`);
+      showToast(`🎉 "${name}" published live to GameTok!`);
     }
 
     // Developer Prompt Inspector
@@ -2379,7 +2607,7 @@ Follow the official SDK requirements:
 
     function copyText(str, successMsg) {
       navigator.clipboard.writeText(str).then(() => {
-        alert(successMsg || 'Copied to clipboard!');
+        showToast(successMsg || 'Copied to clipboard!');
       });
     }
 
@@ -2395,22 +2623,20 @@ Follow the official SDK requirements:
       document.getElementById('settingsAvatarInitials').textContent = initials;
 
       localStorage.setItem('gametok_creator_handle', handleVal);
-      alert('✓ Profile and developer settings saved successfully.');
-    }
-
-    function filterMetricsPeriod(days) {
-      alert(`Filtering dashboard metrics for: Last ${days} days.`);
+      showToast('✓ Profile and developer settings saved successfully');
     }
 
     function logout() {
       localStorage.removeItem('gametok_creator_handle');
-      window.location.href = '/';
+      showToast('Signed out from GameTok Studio');
+      setTimeout(() => { window.location.href = '/'; }, 1000);
     }
 
     // Initialize Viewport
     window.addEventListener('DOMContentLoaded', () => {
       renderDashboardTable();
       renderGamesCatalog('all');
+      renderPayoutsTable(1);
     });
   </script>
 </body>
