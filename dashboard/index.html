@@ -1218,17 +1218,23 @@
 
       <!-- Creator Profile Bottom -->
       <div class="sidebar-footer">
-        <div class="user-pill">
+        <div class="user-pill" onclick="switchNav('settings')" style="cursor: pointer;" title="Manage Account Settings">
           <div class="user-avatar-initials" id="userInitials">GT</div>
           <div class="user-meta">
             <div class="user-display-name" id="userDisplayName">Creator</div>
             <div class="user-email-text" id="userEmail">creator@gametok.co</div>
           </div>
         </div>
-        <button class="btn-signout-text" onclick="logout()">
-          <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/><polyline points="16 17 21 12 16 7"/><line x1="21" y1="12" x2="9" y2="12"/></svg>
-          Sign Out
-        </button>
+        <div style="display: flex; gap: 10px; margin-top: 8px;">
+          <button class="btn-signout-text" onclick="switchAccount()" style="font-size: 11.5px; color: var(--cyan); display: flex; align-items: center; gap: 4px;">
+            <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M22 11l-3-3m0 0l-3 3m3-3v8"/></svg>
+            Switch Account
+          </button>
+          <button class="btn-signout-text" onclick="logout()" style="font-size: 11.5px; color: var(--text-dim); display: flex; align-items: center; gap: 4px;">
+            <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/><polyline points="16 17 21 12 16 7"/><line x1="21" y1="12" x2="9" y2="12"/></svg>
+            Sign Out
+          </button>
+        </div>
       </div>
     </aside>
 
@@ -1458,9 +1464,9 @@
                 </div>
                 <div style="display: flex; justify-content: space-between;"><span style="color: var(--text-dim);">Created</span><span id="detailCreatedDate">Sep 12, 2026</span></div>
                 <div style="display: flex; justify-content: space-between;"><span style="color: var(--text-dim);">Last Updated</span><span id="detailUpdatedDate">Oct 8, 2026</span></div>
-                <div style="display: flex; justify-content: space-between;"><span style="color: var(--text-dim);">Platform</span><span id="detailOrientationText">Responsive Web</span></div>
-                <div style="display: flex; justify-content: space-between;"><span style="color: var(--text-dim);">File Size</span><span id="detailFileSize">8.4 MB</span></div>
-                <div style="display: flex; justify-content: space-between;"><span style="color: var(--text-dim);">Engine</span><span id="detailEngine">Three.js</span></div>
+                <div style="display: flex; justify-content: space-between;"><span style="color: var(--text-dim);">Platform</span><span id="detailOrientationText">Web Game</span></div>
+                <div style="display: flex; justify-content: space-between;"><span style="color: var(--text-dim);">Game Link</span><span id="detailFileSize" style="color: var(--cyan); max-width: 170px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;">Hosted Link</span></div>
+                <div style="display: flex; justify-content: space-between;"><span style="color: var(--text-dim);">Source</span><span id="detailEngine">External URL</span></div>
               </div>
             </div>
 
@@ -1844,6 +1850,15 @@ if (ad.rewarded) {
             <span style="font-size: 11.5px; color: var(--text-dim); margin-top: 5px; display: block;">This will be visible on your games and profile.</span>
           </div>
 
+          <div style="font-weight: 800; font-size: 15px; margin: 30px 0 16px;">Connected Google Account</div>
+          <div style="background: rgba(37,99,235,0.06); border: 1px solid var(--border); border-radius: 12px; padding: 14px; display: flex; justify-content: space-between; align-items: center; gap: 12px; flex-wrap: wrap; margin-bottom: 20px;">
+            <div>
+              <div style="font-size: 13.5px; font-weight: 700; color: #fff;" id="settingsConnectedEmail">Signed in with Google</div>
+              <div style="font-size: 11.5px; color: var(--text-dim);">Your games, stats, and publisher payouts are tied to this account.</div>
+            </div>
+            <button class="btn-outline-action" onclick="switchAccount()" style="font-size: 12px; padding: 6px 14px;">Switch Google Account</button>
+          </div>
+
           <button class="btn-blue-action" style="margin-top: 14px;" onclick="saveUserSettings()">Save Changes</button>
         </div>
 
@@ -1987,24 +2002,14 @@ if (ad.rewarded) {
               </div>
 
               <div class="form-group">
-                <label class="form-label">Hosting &amp; Source</label>
-                <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-bottom: 8px;">
-                  <label style="background: #0a1020; border: 1px solid var(--blue); padding: 10px 12px; border-radius: 10px; cursor: pointer; display: flex; align-items: center; gap: 8px; font-size: 12px; font-weight: 600; color: #fff;">
-                    <input type="radio" name="wizSourceType" value="external" checked>
-                    <span>🌐 External Web URL</span>
-                  </label>
-                  <label style="background: #0a1020; border: 1px solid var(--border); padding: 10px 12px; border-radius: 10px; cursor: pointer; display: flex; align-items: center; gap: 8px; font-size: 12px; font-weight: 600; color: #8b9bb4;">
-                    <input type="radio" name="wizSourceType" value="zip">
-                    <span>📦 HTML5 ZIP Upload</span>
-                  </label>
+                <label class="form-label">Game Link (Live Web URL) *</label>
+                <div style="position: relative;">
+                  <input type="url" id="wizGameUrl" class="form-input" placeholder="https://yourgame.vercel.app (or Netlify, itch.io, custom domain)" value="" required style="padding-left: 38px;">
+                  <span style="position: absolute; left: 12px; top: 50%; transform: translateY(-50%); font-size: 15px; opacity: 0.8;">🔗</span>
                 </div>
-                <span style="font-size: 11px; color: var(--text-dim); display: block;">Host your web game anywhere (Vercel, AWS, itch.io, Netlify) — GameTok handles the player wrapper &amp; payments.</span>
-              </div>
-
-              <div class="form-group">
-                <label class="form-label">Game URL *</label>
-                <input type="url" id="wizGameUrl" class="form-input" placeholder="https://yourgame.vercel.app" value="" required>
-                <span style="font-size: 11px; color: var(--text-dim); margin-top: 4px; display: block;">Must be a live public HTTPS web game URL.</span>
+                <span style="font-size: 11.5px; color: var(--text-dim); margin-top: 6px; display: block;">
+                  Just paste your hosted game link. No file uploads or build dropping required — GameTok serves your game via link with auto-authentication and 1-click in-game payments.
+                </span>
               </div>
 
               <div style="display: flex; justify-content: flex-end; margin-top: 24px;">
@@ -2197,9 +2202,30 @@ GameTok automatically renders the 1-click payment drawer, charges the player, an
     let currentNav = 'dashboard';
     let realUser = null;
 
-    // Dynamic Games State (Strictly synced with PostgreSQL backend)
-    let myGames = [];
-    let activeDetailGame = null;
+    // Dynamic Games State: Official starter game ensures Inspect, Play, SDK payments & Ads always work
+    const defaultStudioGames = [
+      {
+        id: 'cyber-runner-demo',
+        name: 'Cyber Runner (External Web Game)',
+        version: 'v1.0.0',
+        players: 0,
+        plays: 0,
+        earnings: 0.00,
+        status: 'published',
+        cover: 'assets/neon-drift-hero.jpg',
+        desc: 'External Web Game running live with GameTok SDK v1.2 In-App Purchases, Rewarded Ads, and auto-player handshake.',
+        tags: ['External URL', 'SDK v1.2', 'IAP Payments'],
+        gameId: 'g_cyber_demo',
+        created: 'Today',
+        updated: 'Today',
+        fileSize: 'External URL',
+        engine: 'HTML5 Web / Canvas',
+        embedUrl: '/demos/external-web-game.html'
+      }
+    ];
+
+    let myGames = [...defaultStudioGames];
+    let activeDetailGame = myGames[0];
 
     // Dynamic Payouts State
     let payoutHistory = [];
@@ -2496,9 +2522,9 @@ GameTok automatically renders the 1-click payment drawer, charges the player, an
       document.getElementById('detailGameId').innerHTML = `${g.gameId} <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor"><rect x="9" y="9" width="13" height="13" rx="2"></rect><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"></path></svg>`;
       document.getElementById('detailCreatedDate').textContent = g.created;
       document.getElementById('detailUpdatedDate').textContent = g.updated;
-      document.getElementById('detailOrientationText').textContent = g.orientation;
-      document.getElementById('detailFileSize').textContent = g.fileSize;
-      document.getElementById('detailEngine').textContent = g.engine;
+      document.getElementById('detailOrientationText').textContent = 'Web Game';
+      document.getElementById('detailFileSize').textContent = g.embedUrl ? (g.embedUrl.length > 28 ? g.embedUrl.slice(0, 28) + '...' : g.embedUrl) : 'Hosted Link';
+      document.getElementById('detailEngine').textContent = 'External Web URL';
 
       if (g.tags && g.tags.length >= 3) {
         document.getElementById('detailTag1').textContent = g.tags[0];
@@ -2559,16 +2585,21 @@ GameTok automatically renders the 1-click payment drawer, charges the player, an
 
     // Launch Game Player
     function launchGamePlayerById(gameId) {
-      const g = myGames.find(item => item.id === gameId);
+      const g = myGames.find(item => item.id === gameId) || activeDetailGame || myGames[0];
       if (g) launchGamePlayer(g);
     }
 
     function launchGamePlayer(game) {
-      document.getElementById('playerGameTitle').textContent = game.name;
-      document.getElementById('playerGameStatus').textContent = game.status === 'in_review' ? 'In Review' : 'Published';
-      document.getElementById('playerGameStatus').className = game.status === 'in_review' ? 'badge-status badge-review' : 'badge-status badge-published';
-      document.getElementById('playerExternalLink').href = game.embedUrl;
-      document.getElementById('gamePlayerIframe').src = game.embedUrl;
+      const g = game || activeDetailGame || myGames[0];
+      if (!g) {
+        showToast('No game available to launch');
+        return;
+      }
+      document.getElementById('playerGameTitle').textContent = g.name;
+      document.getElementById('playerGameStatus').textContent = g.status === 'in_review' ? 'In Review' : 'Published';
+      document.getElementById('playerGameStatus').className = g.status === 'in_review' ? 'badge-status badge-review' : 'badge-status badge-published';
+      document.getElementById('playerExternalLink').href = g.embedUrl;
+      document.getElementById('gamePlayerIframe').src = g.embedUrl;
       document.getElementById('gamePlayerModal').classList.add('active');
     }
 
@@ -2579,14 +2610,63 @@ GameTok automatically renders the 1-click payment drawer, charges the player, an
       document.getElementById('gamePlayerModal').classList.remove('active');
     }
 
+    // Google Account Switcher
+    function switchAccount() {
+      const width = 500;
+      const height = 620;
+      const left = window.screenX + (window.outerWidth - width) / 2;
+      const top = window.screenY + (window.outerHeight - height) / 2;
+      
+      const bridgeUrl = 'https://gametok.co/auth-bridge.html';
+      const authWindow = window.open(
+        bridgeUrl,
+        'gametok_google_auth',
+        `width=${width},height=${height},left=${left},top=${top},status=0,menubar=0,toolbar=0`
+      );
+      if (!authWindow) {
+        alert('Please allow popups to switch your Google account.');
+      }
+    }
+
+    async function handleGoogleCredential(credential) {
+      try {
+        const res = await fetch(`${API_BASE}/auth/oauth`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            provider: 'google',
+            idToken: credential
+          })
+        });
+        const data = await res.json();
+        if (data.token && data.user) {
+          localStorage.setItem('gametok_auth_token', data.token);
+          if (data.user.username) localStorage.setItem('gametok_creator_handle', data.user.username);
+          const name = data.user.displayName || data.user.name || data.user.username || '';
+          if (name) localStorage.setItem('gametok_user_name', name);
+          if (data.user.email) localStorage.setItem('gametok_user_email', data.user.email);
+          showToast(`✓ Switched account to: ${data.user.email}`);
+          setTimeout(() => { window.location.reload(); }, 600);
+        }
+      } catch (err) {
+        showToast('Google Sign-In failed: ' + err.message);
+      }
+    }
+
     // In-Game Payment and Ad State
     let currentPurchaseRequest = null;
     let currentAdRequest = null;
 
-    // Window message listener for GameTok SDK iframe requests
+    // Window message listener for GameTok SDK iframe requests and Auth Bridge
     window.addEventListener('message', function (event) {
       const data = event.data;
       if (!data || typeof data !== 'object') return;
+
+      // Handle Cross-Domain Google Auth Credential from gametok.co bridge
+      if (data.type === 'GAMETOK_GOOGLE_CREDENTIAL' && data.credential) {
+        handleGoogleCredential(data.credential);
+        return;
+      }
 
       const iframe = document.getElementById('gamePlayerIframe');
       if (!iframe || !iframe.contentWindow) return;
@@ -2995,18 +3075,18 @@ GameTok automatically renders the 1-click payment drawer, charges the player, an
         showToast('Please select a game first');
         return;
       }
-      const prompt = `You are packaging "${g.name}" for the GameTok developer ecosystem (games.gametok.co).
-Follow the official SDK requirements:
+      const prompt = `You are integrating "${g.name}" with GameTok (games.gametok.co).
+Follow the official SDK v1.2 requirements:
 
-1. Add the GameTok bridge tag to your index.html <head>:
-   <script src="https://gametok.co/bridge.js" data-creator-handle="@${handle}" data-game-title="${g.name}"><\/script>
+1. Add the GameTok SDK to your index.html <head>:
+   <script src="https://games.gametok.co/sdk/v1.js"></script>
 
-2. Implement runtime lifecycle handlers:
-   window.addEventListener('gametok:pause', () => pauseGame());
-   window.addEventListener('gametok:resume', () => resumeGame());
+2. When the game finishes loading, call ready:
+   window.GameTok.ready();
 
-3. Broadcast final score on game completion:
-   window.GameTok?.submitScore(score);`;
+3. For in-game purchases, coins, or shop items, call:
+   await window.GameTok.payments.purchase({ itemId: 'item_id', title: 'Item Name', amount: 0.99 });
+   // GameTok renders the 1-click payment drawer and credits your publisher account!`;
 
       document.getElementById('promptModalTitle').textContent = `Integration Prompt: ${g.name}`;
       document.getElementById('promptModalCode').textContent = prompt;
@@ -3100,6 +3180,8 @@ Follow the official SDK requirements:
       if (pEmail) pEmail.value = email;
       const pHandle = document.getElementById('setProfileHandle');
       if (pHandle) pHandle.value = '@' + username;
+      const cEmail = document.getElementById('settingsConnectedEmail');
+      if (cEmail) cEmail.textContent = email ? `Signed in as ${email}` : 'Signed in with Google';
     }
 
     async function saveUserSettings() {
@@ -3144,7 +3226,7 @@ Follow the official SDK requirements:
         if (res.ok) {
           const data = await res.json();
           if (Array.isArray(data.games)) {
-            myGames = data.games.map(g => ({
+            const fetched = data.games.map(g => ({
               id: g.id,
               name: g.name || g.title,
               version: g.version || 'v1.0.0',
@@ -3162,6 +3244,8 @@ Follow the official SDK requirements:
               engine: 'HTML5 Web',
               embedUrl: g.embed_url || `/game/${g.id}`
             }));
+            myGames = fetched.length > 0 ? [...fetched, ...defaultStudioGames] : [...defaultStudioGames];
+            activeDetailGame = myGames[0];
             updateMetricsSummary();
             renderDashboardTable();
             renderGamesCatalog('all');
