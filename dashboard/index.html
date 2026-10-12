@@ -1627,6 +1627,7 @@
             
             <!-- SVG Luminous Wave Chart -->
             <div style="position: relative; width: 100%; height: 180px;">
+              <div id="chartEmpty" style="position: absolute; inset: 0; display: grid; place-items: center; color: var(--text-dim); font-size: 13px;">No plays in this period yet</div>
               <svg viewBox="0 0 600 180" style="width: 100%; height: 100%; overflow: visible;" id="activitySvgChart">
                 <defs>
                   <linearGradient id="chartGlowGrad" x1="0" y1="0" x2="0" y2="1">
@@ -1643,19 +1644,17 @@
                 <line x1="0" y1="100" x2="600" y2="100" stroke="rgba(255,255,255,0.05)" stroke-dasharray="4"/>
                 <line x1="0" y1="140" x2="600" y2="140" stroke="rgba(255,255,255,0.05)" stroke-dasharray="4"/>
 
-                <text x="5" y="24" fill="#546482" font-size="10" id="yLabel4">10k</text>
-                <text x="5" y="64" fill="#546482" font-size="10" id="yLabel3">7.5k</text>
-                <text x="5" y="104" fill="#546482" font-size="10" id="yLabel2">5k</text>
-                <text x="5" y="144" fill="#546482" font-size="10" id="yLabel1">2.5k</text>
+                <text x="5" y="24" fill="#546482" font-size="10" id="yLabel4"></text>
+                <text x="5" y="64" fill="#546482" font-size="10" id="yLabel3"></text>
+                <text x="5" y="104" fill="#546482" font-size="10" id="yLabel2"></text>
+                <text x="5" y="144" fill="#546482" font-size="10" id="yLabel1"></text>
 
-                <path id="chartAreaPath" d="M 30 150 Q 80 140 120 115 T 200 110 T 260 85 T 320 100 T 380 75 T 440 60 T 510 45 T 580 70 L 580 170 L 30 170 Z" fill="url(#chartGlowGrad)"/>
-                <path id="chartLinePath" d="M 30 150 Q 80 140 120 115 T 200 110 T 260 85 T 320 100 T 380 75 T 440 60 T 510 45 T 580 70" fill="none" stroke="#3b82f6" stroke-width="3" filter="url(#glow)"/>
-                <circle id="chartPulseDot" cx="510" cy="45" r="4.5" fill="#38bdf8" stroke="#fff" stroke-width="2"/>
+                <path id="chartAreaPath" d="" fill="url(#chartGlowGrad)"/>
+                <path id="chartLinePath" d="" fill="none" stroke="#3b82f6" stroke-width="3" filter="url(#glow)"/>
+                <circle id="chartPulseDot" cx="-20" cy="-20" r="4.5" fill="#38bdf8" stroke="#fff" stroke-width="2"/>
               </svg>
             </div>
-            <div style="display: flex; justify-content: space-between; font-size: 11px; color: var(--text-dim); margin-top: 10px; padding: 0 10px;">
-              <span>Sep 11</span><span>Sep 14</span><span>Sep 17</span><span>Sep 20</span><span>Sep 23</span><span>Sep 26</span><span>Sep 29</span><span>Oct 2</span><span>Oct 5</span><span>Oct 8</span><span>Oct 10</span>
-            </div>
+            <div id="chartDates" style="display: flex; justify-content: space-between; font-size: 11px; color: var(--text-dim); margin-top: 10px; padding: 0 10px;"></div>
           </div>
 
           <!-- Device Breakdown Donut -->
@@ -1663,9 +1662,10 @@
             <div class="card-panel-header">Device Breakdown</div>
             <div style="display: flex; align-items: center; justify-content: center; height: 120px; position: relative;">
               <svg width="110" height="110" viewBox="0 0 100 100">
-                <circle cx="50" cy="50" r="38" fill="none" stroke="#2563eb" stroke-width="12" stroke-dasharray="148 238" stroke-dashoffset="0"/>
-                <circle cx="50" cy="50" r="38" fill="none" stroke="#0ea5e9" stroke-width="12" stroke-dasharray="74 238" stroke-dashoffset="-148"/>
-                <circle cx="50" cy="50" r="38" fill="none" stroke="#38bdf8" stroke-width="12" stroke-dasharray="16 238" stroke-dashoffset="-222"/>
+                <circle cx="50" cy="50" r="38" fill="none" stroke="var(--border)" stroke-width="12"/>
+                <circle id="donutArcMobile" cx="50" cy="50" r="38" fill="none" stroke="#2563eb" stroke-width="12" stroke-dasharray="0 239" stroke-dashoffset="0"/>
+                <circle id="donutArcDesktop" cx="50" cy="50" r="38" fill="none" stroke="#0ea5e9" stroke-width="12" stroke-dasharray="0 239" stroke-dashoffset="0"/>
+                <circle id="donutArcTablet" cx="50" cy="50" r="38" fill="none" stroke="#38bdf8" stroke-width="12" stroke-dasharray="0 239" stroke-dashoffset="0"/>
               </svg>
               <div style="position: absolute; text-align: center;">
                 <div style="font-weight: 800; font-size: 15px;" id="donutTotalPlayers">0</div>
@@ -1674,15 +1674,15 @@
             </div>
 
             <div style="display: flex; flex-direction: column; gap: 8px; font-size: 12.5px; margin-top: 16px;">
-              <div style="display: flex; justify-content: space-between;"><span style="color: #60a5fa;">● Mobile</span><span style="font-weight: 700;" id="donutPctMobile">68%</span></div>
-              <div style="display: flex; justify-content: space-between;"><span style="color: #0ea5e9;">● Desktop</span><span style="font-weight: 700;" id="donutPctDesktop">24%</span></div>
-              <div style="display: flex; justify-content: space-between;"><span style="color: #38bdf8;">● Tablet</span><span style="font-weight: 700;" id="donutPctTablet">8%</span></div>
+              <div style="display: flex; justify-content: space-between;"><span style="color: #60a5fa;">● Mobile</span><span style="font-weight: 700;" id="donutPctMobile">0%</span></div>
+              <div style="display: flex; justify-content: space-between;"><span style="color: #0ea5e9;">● Desktop</span><span style="font-weight: 700;" id="donutPctDesktop">0%</span></div>
+              <div style="display: flex; justify-content: space-between;"><span style="color: #38bdf8;">● Tablet</span><span style="font-weight: 700;" id="donutPctTablet">0%</span></div>
             </div>
           </div>
         </div>
 
-        <!-- Bottom Row: Top Games by Players & Top Countries -->
-        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 20px;">
+        <!-- Bottom Row: Top Games by Players -->
+        <div>
           <!-- Top Games -->
           <div class="card-panel">
             <div class="card-panel-header">Top Games by Players</div>
@@ -1690,13 +1690,6 @@
               <div style="text-align: center; padding: 24px 0; color: var(--text-dim); font-size: 13px;">No game activity recorded yet</div>
             </div>
           </div>
-
-          <!-- Top Countries -->
-          <div class="card-panel">
-            <div class="card-panel-header">Top Countries</div>
-            <div style="display: flex; flex-direction: column; gap: 13px; font-size: 13px;" id="topCountriesAnalyticsList">
-              <div style="text-align: center; padding: 24px 0; color: var(--text-dim); font-size: 13px;">No geo-location data yet</div>
-            </div>
           </div>
         </div>
       </section>
@@ -2332,6 +2325,12 @@
         const elMb = document.getElementById('donutPctMobile');
         const elDt = document.getElementById('donutPctDesktop');
         const elTb = document.getElementById('donutPctTablet');
+        // Ring segments follow the real split (circumference 2πr ≈ 239).
+        const C = 2 * Math.PI * 38;
+        [['donutArcMobile', mb, 0], ['donutArcDesktop', dt, mb], ['donutArcTablet', tb, mb + dt]].forEach(([id, pct, before]) => {
+          const arc = document.getElementById(id);
+          if (arc) { arc.setAttribute('stroke-dasharray', `${(pct / 100) * C} ${C}`); arc.setAttribute('stroke-dashoffset', `${-(before / 100) * C}`); }
+        });
         if (elMb) elMb.textContent = `${mb}%`;
         if (elDt) elDt.textContent = `${dt}%`;
         if (elTb) elTb.textContent = `${tb}%`;
@@ -2342,9 +2341,7 @@
         }
 
         // Render Dynamic SVG Chart
-        if (Array.isArray(data.activityPoints) && data.activityPoints.length > 0) {
-          renderActivityChart(data.activityPoints);
-        }
+        renderActivityChart(Array.isArray(data.activityPoints) ? data.activityPoints : []);
       } catch (err) {
         console.warn('[Analytics] Failed to fetch developer analytics:', err);
       }
@@ -2380,7 +2377,22 @@
     }
 
     function renderActivityChart(points) {
-      if (!points || points.length === 0) return;
+      const empty = document.getElementById('chartEmpty');
+      const dates = document.getElementById('chartDates');
+      if (!points || points.length === 0) {
+        if (empty) empty.hidden = false;
+        if (dates) dates.innerHTML = '';
+        ['chartLinePath', 'chartAreaPath'].forEach(id => document.getElementById(id)?.setAttribute('d', ''));
+        document.getElementById('chartPulseDot')?.setAttribute('cx', '-20');
+        ['yLabel1', 'yLabel2', 'yLabel3', 'yLabel4'].forEach(id => { const el = document.getElementById(id); if (el) el.textContent = ''; });
+        return;
+      }
+      if (empty) empty.hidden = true;
+      if (dates) {
+        const step = Math.max(1, Math.ceil(points.length / 8));
+        dates.innerHTML = points.filter((_, i) => i % step === 0 || i === points.length - 1)
+          .map(p => `<span>${new Date(p.date + 'T00:00:00').toLocaleDateString(undefined, { month: 'short', day: 'numeric' })}</span>`).join('');
+      }
       const maxVal = Math.max(...points.map(p => Math.max(Number(p.plays || 0), Number(p.players || 0), 5)));
       const y4 = document.getElementById('yLabel4');
       const y3 = document.getElementById('yLabel3');
