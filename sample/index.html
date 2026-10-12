@@ -1,0 +1,53 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Tap Tap — GameTok sample game</title>
+  <meta name="description" content="A 40-line GameTok sample: player identity, pause/resume and scores.">
+  <script src="https://gametok.co/bridge.js"></script>
+  <style>
+    body { margin: 0; height: 100dvh; display: grid; place-items: center; text-align: center;
+           font: 600 20px system-ui, sans-serif; background: #0b1020; color: #fff; }
+    button { font: inherit; margin: 6px; padding: 16px 30px; border: 0; border-radius: 99px; background: #38bdf8; color: #001; }
+    img { width: 48px; height: 48px; border-radius: 50%; vertical-align: middle; }
+    small { display: block; color: #8a97b2; font-size: 13px; margin-top: 8px; }
+  </style>
+</head>
+<body>
+  <main>
+    <p id="hi">Loading…</p>
+    <p>Taps: <b id="score">0</b></p>
+    <button id="tap">Tap!</button>
+    <small id="status"></small>
+  </main>
+  <script>
+    let score = 0, paused = false
+    const $ = (id) => document.getElementById(id)
+
+    // 1. Who's playing? (inside GameTok only — on its own the game still works, as a guest)
+    GameTok.init()
+      .then(({ player, session, mode }) => {
+        $('hi').innerHTML = (player.avatar ? `<img src="${player.avatar}" alt=""> ` : '') + `Hi ${player.name} 👋`
+        $('status').textContent = `${mode} player ${player.id}`
+        // 2. Your server checks the session before trusting the player (see "Your server").
+        //    fetch('/api/me', { method: 'POST', body: JSON.stringify({ session }) })
+      })
+      .catch((err) => {
+        $('hi').textContent = 'Hi there 👋'
+        $('status').textContent = err.code === 'NOT_IN_GAMETOK' ? 'Open me from GameTok to see your name' : err.message
+      })
+
+    // 3. Stop when GameTok pauses you (app in the background, another game on screen)
+    GameTok.on('pause', () => { paused = true; document.body.style.opacity = 0.5 })
+    GameTok.on('resume', () => { paused = false; document.body.style.opacity = 1 })
+
+    // 4. Report scores
+    $('tap').onclick = () => {
+      if (paused) return
+      $('score').textContent = ++score
+      if (score % 10 === 0) GameTok.submitScore(score)
+    }
+  </script>
+</body>
+</html>

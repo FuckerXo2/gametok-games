@@ -1381,6 +1381,8 @@
             </button>
             <button class="btn-outline-action" id="btnRetakeScreenshot" onclick="recaptureGameScreenshot()">📸 Retake Thumbnail</button>
             <button class="btn-outline-action" onclick="openDeveloperPromptModal()">Inspect</button>
+            <button class="btn-outline-action" onclick="openTestPlayer()">Test player</button>
+            <button class="btn-blue-action" id="btnGoLive" onclick="goLiveFromDashboard()" hidden>Go live</button>
             <button class="btn-blue-action" onclick="launchGamePlayer(activeDetailGame)">Play Game</button>
           </div>
         </div>
@@ -1749,6 +1751,10 @@
           <p style="font-size: 12.5px; color: var(--text-dim); margin-bottom: 16px;">Give a key to your AI agent or CI so it can publish games to your account (see <a href="/skill.md" target="_blank" style="color: var(--cyan);">skill.md</a>). Keys are shown once — store them like a password.</p>
           <div style="display: flex; gap: 10px; margin-bottom: 14px;">
             <input type="text" class="form-input" id="newApiKeyName" placeholder="Key name, e.g. Claude Code" maxlength="100">
+            <select class="form-input" id="newApiKeyMode" style="max-width: 130px;" title="Test keys only create drafts you play in the test player">
+              <option value="live">Live key</option>
+              <option value="test">Test key</option>
+            </select>
             <button class="btn-blue-action" id="btnCreateApiKey" onclick="createApiKey()">Create key</button>
           </div>
           <div id="newApiKeyReveal" hidden style="background: rgba(34,197,94,0.08); border: 1px solid rgba(34,197,94,0.4); border-radius: 10px; padding: 12px; margin-bottom: 14px;">
@@ -1954,14 +1960,17 @@
                 <span>⏳</span> Automated Verification Pipeline
               </div>
               <p style="font-size: 12px; color: #cbd5e1; line-height: 1.5;">
-                After submitting, your game goes live at <strong>gametok.co/game/&lt;id&gt;</strong> right away, and a screenshot thumbnail is captured automatically.
+                Publishing runs automatic checks; if they pass your game goes live at <strong>gametok.co/game/&lt;id&gt;</strong> right away. Or save it as a draft and play it in the private test player first.
               </p>
             </div>
 
             <div style="display: flex; justify-content: space-between;">
               <button class="btn-outline-action" onclick="jumpToWizardStep(2)">← Back</button>
+              <label style="display: flex; align-items: center; gap: 8px; font-size: 12.5px; color: var(--text-muted); margin-right: auto; margin-left: 14px; cursor: pointer;">
+                <input type="checkbox" id="wizAsDraft" style="accent-color: var(--blue);"> Save as a draft to test first
+              </label>
               <button class="btn-blue-action" id="btnSubmitReview" onclick="submitGameForReview()">
-                🚀 Submit Game for Review
+                🚀 Publish
               </button>
             </div>
           </div>
@@ -2609,6 +2618,7 @@
       }
 
       const badge = document.getElementById('detailStatusBadge');
+      document.getElementById('btnGoLive').hidden = g.status !== 'draft';
       if (g.status === 'draft') {
         badge.className = 'badge-status badge-review';
         badge.textContent = 'Draft';
@@ -2674,7 +2684,7 @@
           <div style="display: flex; align-items: center; justify-content: space-between; gap: 10px; padding: 10px 0; border-top: 1px solid rgba(255,255,255,0.06);">
             <div>
               <div style="color: #fff; font-weight: 600;">${escapeHtml(k.name)}</div>
-              <div style="font-size: 12px;"><code>${escapeHtml(k.prefix)}…</code> · created ${new Date(k.createdAt).toLocaleDateString()} · ${k.lastUsedAt ? 'last used ' + new Date(k.lastUsedAt).toLocaleDateString() : 'never used'}</div>
+              <div style="font-size: 12px;"><span class="badge-status ${k.mode === 'test' ? 'badge-review' : 'badge-published'}" style="font-size: 10px;">${k.mode === 'test' ? 'TEST' : 'LIVE'}</span> <code>${escapeHtml(k.prefix)}…</code> · created ${new Date(k.createdAt).toLocaleDateString()} · ${k.lastUsedAt ? 'last used ' + new Date(k.lastUsedAt).toLocaleDateString() : 'never used'}</div>
             </div>
             <button class="btn-outline-action" style="font-size: 12px;" onclick="revokeApiKey('${escapeHtml(k.id)}', this)">Revoke</button>
           </div>`).join('');
@@ -2691,7 +2701,7 @@
         const res = await fetch(`${API_BASE}/developer/api-keys`, {
           method: 'POST',
           headers: authHeaders({ 'Content-Type': 'application/json' }),
-          body: JSON.stringify({ name: nameEl.value.trim() || 'Default' })
+          body: JSON.stringify({ name: nameEl.value.trim() || 'Default', mode: document.getElementById('newApiKeyMode').value })
         });
         const data = await res.json();
         if (!res.ok) throw new Error(data.error || `HTTP ${res.status}`);
@@ -2909,6 +2919,26 @@
       // simulating a checkout/ad and handing the game a fake receipt.
       if (data.type === 'GAMETOK_PURCHASE_REQUEST' || data.type === 'GAMETOK_SHOW_REWARDED_AD' || data.type === 'GAMETOK_SHOW_INTERSTITIAL') {
         iframe.contentWindow.postMessage({ requestId: data.requestId, success: false, error: 'NOT_AVAILABLE' }, '*');
+      }
+
+      // Player identity (bridge.js GameTok.init / session): a real signed session for this game.
+      else if (data.type === 'GAMETOK_PLAYER_SESSION_REQUEST' && event.source === iframe.contentWindow) {
+        const g = myGames.find(gItem => iframe.src && iframe.src.includes(gItem.embedUrl)) || activeDetailGame;
+        let targetOrigin = '*';
+        try { targetOrigin = new URL(iframe.src).origin; } catch (e) {}
+        (async () => {
+          let reply;
+          try {
+            const res = await fetch(`${API_BASE}/games/${encodeURIComponent(g.id)}/player-session`, { method: 'POST', headers: authHeaders() });
+            const body = await res.json();
+            reply = res.ok
+              ? { type: 'GAMETOK_PLAYER_SESSION', requestId: data.requestId, ok: true, player: body.player, session: body.session, mode: body.mode, expiresIn: body.expiresIn }
+              : { type: 'GAMETOK_PLAYER_SESSION', requestId: data.requestId, ok: false, code: body.code || 'SESSION_FAILED', error: body.error };
+          } catch (err) {
+            reply = { type: 'GAMETOK_PLAYER_SESSION', requestId: data.requestId, ok: false, code: 'NETWORK', error: err.message };
+          }
+          iframe.contentWindow.postMessage(reply, targetOrigin);
+        })();
       }
 
       // Player Identity Request
@@ -3131,10 +3161,12 @@
 
       const btn = document.getElementById('btnSubmitReview');
       if (btn) {
-        btn.textContent = 'Submitting to Review Queue...';
+        btn.textContent = 'Running checks…';
         btn.disabled = true;
       }
 
+      const asDraft = Boolean(document.getElementById('wizAsDraft')?.checked);
+      let testUrl = null;
       let realGameId = name.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-|-$/g, '').slice(0, 40) || 'game-' + Date.now();
       let platformUrl = `https://gametok.co/game/${realGameId}`;
 
@@ -3149,13 +3181,15 @@
             description: desc,
             url: currentHostMode === 'link' ? url : undefined,
             html: currentHostMode === 'file' ? uploadedGameHtml : undefined,
-            orientation: 'landscape'
+            orientation: 'landscape',
+            draft: asDraft
           })
         });
         const data = await res.json().catch(() => ({}));
         if (res.ok && data.gameId) {
           realGameId = data.gameId;
           platformUrl = data.url || platformUrl;
+          testUrl = data.testUrl || null;
         } else {
           publishError = data.error || `Publish failed (HTTP ${res.status})`;
         }
@@ -3165,7 +3199,7 @@
 
       if (publishError) {
         if (btn) {
-          btn.textContent = '🚀 Submit Game for Review';
+          btn.textContent = '🚀 Publish';
           btn.disabled = false;
         }
         alert(publishError);
@@ -3177,11 +3211,40 @@
       closeNewGameWizard();
 
       if (btn) {
-        btn.textContent = '🚀 Submit Game for Review';
+        btn.textContent = '🚀 Publish';
         btn.disabled = false;
       }
 
+      if (asDraft && testUrl) {
+        showToast(`📝 "${name}" saved as a draft — opening the test player`);
+        window.location.href = testUrl;
+        return;
+      }
       showToast(`🚀 "${name}" is live at ${platformUrl}`);
+    }
+
+    function openTestPlayer() {
+      if (!activeDetailGame) return;
+      window.location.href = `/sandbox/?game=${encodeURIComponent(activeDetailGame.id)}`;
+    }
+
+    async function goLiveFromDashboard() {
+      const g = activeDetailGame;
+      if (!g) return;
+      const btn = document.getElementById('btnGoLive');
+      btn.disabled = true;
+      try {
+        const res = await fetch(`${API_BASE}/developer/games/${encodeURIComponent(g.id)}/submit`, { method: 'POST', headers: authHeaders() });
+        const data = await res.json();
+        if (!res.ok) throw new Error(data.error || `HTTP ${res.status}`);
+        await fetchDeveloperGames();
+        inspectGame(g.id);
+        showToast(`🚀 "${g.name}" is live at ${data.url}`);
+      } catch (err) {
+        showToast('Could not go live: ' + err.message);
+      } finally {
+        btn.disabled = false;
+      }
     }
 
     // Developer Prompt Inspector
