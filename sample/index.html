@@ -29,7 +29,7 @@
     GameTok.init()
       .then(({ player, session, mode }) => {
         $('hi').innerHTML = (player.avatar ? `<img src="${player.avatar}" alt=""> ` : '') + `Hi ${player.name} 👋`
-        $('status').textContent = `${mode} player ${player.id}`
+        console.log('GameTok player', player.id, '(' + mode + ' mode)') // your id for this player in this game
         // 2. Your server checks the session before trusting the player (see "Your server").
         //    fetch('/api/me', { method: 'POST', body: JSON.stringify({ session }) })
       })
