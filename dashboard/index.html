@@ -1763,11 +1763,6 @@
               <input type="text" class="form-input" id="newApiKeyValue" readonly>
               <button class="btn-outline-action" onclick="copyText(document.getElementById('newApiKeyValue').value, 'API key copied!')">Copy</button>
             </div>
-            <div style="font-size: 12px; color: var(--text-dim); margin: 10px 0 4px;">Results secret — only for signing multiplayer match results on your server (<code>GAMETOK_RESULTS_SECRET</code>):</div>
-            <div style="display: flex; gap: 10px;">
-              <input type="text" class="form-input" id="newApiKeyResultsSecret" readonly>
-              <button class="btn-outline-action" onclick="copyText(document.getElementById('newApiKeyResultsSecret').value, 'Results secret copied!')">Copy</button>
-            </div>
           </div>
           <div id="apiKeysList" style="font-size: 13px; color: var(--text-dim);">Loading…</div>
         </div>
@@ -2711,7 +2706,6 @@
         const data = await res.json();
         if (!res.ok) throw new Error(data.error || `HTTP ${res.status}`);
         document.getElementById('newApiKeyValue').value = data.key;
-        document.getElementById('newApiKeyResultsSecret').value = data.resultsSecret || '';
         document.getElementById('newApiKeyReveal').hidden = false;
         nameEl.value = '';
         loadApiKeys();

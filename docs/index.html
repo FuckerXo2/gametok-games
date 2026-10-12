@@ -4,7 +4,7 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Docs — GameTok for Developers</title>
-  <meta name="description" content="Publish your web game on GameTok: the bridge script, player identity, test mode, multiplayer lobby and the server API.">
+  <meta name="description" content="Publish your web game on GameTok: the bridge script, player identity, test mode and the server API.">
   <link rel="icon" href="/assets/adaptive-icon.png">
   <style>
     :root {
@@ -68,7 +68,6 @@
         <a href="#checks">Automatic checks</a>
         <a href="#bridge">bridge.js reference</a>
         <a href="#identity">Player identity</a>
-        <a href="#multiplayer">Multiplayer</a>
         <a href="#api">Server API reference</a>
         <a href="#keys">API keys</a>
         <a href="#errors">Error codes</a>
@@ -79,13 +78,13 @@
 
     <main>
       <h1>Docs</h1>
-      <p class="lead">Your game stays on your own HTTPS site. GameTok shows it in its feed, in a frame, and one script — <code>bridge.js</code> — lets it ask who's playing, report scores, and pair players for multiplayer. Your server checks players with the GameTok API before trusting them.</p>
+      <p class="lead">Your game stays on your own HTTPS site. GameTok shows it in its feed, in a frame, and one script — <code>bridge.js</code> — lets it ask who's playing and report scores. Your server checks players with the GameTok API before trusting them.</p>
 
       <h2 id="overview">How it fits together</h2>
       <div class="cards">
         <div class="card"><h3>Your game</h3><p>Any web game (HTML5, Canvas, Phaser, Three.js, Unity WebGL, Godot…) on your own HTTPS address. It loads <code>bridge.js</code> and calls <code>GameTok.*</code>.</p></div>
         <div class="card"><h3>The GameTok player</h3><p>The feed and game pages on gametok.co (and the GameTok app). It frames your game, pauses and resumes it, and answers <code>GameTok.init()</code> with the signed-in player.</p></div>
-        <div class="card"><h3>Your server (optional)</h3><p>Holds your secret API key. Checks player sessions, saves progress against the player's id, runs multiplayer rounds and reports results.</p></div>
+        <div class="card"><h3>Your server (optional)</h3><p>Holds your secret API key. Checks player sessions and saves progress against the player's id.</p></div>
       </div>
       <p>Updates are instant: GameTok loads your hosted URL, so every time you deploy, players get the new version.</p>
 
@@ -163,7 +162,6 @@
         <tr><td><code>GameTok.submitScore(n)</code></td><td>Report a score (whole number).</td></tr>
         <tr><td><code>GameTok.gameOver(score?)</code></td><td>The run ended; also reports session length to your analytics.</td></tr>
         <tr><td><code>GameTok.recordEvent(name, data)</code></td><td>A custom analytics event.</td></tr>
-        <tr><td><code>GameTok.match.*</code></td><td>The multiplayer lobby — see <a href="#multiplayer">Multiplayer</a>.</td></tr>
       </table></div>
 
       <h2 id="identity">Player identity</h2>
@@ -186,49 +184,6 @@ Authorization: Bearer gtk_live_…        (gtk_test_… in the test player)
 → 403 { "valid": false, "code": "WRONG_GAME" | "WRONG_MODE" }</code></pre>
       <p>Full server example: <a href="/sample/server.js">sample/server.js</a>.</p>
 
-      <h2 id="multiplayer">Multiplayer</h2>
-      <p>GameTok runs the lobby; <strong>your server runs the gameplay</strong>. Players create a match and share its six-letter code, join by code, or quick-match with someone waiting in your game. When every seat is filled the match starts; your server plays the round (over your own WebSocket, etc.) and reports who won. Matches have no stakes.</p>
-      <pre><code>// In the game
-const m = await GameTok.match.quick({ seats: 2 })     // or match.create({ seats }) / match.join(code)
-showCode(m.code)                                      // friends can join with GameTok.match.join(code)
-const stop = GameTok.match.onUpdate(async (m) =&gt; {
-  if (m?.status === 'playing') connectToMyServer(m.id, await GameTok.session())   // your server checks the session
-  if (m?.status === 'done') showWinner(m.winner)
-})</code></pre>
-      <div class="table-wrap"><table>
-        <tr><th>Call</th><th>Result</th></tr>
-        <tr><td><code>GameTok.match.create({ seats })</code></td><td>A new match for 2–4 players with a <code>code</code> to share.</td></tr>
-        <tr><td><code>GameTok.match.join(code)</code></td><td>Join by code. Starts the match if it fills it.</td></tr>
-        <tr><td><code>GameTok.match.quick({ seats })</code></td><td>Join the oldest open quick match in your game with a free seat, or open one.</td></tr>
-        <tr><td><code>GameTok.match.current()</code></td><td>Your open or playing match in this game, or <code>null</code>.</td></tr>
-        <tr><td><code>GameTok.match.leave()</code></td><td>Before the start you leave the match; after it you're marked as left (your server decides the result).</td></tr>
-        <tr><td><code>GameTok.match.onUpdate(fn)</code></td><td>Calls <code>fn(match)</code> whenever it changes. Returns <code>unsubscribe()</code>.</td></tr>
-      </table></div>
-      <p>A match is <code>{ id, code, status, seats, players: [{ id, name }], me, winner, result, createdAt, startedAt, endsAt, mode }</code>. <code>status</code> is <code>open</code>, <code>playing</code>, <code>done</code>, <code>cancelled</code> (never filled within 15 minutes) or <code>void</code> (no result within 2 hours of the start). A player can be in one open/playing match per game.</p>
-      <h3>Reporting the result (your server only)</h3>
-      <p>Only your server can settle a match: it needs your API key <em>and</em> a signature with the <strong>results secret</strong> shown when you created that key. A phone can never post a result.</p>
-      <pre><code>// Node 18+
-const crypto = require('crypto')
-const API = 'https://gametok-backend-267787411422.us-central1.run.app'
-
-async function reportResult(matchId, winner /* player id or "draw" */) {
-  const auth = { Authorization: `Bearer ${process.env.GAMETOK_API_KEY}` }
-  const { match } = await (await fetch(`${API}/api/developer/matches/${matchId}`, { headers: auth })).json()
-  const path = `/api/developer/matches/${matchId}/result`
-  const body = JSON.stringify({ winner })
-  const timestamp = String(Math.floor(Date.now() / 1000))
-  const bodyHash = crypto.createHash('sha256').update(body).digest('hex')
-  const signature = 'v1=' + crypto.createHmac('sha256', process.env.GAMETOK_RESULTS_SECRET)
-    .update(['POST', path, timestamp, match.nonce, bodyHash].join('\n')).digest('hex')
-  const res = await fetch(API + path, {
-    method: 'POST',
-    headers: { ...auth, 'Content-Type': 'application/json', 'X-GameTok-Timestamp': timestamp, 'X-GameTok-Signature': signature },
-    body,
-  })
-  return res.json()   // { match: { status: "done", winner, … } }
-}</code></pre>
-      <p>Settled once: sending the same winner again returns the same match; a different winner afterwards is <code>409 ALREADY_SETTLED</code>. Check each player's session (<code>sessions/verify</code>) when they connect to your server so you know the ids in the match are really them.</p>
-
       <h2 id="api">Server API reference</h2>
       <p>Base URL <code>https://gametok-backend-267787411422.us-central1.run.app/api</code>. Authenticate with <code>Authorization: Bearer &lt;API key&gt;</code>. Keep keys on your server.</p>
       <div class="table-wrap"><table>
@@ -240,12 +195,10 @@ async function reportResult(matchId, winner /* player id or "draw" */) {
         <tr><td><span class="method">GET</span><code>/developer/games/:id/analytics</code></td><td>Plays, unique players, average session, high score.</td></tr>
         <tr><td><span class="method">DELETE</span><code>/developer/games/:id</code></td><td>Unpublish and delete a game (test keys: drafts only).</td></tr>
         <tr><td><span class="method">POST</span><code>/developer/sessions/verify</code></td><td>Check a player session (see <a href="#identity">Player identity</a>).</td></tr>
-        <tr><td><span class="method">GET</span><code>/developer/matches/:id</code></td><td>A match in your game, including its <code>nonce</code>.</td></tr>
-        <tr><td><span class="method">POST</span><code>/developer/matches/:id/result</code></td><td>Settle a match (signed — see <a href="#multiplayer">Multiplayer</a>).</td></tr>
       </table></div>
 
       <h2 id="keys">API keys</h2>
-      <p>Create keys in <a href="/dashboard/">Dashboard → Settings → API Keys</a>. Each key and its results secret are shown once; GameTok stores only a hash of the key. Revoke a key there at any time — it stops working immediately. Keys can't accept the Developer Agreement or create other keys; that needs you, signed in.</p>
+      <p>Create keys in <a href="/dashboard/">Dashboard → Settings → API Keys</a>. Each key is shown once; GameTok stores only a hash of the key. Revoke a key there at any time — it stops working immediately. Keys can't accept the Developer Agreement or create other keys; that needs you, signed in.</p>
 
       <h2 id="errors">Error codes</h2>
       <div class="table-wrap"><table>
@@ -255,8 +208,6 @@ async function reportResult(matchId, winner /* player id or "draw" */) {
         <tr><td><code>TEST_KEY_CANNOT_GO_LIVE</code> · <code>TEST_KEY_LIVE_GAME</code></td><td>Test keys only work on drafts.</td></tr>
         <tr><td><code>NOT_IN_GAMETOK</code> · <code>NO_RESPONSE</code></td><td><code>GameTok.init()</code> outside GameTok, or the player didn't answer.</td></tr>
         <tr><td><code>SESSION_EXPIRED</code> · <code>SESSION_INVALID</code> · <code>WRONG_GAME</code> · <code>WRONG_MODE</code></td><td>Session verification failed; ask the game for a fresh <code>GameTok.session()</code>.</td></tr>
-        <tr><td><code>ALREADY_IN_MATCH</code> · <code>MATCH_NOT_FOUND</code> · <code>MATCH_FULL</code> · <code>BAD_SEATS</code></td><td>Lobby errors.</td></tr>
-        <tr><td><code>BAD_SIGNATURE</code> · <code>STALE_TIMESTAMP</code> · <code>NOT_PLAYING</code> · <code>ALREADY_SETTLED</code> · <code>BAD_WINNER</code></td><td>Match result errors.</td></tr>
       </table></div>
 
       <h2 id="sample">Sample game</h2>
