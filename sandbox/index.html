@@ -21,7 +21,9 @@
     @media (max-width: 860px) { main { grid-template-columns: 1fr; } }
     .phone { background: #000; border: 1px solid var(--border); border-radius: 22px; overflow: hidden; aspect-ratio: 9 / 16; width: 100%; position: relative; }
     .phone.landscape { aspect-ratio: 16 / 9; }
-    .phone iframe { position: absolute; inset: 0; width: 100%; height: 100%; border: 0; }
+    /* color-scheme must match the game's (normal), or the browser paints an opaque white
+       backdrop behind the frame — and bridge.js makes the game's own background transparent. */
+    .phone iframe { position: absolute; inset: 0; width: 100%; height: 100%; border: 0; color-scheme: normal; }
     .controls { display: flex; gap: 8px; flex-wrap: wrap; margin-top: 10px; }
     .card { background: var(--surface); border: 1px solid var(--border); border-radius: 18px; padding: 18px; margin-bottom: 16px; }
     .card h2 { font-size: 14px; margin: 0 0 4px; }
