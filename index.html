@@ -2,6 +2,10 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8">
+  <script>
+    // Older /api/publish responses linked to games.gametok.co?creator=<handle>; send those to the dashboard.
+    if (/[?&]creator=/.test(location.search)) location.replace('/dashboard/' + location.search);
+  </script>
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>GameTok for Developers — Build once. Reach millions. On GameTok.</title>
   <meta name="description" content="Publish your games, get real players, earn revenue. Integrate with your AI agent in minutes and let us handle distribution, analytics and payments.">

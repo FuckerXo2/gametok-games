@@ -1589,46 +1589,22 @@
         <div id="detailTabIntegration" style="display: none;">
           <div class="card-panel" style="margin-bottom: 20px;">
             <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px; flex-wrap: wrap; gap: 10px;">
-              <div class="card-panel-header" style="margin-bottom: 0;">GameTok Web Games SDK (v1.2.0)</div>
-              <button class="btn-blue-action" onclick="launchGamePlayerById(activeDetailGame ? activeDetailGame.id : '')" style="padding: 6px 14px; font-size: 12px;">
-                ⚡ Launch In-Game Payment Simulator
-              </button>
+              <div class="card-panel-header" style="margin-bottom: 0;">GameTok Bridge</div>
+              <a class="btn-outline-action" href="/skill.md" target="_blank" style="padding: 6px 14px; font-size: 12px; text-decoration: none;">Full guide (skill.md)</a>
             </div>
             <p style="font-size: 13px; color: var(--text-muted); margin-bottom: 14px;">
-              Connect your external web game (HTML5, Canvas, Three.js, Phaser, Godot) to GameTok in under 2 minutes. Enable 1-click in-game payments, rewarded ads, and auto-login without hosting your code with us.
+              Connect your web game (HTML5, Canvas, Three.js, Phaser, Godot) to GameTok with one script tag. Your game stays on your own hosting.
             </p>
 
-            <div style="font-weight: 700; font-size: 13.5px; color: #fff; margin-top: 14px;">1. Include the SDK in your HTML &lt;head&gt;</div>
-            <div class="code-snippet" id="sdkIntegrationTagSnippet">&lt;script src="https://games.gametok.co/sdk/v1.js"&gt;&lt;/script&gt;</div>
-            <button class="btn-outline-action" style="font-size: 11.5px; padding: 4px 12px; margin-bottom: 16px;" onclick="copyText(document.getElementById('sdkIntegrationTagSnippet').innerText, 'SDK script tag copied!')">Copy Tag</button>
+            <div style="font-weight: 700; font-size: 13.5px; color: #fff; margin-top: 14px;">1. Add the bridge to your index.html</div>
+            <div class="code-snippet" id="sdkIntegrationTagSnippet">&lt;script src="https://gametok.co/bridge.js" data-creator-name="Your Name" data-creator-handle="yourhandle"&gt;&lt;/script&gt;</div>
+            <button class="btn-outline-action" style="font-size: 11.5px; padding: 4px 12px; margin-bottom: 16px;" onclick="copyText(document.getElementById('sdkIntegrationTagSnippet').innerText, 'Bridge script tag copied!')">Copy Tag</button>
 
-            <div style="font-weight: 700; font-size: 13.5px; color: #fff; margin-top: 10px;">2. In-App Purchases (80% Creator Payout / 20% GameTok Cut)</div>
-            <div class="code-snippet">// Trigger native GameTok Apple Pay / Card checkout sheet
-const purchase = await window.GameTok.payments.purchase({
-  itemId: 'gems_100',
-  title: '100 Gem Pack',
-  amount: 0.99,
-  currency: 'USD'
-});
-
-if (purchase.success) {
-  console.log('Payment verified! Receipt:', purchase.receiptId);
-  grantPlayerGems(100);
+            <div style="font-weight: 700; font-size: 13.5px; color: #fff; margin-top: 10px;">2. Scores &amp; game over (optional)</div>
+            <div class="code-snippet">if (window.GameTok) {
+  window.GameTok.submitScore(score);
+  window.GameTok.gameOver(score);
 }</div>
-            <button class="btn-outline-action" style="font-size: 11.5px; padding: 4px 12px; margin-bottom: 16px;" onclick="copyText('const purchase = await window.GameTok.payments.purchase({ itemId: \'gems_100\', title: \'100 Gem Pack\', amount: 0.99, currency: \'USD\' });', 'Purchase snippet copied!')">Copy Payment Code</button>
-
-            <div style="font-weight: 700; font-size: 13.5px; color: #fff; margin-top: 10px;">3. Player Identity (Auto-Login)</div>
-            <div class="code-snippet">const player = await window.GameTok.player.getPlayer();
-console.log('Welcome ' + player.username + ' (ID: ' + player.id + ')');</div>
-
-            <div style="font-weight: 700; font-size: 13.5px; color: #fff; margin-top: 10px;">4. Rewarded Video Ads</div>
-            <div class="code-snippet">const ad = await window.GameTok.ads.showRewardedAd();
-if (ad.rewarded) {
-  givePlayerExtraLife();
-}</div>
-
-            <div style="font-weight: 700; font-size: 13.5px; color: #fff; margin-top: 10px;">5. Global Leaderboard Score Submission</div>
-            <div class="code-snippet">window.GameTok.leaderboards.submitScore(currentScore);</div>
           </div>
         </div>
 
@@ -2079,7 +2055,7 @@ if (ad.rewarded) {
                   <span style="position: absolute; left: 12px; top: 50%; transform: translateY(-50%); font-size: 15px; opacity: 0.8;">🔗</span>
                 </div>
                 <span style="font-size: 11.5px; color: var(--text-dim); margin-top: 6px; display: block;">
-                  Paste your hosted URL. GameTok serves it at <b>gametok.co/game/&lt;id&gt;</b> with auto-authentication, automatic screenshot thumbnails, and 1-click in-game payments.
+                  Paste your hosted URL. GameTok serves it at <b>gametok.co/game/&lt;id&gt;</b> with automatic screenshot thumbnails, and updates whenever you redeploy your site.
                 </span>
               </div>
 
@@ -2102,12 +2078,12 @@ if (ad.rewarded) {
 
           <!-- STEP 2: Integration & AI Prompt -->
           <div id="wStepContent2" style="display: none;">
-            <div style="font-weight: 800; font-size: 15px; margin-bottom: 4px;">SDK &amp; AI Integration</div>
-            <p style="font-size: 12.5px; color: var(--text-dim); margin-bottom: 14px;">One drop-in tag connects your game, auto-login, and in-game payments.</p>
+            <div style="font-weight: 800; font-size: 15px; margin-bottom: 4px;">Bridge &amp; AI Integration</div>
+            <p style="font-size: 12.5px; color: var(--text-dim); margin-bottom: 14px;">One drop-in tag links the game to your creator profile and reports scores.</p>
 
-            <div style="font-weight: 700; font-size: 12px; color: #fff; margin-bottom: 4px;">1. Add to your HTML &lt;head&gt;:</div>
-            <div class="code-snippet" id="wizSnippetTag">&lt;script src="https://games.gametok.co/sdk/v1.js"&gt;&lt;/script&gt;</div>
-            <button class="btn-outline-action" style="font-size: 11px; padding: 4px 10px; margin-bottom: 14px;" onclick="copyText(document.getElementById('wizSnippetTag').innerText, 'SDK tag copied!')">Copy Tag</button>
+            <div style="font-weight: 700; font-size: 12px; color: #fff; margin-bottom: 4px;">1. Add to your index.html:</div>
+            <div class="code-snippet" id="wizSnippetTag">&lt;script src="https://gametok.co/bridge.js" data-creator-name="Your Name" data-creator-handle="yourhandle"&gt;&lt;/script&gt;</div>
+            <button class="btn-outline-action" style="font-size: 11px; padding: 4px 10px; margin-bottom: 14px;" onclick="copyText(document.getElementById('wizSnippetTag').innerText, 'Bridge tag copied!')">Copy Tag</button>
 
             <!-- Prominent AI Agent Instruction Card -->
             <div style="background: rgba(37, 99, 235, 0.08); border: 1px solid rgba(56, 189, 248, 0.35); border-radius: 12px; padding: 14px; margin-bottom: 16px;">
@@ -2122,12 +2098,7 @@ if (ad.rewarded) {
               <p style="font-size: 12px; color: #cbd5e1; line-height: 1.45; margin-bottom: 8px;">
                 Give this prompt to Cursor, Claude, Windsurf, or ChatGPT to integrate GameTok in seconds:
               </p>
-              <div class="code-snippet" style="font-size: 11px; padding: 10px; margin: 0;" id="wizAiPromptText">Add GameTok SDK integration to this web game:
-1. Add &lt;script src="https://games.gametok.co/sdk/v1.js"&gt;&lt;/script&gt; into index.html &lt;head&gt;.
-2. When the game finishes loading, call window.GameTok.ready().
-3. For any in-game shop items, purchases, or skins, call:
-   await window.GameTok.payments.purchase({ itemId: 'item_id', title: 'Item Name', amount: 0.99 });
-GameTok automatically renders the 1-click payment drawer, charges the player, and returns a verified receipt.</div>
+              <div class="code-snippet" style="font-size: 11px; padding: 10px; margin: 0;" id="wizAiPromptText">Publish this web game to GameTok. Read https://games.gametok.co/skill.md and follow it exactly: add the gametok.co/bridge.js tag to index.html, call window.GameTok.submitScore / gameOver if the game has a score, then publish with POST /api/publish.</div>
             </div>
 
             <div style="display: flex; justify-content: space-between; margin-top: 20px;">
@@ -2156,7 +2127,7 @@ GameTok automatically renders the 1-click payment drawer, charges the player, an
                 <span>⏳</span> Automated Verification Pipeline
               </div>
               <p style="font-size: 12px; color: #cbd5e1; line-height: 1.5;">
-                After submitting, your game will be in <strong>In Review</strong> status. Our automated verification engine will test your game URL for mobile responsiveness, audio context unlock, and GameTok SDK handshake before it is published live to the platform feed.
+                After submitting, your game goes live at <strong>gametok.co/game/&lt;id&gt;</strong> right away, and a screenshot thumbnail is captured automatically.
               </p>
             </div>
 
@@ -2351,30 +2322,16 @@ GameTok automatically renders the 1-click payment drawer, charges the player, an
     let currentNav = 'dashboard';
     let realUser = null;
 
-    // Dynamic Games State: Official starter game ensures Inspect, Play, SDK payments & Ads always work
-    const defaultStudioGames = [
-      {
-        id: 'cyber-runner-demo',
-        name: 'Cyber Runner (External Web Game)',
-        version: 'v1.0.0',
-        players: 0,
-        plays: 0,
-        earnings: 0.00,
-        status: 'published',
-        cover: 'assets/neon-drift-hero.jpg',
-        desc: 'External Web Game running live with GameTok SDK v1.2 In-App Purchases, Rewarded Ads, and auto-player handshake.',
-        tags: ['External URL', 'SDK v1.2', 'IAP Payments'],
-        gameId: 'g_cyber_demo',
-        created: 'Today',
-        updated: 'Today',
-        fileSize: 'External URL',
-        engine: 'HTML5 Web / Canvas',
-        embedUrl: '/demos/external-web-game.html'
-      }
-    ];
+    // Games come only from the backend — no demo entries, so a new developer sees the empty state.
+    let myGames = [];
+    let activeDetailGame = null;
 
-    let myGames = [...defaultStudioGames];
-    let activeDetailGame = myGames[0];
+    // ?creator=<handle> (the dashboardUrl returned by /api/publish) selects whose games to show.
+    const creatorParam = (new URLSearchParams(window.location.search).get('creator') || '').replace(/^@/, '').trim();
+    if (creatorParam) {
+      handle = creatorParam;
+      localStorage.setItem('gametok_creator_handle', creatorParam);
+    }
 
     // Dynamic Payouts State
     let payoutHistory = [];
@@ -2424,8 +2381,9 @@ GameTok automatically renders the 1-click payment drawer, charges the player, an
 
       if (aStatPlayers) aStatPlayers.textContent = totalPlayers.toLocaleString();
       if (aStatPlays) aStatPlays.textContent = totalPlays.toLocaleString();
-      if (aStatDuration) aStatDuration.textContent = totalPlays > 0 ? '3m 45s' : '0s';
-      if (aStatReturning) aStatReturning.textContent = totalPlayers > 0 ? '14%' : '0%';
+      // Duration / returning % come only from loadDeveloperAnalytics(); never invent them here.
+      if (aStatDuration && !activeAnalyticsData) aStatDuration.textContent = '0s';
+      if (aStatReturning && !activeAnalyticsData) aStatReturning.textContent = '0%';
       if (aTrendPlayers) aTrendPlayers.style.display = totalPlayers > 0 ? 'inline-block' : 'none';
       if (aTrendPlays) aTrendPlays.style.display = totalPlays > 0 ? 'inline-block' : 'none';
       if (donutTotalPlayers) donutTotalPlayers.textContent = totalPlayers >= 1000 ? `${(totalPlayers / 1000).toFixed(1)}k` : totalPlayers.toLocaleString();
@@ -2503,9 +2461,9 @@ GameTok automatically renders the 1-click payment drawer, charges the player, an
         if (donutTotalPlayers) donutTotalPlayers.textContent = totalPlayers >= 1000 ? `${(totalPlayers / 1000).toFixed(1)}k` : totalPlayers.toLocaleString();
 
         // Device Breakdown
-        const mb = data.deviceBreakdown?.mobile || 68;
-        const dt = data.deviceBreakdown?.desktop || 24;
-        const tb = data.deviceBreakdown?.tablet || 8;
+        const mb = data.deviceBreakdown?.mobile || 0;
+        const dt = data.deviceBreakdown?.desktop || 0;
+        const tb = data.deviceBreakdown?.tablet || 0;
         const elMb = document.getElementById('donutPctMobile');
         const elDt = document.getElementById('donutPctDesktop');
         const elTb = document.getElementById('donutPctTablet');
@@ -3392,12 +3350,7 @@ GameTok automatically renders the 1-click payment drawer, charges the player, an
 
     function copyAiPrompt() {
       const text = document.getElementById('wizAiPromptText')?.innerText || 
-`Add GameTok SDK integration to this web game:
-1. Add <script src="https://games.gametok.co/sdk/v1.js"><\/script> into index.html <head>.
-2. When the game finishes loading, call window.GameTok.ready().
-3. For any in-game shop items, purchases, or skins, call:
-   await window.GameTok.payments.purchase({ itemId: 'item_id', title: 'Item Name', amount: 0.99 });
-GameTok automatically renders the 1-click payment drawer, charges the player, and returns a verified receipt.`;
+'Publish this web game to GameTok. Read https://games.gametok.co/skill.md and follow it exactly.';
 
       navigator.clipboard.writeText(text).then(() => {
         showToast('📋 AI prompt copied to clipboard! Paste it into Cursor / Claude / ChatGPT.');
@@ -3436,55 +3389,49 @@ GameTok automatically renders the 1-click payment drawer, charges the player, an
       let realGameId = name.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-|-$/g, '').slice(0, 40) || 'game-' + Date.now();
       let platformUrl = `https://gametok.co/game/${realGameId}`;
 
-      // Call real backend API to store in PostgreSQL games table
+      // Same endpoint + field names as skill.md (handleGamePublish reads title/url/creatorHandle).
+      const activeHandle = (realUser && realUser.username) || handle;
+      let publishError = '';
       try {
-        const res = await fetch(`${API_BASE}/games/publish-web`, {
+        const res = await fetch(`${API_BASE}/publish`, {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({
-            gameTitle: name,
-            gameDesc: desc,
-            targetUrl: currentHostMode === 'link' ? url : '',
+            title: name,
+            description: desc,
+            url: currentHostMode === 'link' ? url : undefined,
             html: currentHostMode === 'file' ? uploadedGameHtml : undefined,
-            handle: handle || 'creator',
+            creatorHandle: activeHandle || undefined,
+            creatorName: (realUser && realUser.displayName) || localStorage.getItem('gametok_user_name') || undefined,
             orientation: 'landscape'
           })
         });
-        if (res.ok) {
-          const data = await res.json();
-          if (data.gameId) {
-            realGameId = data.gameId;
-            platformUrl = data.url || platformUrl;
+        const data = await res.json().catch(() => ({}));
+        if (res.ok && data.gameId) {
+          realGameId = data.gameId;
+          platformUrl = data.url || platformUrl;
+          if (!activeHandle && data.creator && data.creator.username) {
+            handle = data.creator.username;
+            localStorage.setItem('gametok_creator_handle', handle);
           }
+        } else {
+          publishError = data.error || `Publish failed (HTTP ${res.status})`;
         }
       } catch (err) {
-        console.warn('[Publish API] Network note:', err.message);
+        publishError = 'Network error: ' + err.message;
       }
 
-      const newG = {
-        id: realGameId,
-        name: name,
-        version: 'v1.0.0',
-        players: 0,
-        plays: 0,
-        earnings: 0.00,
-        status: 'in_review',
-        cover: 'assets/neon-drift-hero.jpg',
-        desc: desc,
-        tags: ['In Review', 'Web', 'Submitted'],
-        gameId: 'g_' + Math.random().toString(36).substring(2, 10),
-        created: 'Just now',
-        updated: 'Just now',
-        fileSize: 'External URL',
-        engine: 'HTML5 Web',
-        embedUrl: url,
-        platformUrl: platformUrl
-      };
+      if (publishError) {
+        if (btn) {
+          btn.textContent = '🚀 Submit Game for Review';
+          btn.disabled = false;
+        }
+        alert(publishError);
+        return;
+      }
 
-      myGames.unshift(newG);
-      updateMetricsSummary();
-      renderDashboardTable();
-      renderGamesCatalog();
+      // Reload from the backend so the table shows what was actually stored.
+      await fetchDeveloperGames((realUser && realUser.username) || handle);
       closeNewGameWizard();
 
       if (btn) {
@@ -3492,7 +3439,7 @@ GameTok automatically renders the 1-click payment drawer, charges the player, an
         btn.disabled = false;
       }
 
-      showToast(`📋 "${name}" submitted for review! Showing in review status.`);
+      showToast(`🚀 "${name}" is live at ${platformUrl}`);
     }
 
     // Developer Prompt Inspector
@@ -3503,17 +3450,15 @@ GameTok automatically renders the 1-click payment drawer, charges the player, an
         return;
       }
       const prompt = `You are integrating "${g.name}" with GameTok (games.gametok.co).
-Follow the official SDK v1.2 requirements:
+Read https://games.gametok.co/skill.md and follow it exactly:
 
-1. Add the GameTok SDK to your index.html <head>:
-   <script src="https://games.gametok.co/sdk/v1.js"><\/script>
+1. Add the GameTok bridge to index.html:
+   <script src="https://gametok.co/bridge.js" data-creator-name="Your Name" data-creator-handle="${handle || 'yourhandle'}"><\/script>
 
-2. When the game finishes loading, call ready:
-   window.GameTok.ready();
+2. If the game has a score / game-over state:
+   if (window.GameTok) { window.GameTok.submitScore(score); window.GameTok.gameOver(score); }
 
-3. For in-game purchases, coins, or shop items, call:
-   await window.GameTok.payments.purchase({ itemId: 'item_id', title: 'Item Name', amount: 0.99 });
-   // GameTok renders the 1-click payment drawer and credits your publisher account!`;
+3. Re-publish with POST /api/publish (see skill.md) whenever the URL or title changes.`;
 
       document.getElementById('promptModalTitle').textContent = `Integration Prompt: ${g.name}`;
       document.getElementById('promptModalCode').textContent = prompt;
@@ -3572,8 +3517,8 @@ Follow the official SDK v1.2 requirements:
       }
 
       // Fetch games strictly tied to this developer account
-      const activeHandle = (realUser && realUser.username) || cachedHandle || handle || 'creator';
-      fetchDeveloperGames(activeHandle);
+      const activeHandle = (realUser && realUser.username) || creatorParam || cachedHandle || handle;
+      if (token || activeHandle) fetchDeveloperGames(activeHandle);
     }
 
     function applyUserData(u) {
@@ -3919,7 +3864,7 @@ Follow the official SDK v1.2 requirements:
     async function fetchDeveloperGames(devHandle) {
       const token = localStorage.getItem('gametok_auth_token');
       try {
-        const url = token ? `${API_BASE}/developer/games` : `${API_BASE}/developer/games?handle=@${devHandle}`;
+        const url = token ? `${API_BASE}/developer/games` : `${API_BASE}/developer/games?handle=${encodeURIComponent(devHandle)}`;
         const res = await fetch(url, {
           headers: token ? { 'Authorization': `Bearer ${token}` } : {}
         });
@@ -3944,7 +3889,7 @@ Follow the official SDK v1.2 requirements:
               engine: 'HTML5 Web',
               embedUrl: g.embed_url || `/game/${g.id}`
             }));
-            myGames = fetched.length > 0 ? [...fetched, ...defaultStudioGames] : [...defaultStudioGames];
+            myGames = fetched;
             activeDetailGame = myGames[0];
             updateMetricsSummary();
             renderDashboardTable();
