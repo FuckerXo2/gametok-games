@@ -1357,7 +1357,7 @@
         <div class="filter-pills-row">
           <button class="filter-pill active" onclick="filterGamesCatalogue('all', this)">All (<span id="countAll">4</span>)</button>
           <button class="filter-pill" onclick="filterGamesCatalogue('published', this)">Published (<span id="countPub">3</span>)</button>
-          <button class="filter-pill" onclick="filterGamesCatalogue('in_review', this)">In Review (<span id="countRev">1</span>)</button>
+          <button class="filter-pill" onclick="filterGamesCatalogue('draft', this)">Draft (<span id="countRev">1</span>)</button>
           <button class="filter-pill" onclick="filterGamesCatalogue('draft', this)">Drafts (<span id="countDraft">0</span>)</button>
           <button class="filter-pill" onclick="filterGamesCatalogue('suspended', this)">Suspended (0)</button>
         </div>
@@ -1407,12 +1407,11 @@
           </div>
         </div>
 
-        <!-- Tabs: Overview, Versions, Analytics, Verification, Integration -->
+        <!-- Tabs: Overview, Analytics, Checks, Integration -->
         <div class="detail-nav-tabs">
           <div class="detail-nav-tab active" onclick="switchDetailTab('overview', this)">Overview</div>
-          <div class="detail-nav-tab" onclick="switchDetailTab('versions', this)">Versions</div>
           <div class="detail-nav-tab" onclick="switchDetailTab('analytics', this)">Analytics</div>
-          <div class="detail-nav-tab" onclick="switchDetailTab('verification', this)">Verification</div>
+          <div class="detail-nav-tab" onclick="switchDetailTab('verification', this)">Checks</div>
           <div class="detail-nav-tab" onclick="switchDetailTab('integration', this)">Integration</div>
         </div>
 
@@ -1427,34 +1426,8 @@
               </div>
             </div>
 
-            <!-- 3 Thumbnails Selector Row -->
-            <div class="game-thumbnails-row">
-              <div class="game-thumb-preview-item active" onclick="setDetailStageImage(this, 'assets/neon-drift-hero.jpg')">
-                <img src="assets/neon-drift-hero.jpg" alt="Preview 1" onerror="handleImgError(this, 'neon-drift-hero.jpg')">
-              </div>
-              <div class="game-thumb-preview-item" onclick="setDetailStageImage(this, 'assets/neon-drift-shot-2.jpg')">
-                <img src="assets/neon-drift-shot-2.jpg" alt="Preview 2" onerror="handleImgError(this, 'neon-drift-shot-2.jpg')">
-              </div>
-              <div class="game-thumb-preview-item" onclick="setDetailStageImage(this, 'assets/neon-drift-shot-3.jpg')">
-                <img src="assets/neon-drift-shot-3.jpg" alt="Preview 3" onerror="handleImgError(this, 'neon-drift-shot-3.jpg')">
-              </div>
-            </div>
-
-            <!-- Verification Status Card -->
-            <div class="card-panel">
-              <div style="display: flex; align-items: center; gap: 10px; margin-bottom: 14px;">
-                <div class="chk-icon" style="width: 24px; height: 24px; font-size: 14px;">✓</div>
-                <div>
-                  <div style="font-weight: 800; font-size: 14.5px;">Verification Status</div>
-                  <div style="font-size: 12px; color: var(--green);">Your game passed all automated checks.</div>
-                </div>
-              </div>
-
-              <div class="checklist-row"><div class="chk-icon">✓</div><span>Bridge.js tag detected</span></div>
-              <div class="checklist-row"><div class="chk-icon">✓</div><span>Responsive viewport</span></div>
-              <div class="checklist-row"><div class="chk-icon">✓</div><span>Touch controls working</span></div>
-              <div class="checklist-row"><div class="chk-icon">✓</div><span>Mobile compatibility</span></div>
-            </div>
+            <!-- Automatic checks (real results from publish / re-check) -->
+            <div class="card-panel" id="detailChecksCard"></div>
           </div>
 
           <!-- Right Column -->
@@ -1465,68 +1438,18 @@
               <div style="display: flex; flex-direction: column; gap: 13px; font-size: 13px;">
                 <div style="display: flex; justify-content: space-between; align-items: center;">
                   <span style="color: var(--text-dim);">Game ID</span>
-                  <span style="font-family: var(--font-mono); color: #cbd5e1; display: inline-flex; align-items: center; gap: 6px; cursor: pointer;" onclick="copyText('g_713a9e2c', 'Game ID copied!')" id="detailGameId">
-                    g_713a9e2c
+                  <span style="font-family: var(--font-mono); color: #cbd5e1; display: inline-flex; align-items: center; gap: 6px; cursor: pointer;" onclick="activeDetailGame && copyText(activeDetailGame.id, 'Game ID copied!')" id="detailGameId">
                     <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor"><rect x="9" y="9" width="13" height="13" rx="2"></rect><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"></path></svg>
                   </span>
                 </div>
-                <div style="display: flex; justify-content: space-between;"><span style="color: var(--text-dim);">Created</span><span id="detailCreatedDate">Sep 12, 2026</span></div>
-                <div style="display: flex; justify-content: space-between;"><span style="color: var(--text-dim);">Last Updated</span><span id="detailUpdatedDate">Oct 8, 2026</span></div>
+                <div style="display: flex; justify-content: space-between;"><span style="color: var(--text-dim);">Created</span><span id="detailCreatedDate">–</span></div>
+                <div style="display: flex; justify-content: space-between;"><span style="color: var(--text-dim);">Last Updated</span><span id="detailUpdatedDate">–</span></div>
                 <div style="display: flex; justify-content: space-between;"><span style="color: var(--text-dim);">Platform</span><span id="detailOrientationText">Web Game</span></div>
                 <div style="display: flex; justify-content: space-between;"><span style="color: var(--text-dim);">Game Link</span><span id="detailFileSize" style="color: var(--cyan); max-width: 170px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;">Hosted Link</span></div>
                 <div style="display: flex; justify-content: space-between;"><span style="color: var(--text-dim);">Source</span><span id="detailEngine">External URL</span></div>
               </div>
             </div>
 
-            <!-- Version History Card -->
-            <div class="card-panel">
-              <div style="font-weight: 800; font-size: 14.5px; margin-bottom: 16px;">Version History</div>
-              <div style="display: flex; flex-direction: column; gap: 14px; font-size: 13px;">
-                <div style="display: flex; justify-content: space-between; align-items: center;">
-                  <div>
-                    <div style="font-weight: 700;">v1.2.0</div>
-                    <div style="font-size: 11px; color: var(--text-dim);">Oct 8, 2026</div>
-                  </div>
-                  <span class="badge-status badge-published">Published</span>
-                </div>
-                <div style="display: flex; justify-content: space-between; align-items: center;">
-                  <div>
-                    <div style="font-weight: 700;">v1.1.0</div>
-                    <div style="font-size: 11px; color: var(--text-dim);">Sep 28, 2026</div>
-                  </div>
-                  <span class="badge-status badge-published">Published</span>
-                </div>
-                <div style="display: flex; justify-content: space-between; align-items: center;">
-                  <div>
-                    <div style="font-weight: 700;">v1.0.0</div>
-                    <div style="font-size: 11px; color: var(--text-dim);">Sep 12, 2026</div>
-                  </div>
-                  <span class="badge-status badge-published">Published</span>
-                </div>
-                <div style="border-top: 1px solid var(--border); padding-top: 10px; margin-top: 4px;">
-                  <a href="javascript:void(0)" onclick="switchDetailTab('versions', document.querySelectorAll('.detail-nav-tab')[1])" style="color: var(--cyan); text-decoration: none; font-size: 12px; font-weight: 600;">
-                    View All Versions →
-                  </a>
-                </div>
-              </div>
-            </div>
-          </div>
-        </div>
-
-        <!-- DETAIL TAB 2: VERSIONS -->
-        <div id="detailTabVersions" style="display: none;">
-          <div class="card-panel">
-            <div class="card-panel-header">Release &amp; Version History</div>
-            <table class="data-table">
-              <thead>
-                <tr><th>Version</th><th>Release Date</th><th>Changelog</th><th>Status</th><th>Action</th></tr>
-              </thead>
-              <tbody>
-                <tr><td>v1.2.0 (Active)</td><td>Oct 8, 2026</td><td>Physics optimization, touch drift controls, new shaders</td><td><span class="badge-status badge-published">Published</span></td><td><button class="btn-table-action" onclick="showToast('v1.2.0 is currently live')">Active</button></td></tr>
-                <tr><td>v1.1.0</td><td>Sep 28, 2026</td><td>Added neon highway level 2, audio bridge hooks</td><td><span class="badge-status badge-published">Published</span></td><td><button class="btn-table-action" onclick="showToast('Rolled back release artifact view')">Inspect</button></td></tr>
-                <tr><td>v1.0.0</td><td>Sep 12, 2026</td><td>Initial game package submission &amp; verification</td><td><span class="badge-status badge-published">Published</span></td><td><button class="btn-table-action" onclick="showToast('Initial commit build view')">Inspect</button></td></tr>
-              </tbody>
-            </table>
           </div>
         </div>
 
@@ -1542,13 +1465,10 @@
         <!-- DETAIL TAB 4: VERIFICATION -->
         <div id="detailTabVerification" style="display: none;">
           <div class="card-panel">
-            <div class="card-panel-header">Automated Compliance Report</div>
-            <div style="display: flex; flex-direction: column; gap: 14px; margin-bottom: 20px;">
-              <div class="checklist-row"><div class="chk-icon">✓</div><div><strong>Bridge handshake:</strong> bridge.js verified at entry point. Ready for score and session reporting.</div></div>
-              <div class="checklist-row"><div class="chk-icon">✓</div><div><strong>Responsive layout:</strong> Dynamic 100vw x 100vh canvas sizing with touch-action: none.</div></div>
-              <div class="checklist-row"><div class="chk-icon">✓</div><div><strong>Audio unlock:</strong> User-gesture WebAudio context unlock detected.</div></div>
-            </div>
-            <button class="btn-blue-action" onclick="showToast('Re-running real-time probe: 100% Passed!')">⚡ Re-run Verification Probe</button>
+            <div class="card-panel-header">Automatic checks</div>
+            <p style="font-size: 12.5px; color: var(--text-dim); margin-bottom: 14px;">Run on every publish. Required checks must pass for the game to be live; recommendations never block.</p>
+            <div id="detailChecksFull" style="display: flex; flex-direction: column; gap: 10px; margin-bottom: 18px;"></div>
+            <button class="btn-blue-action" id="btnRecheckGame" onclick="recheckGame()">Re-run checks</button>
           </div>
         </div>
 
@@ -1871,6 +1791,25 @@
     </div>
   </div>
 
+  <!-- Onboarding step 2: accept the Developer Agreement (version from GET /api/developer/me). -->
+  <div class="modal-overlay" id="agreementPrompt" role="dialog" aria-modal="true" aria-labelledby="agreementPromptTitle">
+    <div class="modal-box" style="max-width: 500px;">
+      <div style="font-size: 12px; font-weight: 700; letter-spacing: 0.08em; color: var(--cyan); margin-bottom: 8px;">ONE LAST STEP</div>
+      <div id="agreementPromptTitle" style="font-size: 20px; font-weight: 800; margin-bottom: 6px;">GameTok Developer Agreement</div>
+      <p style="font-size: 13px; color: var(--text-dim); margin-bottom: 12px;" id="agreementPromptLead">Please read and accept it before publishing. The short version: you keep your games, they must be suitable for all ages, you need the rights to everything in them, and GameTok can remove games that break the rules.</p>
+      <a href="/agreement.html" target="_blank" rel="noopener" style="display: inline-block; font-size: 13px; color: var(--cyan); margin-bottom: 14px;">Read the full Developer Agreement →</a>
+      <label style="display: flex; gap: 10px; align-items: flex-start; font-size: 13px; cursor: pointer;">
+        <input type="checkbox" id="agreementPromptCheck" style="margin-top: 3px; accent-color: var(--blue);">
+        <span>I have read and agree to the GameTok Developer Agreement (version <span id="agreementPromptVersion">–</span>).</span>
+      </label>
+      <div id="agreementPromptError" style="font-size: 12px; color: #f87171; margin-top: 8px;" hidden></div>
+      <button class="btn-blue-action" id="agreementPromptBtn" style="width: 100%; margin-top: 16px; justify-content: center;" onclick="acceptAgreement()">Accept and continue</button>
+      <div style="text-align: center; margin-top: 14px; font-size: 12px;">
+        <a href="#" onclick="event.preventDefault(); logout();" style="color: var(--text-muted);">Not now — sign out</a>
+      </div>
+    </div>
+  </div>
+
   <div class="modal-overlay" id="newGameWizardModal">
     <div class="modal-box" style="max-width: 690px;">
       <button class="modal-close" onclick="closeNewGameWizard()">✕</button>
@@ -2003,7 +1942,7 @@
             <div style="background: var(--bg-card); border: 1px solid var(--border); border-radius: 12px; padding: 16px; margin-bottom: 16px;">
               <div style="display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 6px;">
                 <div style="font-weight: 800; font-size: 16px;" id="wizSummaryName">—</div>
-                <span class="badge-status badge-review">In Review</span>
+                <span class="badge-status badge-review">Draft</span>
               </div>
               <p style="font-size: 12.5px; color: var(--text-muted); margin-bottom: 10px;" id="wizSummaryDesc">—</p>
               <div style="font-size: 11.5px; color: var(--cyan); word-break: break-all;" id="wizSummaryUrl">—</div>
@@ -2452,9 +2391,9 @@
       }
 
       tbody.innerHTML = myGames.map(g => {
-        const isRev = g.status === 'in_review';
+        const isRev = g.status === 'draft';
         const badgeClass = isRev ? 'badge-review' : 'badge-published';
-        const badgeText = isRev ? 'In Review' : 'Published';
+        const badgeText = isRev ? 'Draft' : 'Published';
 
         return `
           <tr>
@@ -2490,7 +2429,7 @@
 
       document.getElementById('countAll').textContent = myGames.length;
       document.getElementById('countPub').textContent = myGames.filter(g => g.status === 'published').length;
-      document.getElementById('countRev').textContent = myGames.filter(g => g.status === 'in_review').length;
+      document.getElementById('countRev').textContent = myGames.filter(g => g.status === 'draft').length;
       document.getElementById('countDraft').textContent = myGames.filter(g => g.status === 'draft').length;
 
       if (!myGames || myGames.length === 0) {
@@ -2519,9 +2458,9 @@
       }
 
       grid.innerHTML = list.map(g => {
-        const isRev = g.status === 'in_review';
+        const isRev = g.status === 'draft';
         const badgeClass = isRev ? 'badge-review' : 'badge-published';
-        const badgeText = isRev ? 'In Review' : 'Published';
+        const badgeText = isRev ? 'Draft' : 'Published';
         const pl = g.players || 0;
         const plays = g.plays || 0;
 
@@ -2570,7 +2509,7 @@
       let status = 'all';
       if (activeFilterBtn) {
         if (activeFilterBtn.innerText.includes('Published')) status = 'published';
-        else if (activeFilterBtn.innerText.includes('In Review')) status = 'in_review';
+        else if (activeFilterBtn.innerText.includes('Draft')) status = 'draft';
         else if (activeFilterBtn.innerText.includes('Drafts')) status = 'draft';
       }
       renderGamesCatalog(status, val);
@@ -2595,6 +2534,50 @@
       }
     }
 
+    // Automatic checks: results stored on the game by publish / re-check (verification_notes JSON).
+    function renderGameChecks(g) {
+      const checks = Array.isArray(g.checks) ? g.checks : [];
+      const icon = (c) => c.ok === true ? '✓' : c.ok === false ? (c.blocking ? '✕' : '!') : '?';
+      const color = (c) => c.ok === true ? 'var(--green)' : c.ok === false ? (c.blocking ? '#f87171' : '#fbbf24') : 'var(--text-dim)';
+      const rows = checks.map(c => `
+        <div class="checklist-row" style="align-items: flex-start;">
+          <div class="chk-icon" style="background: transparent; color: ${color(c)}; border: 1px solid ${color(c)};">${icon(c)}</div>
+          <div><strong>${escapeHtml(c.label)}</strong>${c.blocking ? '' : ' <span style="color: var(--text-dim); font-size: 11px;">(recommended)</span>'}
+            ${c.ok === true ? '' : `<div style="font-size: 12px; color: var(--text-dim);">${escapeHtml(c.detail || '')}</div>`}</div>
+        </div>`).join('');
+      const failed = checks.some(c => c.blocking && c.ok === false);
+      const unverified = checks.some(c => c.ok === null);
+      const summary = !checks.length ? 'Not checked yet — published before automatic checks existed.'
+        : failed ? 'A required check failed.' : unverified ? 'Could not reach the game to verify it.' : 'All required checks passed.';
+      const card = document.getElementById('detailChecksCard');
+      if (card) card.innerHTML = `
+        <div style="font-weight: 800; font-size: 14.5px; margin-bottom: 4px;">Automatic checks</div>
+        <div style="font-size: 12px; color: ${failed ? '#f87171' : 'var(--text-dim)'}; margin-bottom: 12px;">${summary}</div>
+        ${rows || '<button class="btn-outline-action" onclick="recheckGame()">Run checks</button>'}`;
+      const full = document.getElementById('detailChecksFull');
+      if (full) full.innerHTML = rows || `<div style="font-size: 13px; color: var(--text-dim);">${summary}</div>`;
+    }
+
+    async function recheckGame() {
+      const g = activeDetailGame;
+      if (!g) return;
+      const btn = document.getElementById('btnRecheckGame');
+      if (btn) btn.disabled = true;
+      try {
+        const res = await fetch(`${API_BASE}/developer/games/${encodeURIComponent(g.id)}/verify`, { method: 'POST', headers: authHeaders() });
+        const data = await res.json();
+        if (!res.ok) throw new Error(data.error || `HTTP ${res.status}`);
+        g.checks = data.checks;
+        g.verificationStatus = data.status;
+        renderGameChecks(g);
+        showToast(data.passed ? 'Checks passed' : 'A required check failed — see the list');
+      } catch (err) {
+        showToast('Could not run checks: ' + err.message);
+      } finally {
+        if (btn) btn.disabled = false;
+      }
+    }
+
     // Inspect Game (Screen 4)
     function inspectGame(gameId) {
       const g = myGames.find(item => item.id === gameId);
@@ -2612,7 +2595,7 @@
       document.getElementById('detailDesc').textContent = g.desc;
       document.getElementById('detailCoverImg').src = g.cover;
       document.getElementById('detailStageImg').src = g.cover;
-      document.getElementById('detailGameId').innerHTML = `${g.gameId} <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor"><rect x="9" y="9" width="13" height="13" rx="2"></rect><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"></path></svg>`;
+      document.getElementById('detailGameId').innerHTML = `${escapeHtml(g.id)} <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor"><rect x="9" y="9" width="13" height="13" rx="2"></rect><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"></path></svg>`;
       document.getElementById('detailCreatedDate').textContent = g.created;
       document.getElementById('detailUpdatedDate').textContent = g.updated;
       document.getElementById('detailOrientationText').textContent = 'Web Game';
@@ -2626,13 +2609,15 @@
       }
 
       const badge = document.getElementById('detailStatusBadge');
-      if (g.status === 'in_review') {
+      if (g.status === 'draft') {
         badge.className = 'badge-status badge-review';
-        badge.textContent = 'In Review';
+        badge.textContent = 'Draft';
       } else {
         badge.className = 'badge-status badge-published';
         badge.textContent = 'Published';
       }
+
+      renderGameChecks(g);
 
       // Reset to overview tab
       switchDetailTab('overview', document.querySelectorAll('.detail-nav-tab')[0]);
@@ -2642,17 +2627,11 @@
       document.getElementById('view-game-detail').classList.add('active');
     }
 
-    function setDetailStageImage(thumbEl, imgSrc) {
-      document.querySelectorAll('.game-thumb-preview-item').forEach(el => el.classList.remove('active'));
-      thumbEl.classList.add('active');
-      document.getElementById('detailStageImg').src = imgSrc;
-    }
-
     function switchDetailTab(tabKey, tabEl) {
       document.querySelectorAll('#view-game-detail .detail-nav-tab').forEach(t => t.classList.remove('active'));
       if (tabEl) tabEl.classList.add('active');
 
-      const tabs = ['Overview', 'Versions', 'Analytics', 'Verification', 'Integration'];
+      const tabs = ['Overview', 'Analytics', 'Verification', 'Integration'];
       tabs.forEach(t => {
         const el = document.getElementById('detailTab' + t);
         if (el) el.style.display = t.toLowerCase() === tabKey.toLowerCase() ? (t === 'Overview' ? 'grid' : 'block') : 'none';
@@ -2765,8 +2744,8 @@
       activeSessionStartTime = Date.now();
 
       document.getElementById('playerGameTitle').textContent = g.name;
-      document.getElementById('playerGameStatus').textContent = g.status === 'in_review' ? 'In Review' : 'Published';
-      document.getElementById('playerGameStatus').className = g.status === 'in_review' ? 'badge-status badge-review' : 'badge-status badge-published';
+      document.getElementById('playerGameStatus').textContent = g.status === 'draft' ? 'Draft' : 'Published';
+      document.getElementById('playerGameStatus').className = g.status === 'draft' ? 'badge-status badge-review' : 'badge-status badge-published';
       document.getElementById('playerExternalLink').href = g.embedUrl;
       document.getElementById('gamePlayerIframe').src = g.embedUrl;
       document.getElementById('gamePlayerModal').classList.add('active');
@@ -3276,6 +3255,7 @@ Read https://games.gametok.co/skill.md and follow it exactly:
                 onboarding.classList.toggle('active', !realUser.username);
                 if (!realUser.username) setTimeout(() => document.getElementById('usernamePromptInput')?.focus(), 50);
               }
+              if (realUser.username) checkAgreement();
               // Share this session with gametok.co if it has none (no-op if it already has one).
               if (window.GameTokSSO) window.GameTokSSO.set(token, realUser);
               if (realUser.displayName) localStorage.setItem('gametok_user_name', realUser.displayName);
@@ -3647,7 +3627,7 @@ Read https://games.gametok.co/skill.md and follow it exactly:
               players: g.uniquePlayers || g.players || 0,
               plays: g.plays || 0,
               earnings: parseFloat(g.earnings || 0),
-              status: g.status === 'in_review' ? 'in_review' : (g.status === 'published' ? 'published' : 'in_review'),
+              status: g.status === 'draft' ? 'draft' : 'published',
               cover: g.thumbnail || g.cover || 'assets/neon-drift-hero.jpg',
               desc: g.description || '',
               tags: [g.category || 'Arcade', 'Web'],
@@ -3656,7 +3636,9 @@ Read https://games.gametok.co/skill.md and follow it exactly:
               updated: g.updated_at ? new Date(g.updated_at).toLocaleDateString() : 'Recent',
               fileSize: g.embed_url ? 'External URL' : 'HTML5 Web',
               engine: 'HTML5 Web',
-              embedUrl: g.embed_url || `/game/${g.id}`
+              embedUrl: g.embed_url || g.embedUrl || `/game/${g.id}`,
+              verificationStatus: g.verificationStatus,
+              checks: (() => { try { const v = JSON.parse(g.verificationNotes || 'null'); return Array.isArray(v) ? v : []; } catch { return []; } })()
             }));
             myGames = fetched;
             activeDetailGame = myGames[0];
@@ -3694,9 +3676,57 @@ Read https://games.gametok.co/skill.md and follow it exactly:
         localStorage.setItem('gametok_creator_handle', realUser.username);
         applyUserData(realUser);
         document.getElementById('usernamePrompt').classList.remove('active');
+        checkAgreement();
         showToast(`✓ You're @${realUser.username} on GameTok`);
       } catch (err) {
         errorEl.textContent = err.message === 'Username taken' ? 'That username is taken — try another.' : 'Could not save: ' + err.message;
+        errorEl.hidden = false;
+      } finally {
+        btn.disabled = false;
+      }
+    }
+
+    let currentAgreementVersion = null;
+
+    // Onboarding step 2: block the dashboard until the current agreement version is accepted.
+    async function checkAgreement() {
+      try {
+        const res = await fetch(`${API_BASE}/developer/me`, { headers: authHeaders() });
+        const data = await res.json();
+        if (!res.ok || !data.agreement) return;
+        currentAgreementVersion = data.agreement.currentVersion;
+        document.getElementById('agreementPromptVersion').textContent = currentAgreementVersion;
+        if (data.agreement.acceptedVersion && !data.agreement.accepted) {
+          document.getElementById('agreementPromptLead').textContent = 'The Developer Agreement has been updated. Please review and accept the new version to keep publishing.';
+        }
+        document.getElementById('agreementPrompt').classList.toggle('active', !data.agreement.accepted);
+      } catch (err) {
+        console.warn('[Agreement] Could not load status:', err);
+      }
+    }
+
+    async function acceptAgreement() {
+      const errorEl = document.getElementById('agreementPromptError');
+      const btn = document.getElementById('agreementPromptBtn');
+      errorEl.hidden = true;
+      if (!document.getElementById('agreementPromptCheck').checked) {
+        errorEl.textContent = 'Tick the box to confirm you agree.';
+        errorEl.hidden = false;
+        return;
+      }
+      btn.disabled = true;
+      try {
+        const res = await fetch(`${API_BASE}/developer/agreement`, {
+          method: 'POST',
+          headers: authHeaders({ 'Content-Type': 'application/json' }),
+          body: JSON.stringify({ version: currentAgreementVersion })
+        });
+        const data = await res.json().catch(() => ({}));
+        if (!res.ok) throw new Error(data.error || `HTTP ${res.status}`);
+        document.getElementById('agreementPrompt').classList.remove('active');
+        showToast('✓ Developer Agreement accepted — you can publish games now');
+      } catch (err) {
+        errorEl.textContent = 'Could not save: ' + err.message;
         errorEl.hidden = false;
       } finally {
         btn.disabled = false;

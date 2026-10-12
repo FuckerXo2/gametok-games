@@ -1,0 +1,84 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Developer Agreement - GameTOK</title>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; background: #fff; color: #333; line-height: 1.7; }
+        .container { max-width: 700px; margin: 0 auto; padding: 40px 24px; }
+        h1 { font-size: 28px; margin-bottom: 8px; }
+        .updated { color: #888; font-size: 14px; margin-bottom: 32px; }
+        h2 { font-size: 18px; margin: 32px 0 12px; color: #111; }
+        p { margin-bottom: 16px; color: #555; }
+        ul { margin: 0 0 16px 24px; color: #555; }
+        li { margin-bottom: 8px; }
+        a { color: #FF6B6B; }
+        code { background: #f4f4f5; padding: 1px 5px; border-radius: 4px; font-size: 0.92em; }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>GameTok Developer Agreement</h1>
+        <!-- Keep in sync with DEVELOPER_AGREEMENT_VERSION in gametok-backend/src/index.js -->
+        <p class="updated">Version 2026-10-13 · Last updated: October 13, 2026</p>
+
+        <p>This agreement is between you (the "Developer") and GameTok Inc. ("GameTok", "we") and covers publishing games to GameTok through games.gametok.co, the GameTok API, API keys, the bridge script and related tools (the "Developer Services"). By accepting it in the dashboard or using the Developer Services, you agree to it. If you accept on behalf of a company, you confirm you can bind that company.</p>
+
+        <h2>1. Eligibility and your account</h2>
+        <ul>
+            <li>You must be at least 18, or the age of majority where you live, to publish games.</li>
+            <li>You are responsible for everything done with your account and your API keys. Keep keys secret, never put them in game code, and revoke any key you think has leaked.</li>
+            <li>Information you give us (username, contact details) must be accurate.</li>
+        </ul>
+
+        <h2>2. Your games stay yours</h2>
+        <p>You keep all rights to your games. You host them; GameTok shows them to players by loading your hosted URL (or the HTML file you upload) inside the GameTok apps and websites.</p>
+        <p>You grant GameTok a worldwide, non-exclusive, royalty-free license, for as long as your game is published, to display, run, frame and distribute your game to players; to make and show screenshots, thumbnails, short previews, its name and description; and to feature it in GameTok's feed, search, recommendations and promotion. The license ends when you unpublish the game, except for copies we keep for legal, safety or record-keeping reasons and promotional material already made.</p>
+
+        <h2>3. You must have the rights</h2>
+        <p>You confirm that you own or have permission to use everything in your game (code, art, music, fonts, names, characters) and that publishing it on GameTok does not infringe anyone's rights. We respond to valid copyright and trademark complaints and may remove a game while a complaint is resolved.</p>
+
+        <h2>4. Content rules</h2>
+        <p>GameTok is rated for all ages. Every game you publish must be suitable for all ages. A game must not contain or link to:</p>
+        <ul>
+            <li>Sexual or sexually suggestive content, graphic violence or gore, or content that exploits or endangers children.</li>
+            <li>Hate speech, harassment, or content that promotes self-harm, terrorism or illegal activity.</li>
+            <li>Gambling with real money or anything that can be exchanged for money, including loot boxes or wagers that can be cashed out.</li>
+            <li>Malware, cryptocurrency miners, phishing, fake login or payment forms, or code that tries to break out of the GameTok frame, track players across sites, or attack GameTok, players or other developers.</li>
+            <li>Ads or redirects that are deceptive, adult, or take players away from the game without their action.</li>
+            <li>Content that impersonates GameTok or another person or company.</li>
+        </ul>
+        <p>Games are approved automatically when they pass GameTok's technical checks. Passing those checks does not mean a game follows these rules — you are responsible for that. GameTok may review any game at any time.</p>
+
+        <h2>5. Players and their data</h2>
+        <ul>
+            <li>GameTok may give your game a player's display name, avatar and a player ID that is specific to your game. Use them only to run your game for that player. Do not try to link player IDs across games or to identify players outside GameTok.</li>
+            <li>Verify player sessions and match results only through the GameTok API, and never treat data sent from a player's device as proof of identity.</li>
+            <li>If your game collects any personal data itself, you must tell players what you collect and why, get any consent the law requires, and follow applicable privacy laws (for example the NDPA in Nigeria and the GDPR for players in Europe). Do not knowingly collect personal data from children.</li>
+        </ul>
+
+        <h2>6. Multiplayer</h2>
+        <p>If your game uses GameTok matches, your own server runs the gameplay and reports the result. You must report results honestly and only from your server, signed with your secret. Matches carry no stakes and must not be tied to real money or anything that can be cashed out.</p>
+
+        <h2>7. Money</h2>
+        <p>GameTok does not currently offer in-game purchases, ads revenue sharing or payouts to developers. Nothing in this agreement entitles you to payment. If GameTok offers monetization later, it will be under separate terms that you can choose to accept.</p>
+
+        <h2>8. Removal, suspension and termination</h2>
+        <p>We may remove or hide any game, revoke API keys, or suspend your developer account at any time if we believe a game or your use of the Developer Services breaks this agreement, harms players, or exposes GameTok to legal risk. Where it is safe and lawful to do so, we will tell you why. You can unpublish your games and stop using the Developer Services at any time.</p>
+
+        <h2>9. Availability and changes to the service</h2>
+        <p>The Developer Services, the GameTok feed and any statistics we show are provided "as is". We do not promise any number of players, plays or placement in the feed, and we may change or discontinue features.</p>
+
+        <h2>10. Liability</h2>
+        <p>To the extent the law allows, GameTok is not liable for indirect or consequential losses, lost profits or lost data, and our total liability to you under this agreement is limited to US$100. You will indemnify GameTok against claims arising from your games or your breach of this agreement.</p>
+
+        <h2>11. Changes to this agreement</h2>
+        <p>We may update this agreement. When we do, the version above changes and you will be asked to accept the new version in the dashboard before publishing again. Games already published stay published unless they break the updated rules.</p>
+
+        <h2>12. Contact</h2>
+        <p>Questions, complaints or reports about a game: <a href="mailto:info@gametok.com">info@gametok.com</a></p>
+    </div>
+</body>
+</html>
