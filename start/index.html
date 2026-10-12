@@ -1,0 +1,272 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Get started — GameTok for Developers</title>
+  <link rel="icon" href="/assets/adaptive-icon.png">
+  <link rel="stylesheet" href="/assets/dev.css">
+  <script src="/session-sso.js"></script>
+  <style>
+    .start { padding: 64px 0 40px; }
+    .count { font-size: 13px; color: var(--dim); margin-top: 8px; }
+    .key-box { display: flex; gap: 10px; }
+    .key-box .input { font-family: var(--mono); font-size: 14px; }
+  </style>
+</head>
+<body>
+  <header class="site-header">
+    <div class="wrap">
+      <a class="brand" href="/"><img src="/assets/adaptive-icon.png" alt=""> GameTok <small>Developers</small></a>
+      <nav class="site-nav">
+        <a href="/docs/">Docs</a>
+        <a href="/sample/" class="hide-sm">Sample</a>
+        <a href="/agreement.html" class="hide-sm">Agreement</a>
+        <a href="/dashboard/">Dashboard</a>
+      </nav>
+    </div>
+  </header>
+
+  <main class="wrap wrap-narrow start">
+    <span class="eyebrow">Get started</span>
+    <h1 class="h1">Put your game on GameTok</h1>
+    <p class="lead" style="margin-bottom: 18px;">Tell us about your game. It's saved as a private draft and opens in the test player, where you can try it inside GameTok before it goes live.</p>
+    <p style="margin: 0 0 40px;"><a href="/dashboard/">Already have games? Your dashboard →</a></p>
+
+    <div id="loading" class="muted">Loading your account…</div>
+
+    <form id="startForm" novalidate hidden>
+      <div id="formError" class="alert alert-error" hidden></div>
+
+      <div class="field" id="usernameField" hidden>
+        <label for="username">Your username</label>
+        <input class="input" id="username" placeholder="pixelforge" maxlength="20" autocomplete="off" autocapitalize="none" spellcheck="false">
+        <div class="hint">The @handle players see on your games. 3–20 lowercase letters, numbers or underscores.</div>
+      </div>
+
+      <div class="field">
+        <label for="title">Game name</label>
+        <input class="input" id="title" placeholder="Danfo Dash" maxlength="80" required>
+      </div>
+
+      <div class="field">
+        <span class="label">Your game</span>
+        <div class="tabs" role="tablist">
+          <button type="button" role="tab" aria-selected="true" data-host="link">Link</button>
+          <button type="button" role="tab" aria-selected="false" data-host="file">Upload a file</button>
+        </div>
+        <div id="hostLink">
+          <input class="input" id="url" type="url" inputmode="url" placeholder="https://play.yourstudio.com/danfo-dash/">
+          <div class="hint">Your HTTPS address. It must allow GameTok to show it in a frame — <a href="/docs/#framing">see how</a>.</div>
+        </div>
+        <div id="hostFile" hidden>
+          <label class="dropzone" for="file"><span id="fileLabel">Choose your game's <code>index.html</code></span></label>
+          <input id="file" type="file" accept=".html,.htm" hidden>
+          <div class="hint">One self-contained .html file (code, images and sounds inside it). GameTok hosts it. Games with several files: host them and use a link.</div>
+        </div>
+      </div>
+
+      <div class="field">
+        <span class="label">How is it played?</span>
+        <div class="choice-row">
+          <label class="choice"><input type="radio" name="orientation" value="portrait"><span>Phone upright<small>Portrait</small></span></label>
+          <label class="choice"><input type="radio" name="orientation" value="landscape"><span>Sideways<small>Landscape</small></span></label>
+        </div>
+      </div>
+
+      <div class="field">
+        <label for="category">Category</label>
+        <select class="input" id="category">
+          <option value="">Choose a category</option>
+          <option value="action">Action</option>
+          <option value="adventure">Adventure</option>
+          <option value="arcade">Arcade</option>
+          <option value="sports">Sports</option>
+          <option value="rpg">RPG</option>
+          <option value="visual-novel">Visual Novel</option>
+          <option value="horror">Horror</option>
+          <option value="racing">Racing</option>
+          <option value="puzzle">Puzzles</option>
+        </select>
+      </div>
+
+      <div class="field">
+        <label for="description">One-line description</label>
+        <input class="input" id="description" placeholder="Race a danfo through Lagos traffic" maxlength="120">
+        <div class="count"><span id="descCount">0</span>/120</div>
+      </div>
+
+      <div class="field" id="agreementField" hidden>
+        <label class="check"><input type="checkbox" id="agree"><span>I have read and agree to the <a href="/agreement.html" target="_blank" rel="noopener">GameTok Developer Agreement</a> (version <span id="agreementVersion"></span>).</span></label>
+      </div>
+
+      <div class="field">
+        <label class="check"><input type="checkbox" id="wantKey"><span>Also give me a test API key, for an AI agent or a script to update this draft. <span class="dim">Optional.</span></span></label>
+      </div>
+
+      <button class="btn btn-primary btn-block" id="submitBtn" type="submit">Create draft and open the test player <span class="arrow">→</span></button>
+      <p class="center dim" style="font-size: 14px; margin-top: 14px;">Drafts are private. Nothing goes live until you click Go live.</p>
+    </form>
+
+    <section id="keyStep" hidden>
+      <div class="alert alert-ok">Your draft is ready.</div>
+      <div class="field">
+        <span class="label">Your test API key — copy it now, you won't see it again</span>
+        <div class="key-box">
+          <input class="input" id="keyValue" readonly>
+          <button class="btn btn-ghost btn-sm" type="button" id="copyKey">Copy</button>
+        </div>
+        <div class="hint">Test keys only create and update drafts. Keep it out of your game's code. Manage keys in <a href="/dashboard/">Dashboard → Settings → API Keys</a>.</div>
+      </div>
+      <a class="btn btn-primary btn-block" id="continueBtn" href="#">Open the test player <span class="arrow">→</span></a>
+    </section>
+  </main>
+
+  <footer class="site-footer">
+    <div class="wrap">
+      <span>© 2026 GameTok Inc.</span>
+      <nav><a href="/docs/">Docs</a><a href="/agreement.html">Developer Agreement</a><a href="/terms.html">Terms</a><a href="/privacy.html">Privacy</a></nav>
+    </div>
+  </footer>
+
+  <script>
+    const API_BASE = 'https://gametok-backend-267787411422.us-central1.run.app/api';
+    const $ = (id) => document.getElementById(id);
+    const token = () => localStorage.getItem('gametok_auth_token') || '';
+    const authHeaders = (extra) => ({ ...(extra || {}), Authorization: `Bearer ${token()}` });
+    let host = 'link';
+    let uploadedHtml = '';
+    let me = null;
+    let agreementVersion = null;
+
+    function showError(message, list) {
+      const el = $('formError');
+      el.textContent = message || '';
+      if (list && list.length) {
+        const ul = document.createElement('ul');
+        list.forEach((t) => { const li = document.createElement('li'); li.textContent = t; ul.appendChild(li); });
+        el.appendChild(ul);
+      }
+      el.hidden = !message;
+      if (message) el.scrollIntoView({ behavior: 'smooth', block: 'center' });
+    }
+
+    async function api(path, options) {
+      const res = await fetch(API_BASE + path, options);
+      const data = await res.json().catch(() => ({}));
+      if (res.status === 401) { goSignIn(); throw new Error('Please sign in again.'); }
+      if (!res.ok) { const err = new Error(data.error || `Request failed (${res.status})`); err.data = data; throw err; }
+      return data;
+    }
+
+    function goSignIn() {
+      localStorage.removeItem('gametok_auth_token');
+      location.replace('/signin/?next=' + encodeURIComponent('/start/'));
+    }
+
+    document.querySelectorAll('.tabs button').forEach((b) => b.addEventListener('click', () => {
+      host = b.dataset.host;
+      document.querySelectorAll('.tabs button').forEach((x) => x.setAttribute('aria-selected', String(x === b)));
+      $('hostLink').hidden = host !== 'link';
+      $('hostFile').hidden = host !== 'file';
+    }));
+
+    $('file').addEventListener('change', () => {
+      const file = $('file').files[0];
+      uploadedHtml = '';
+      if (!file) return;
+      if (!/\.html?$/i.test(file.name)) { $('fileLabel').textContent = 'Choose one .html file'; return; }
+      const reader = new FileReader();
+      reader.onload = () => { uploadedHtml = String(reader.result || ''); $('fileLabel').textContent = `✓ ${file.name} (${Math.round(file.size / 1024)} KB)`; };
+      reader.readAsText(file);
+    });
+
+    $('description').addEventListener('input', () => { $('descCount').textContent = $('description').value.length; });
+
+    $('startForm').addEventListener('submit', async (e) => {
+      e.preventDefault();
+      showError('');
+      const username = $('username').value.trim().replace(/^@/, '').toLowerCase();
+      const title = $('title').value.trim();
+      const url = $('url').value.trim();
+      const orientation = (document.querySelector('input[name="orientation"]:checked') || {}).value || '';
+      const category = $('category').value;
+      const description = $('description').value.trim();
+
+      const problems = [];
+      if (!$('usernameField').hidden && !/^[a-z0-9_]{3,20}$/.test(username)) problems.push('Choose a username: 3–20 lowercase letters, numbers or underscores.');
+      if (!title) problems.push('Give your game a name.');
+      if (host === 'link' && !/^https:\/\//i.test(url)) problems.push('Paste your game\'s https:// address.');
+      if (host === 'file' && !uploadedHtml) problems.push('Choose your game\'s .html file.');
+      if (!orientation) problems.push('Choose how the game is played: phone upright or sideways.');
+      if (!category) problems.push('Choose a category.');
+      if (!$('agreementField').hidden && !$('agree').checked) problems.push('Accept the Developer Agreement.');
+      if (problems.length) return showError('Almost there:', problems);
+
+      const btn = $('submitBtn');
+      btn.disabled = true;
+      btn.textContent = 'Checking your game…';
+      try {
+        if (!$('usernameField').hidden) {
+          await api(`/users/${encodeURIComponent(me.id)}`, { method: 'PUT', headers: authHeaders({ 'Content-Type': 'application/json' }), body: JSON.stringify({ username }) });
+          localStorage.setItem('gametok_creator_handle', username);
+          $('usernameField').hidden = true;
+        }
+        if (!$('agreementField').hidden) {
+          await api('/developer/agreement', { method: 'POST', headers: authHeaders({ 'Content-Type': 'application/json' }), body: JSON.stringify({ version: agreementVersion }) });
+          $('agreementField').hidden = true;
+        }
+        const published = await api('/publish', {
+          method: 'POST',
+          headers: authHeaders({ 'Content-Type': 'application/json' }),
+          body: JSON.stringify({ title, description, orientation, category, draft: true, ...(host === 'link' ? { url } : { html: uploadedHtml }) })
+        });
+        const testUrl = published.testUrl || `/sandbox/?game=${encodeURIComponent(published.gameId)}`;
+
+        if ($('wantKey').checked) {
+          const key = await api('/developer/api-keys', {
+            method: 'POST', headers: authHeaders({ 'Content-Type': 'application/json' }),
+            body: JSON.stringify({ name: `${title} (test)`, mode: 'test' })
+          });
+          $('keyValue').value = key.key;
+          $('continueBtn').href = testUrl;
+          $('startForm').hidden = true;
+          $('keyStep').hidden = false;
+          return;
+        }
+        location.href = testUrl;
+      } catch (err) {
+        const failed = (err.data && Array.isArray(err.data.checks)) ? err.data.checks.filter((c) => c.blocking && c.ok === false).map((c) => c.detail) : [];
+        showError(failed.length ? 'Your game didn\'t pass a check:' : err.message, failed.length ? failed : undefined);
+      } finally {
+        btn.disabled = false;
+        btn.innerHTML = 'Create draft and open the test player <span class="arrow">→</span>';
+      }
+    });
+
+    $('copyKey').addEventListener('click', () => {
+      navigator.clipboard.writeText($('keyValue').value).then(() => { $('copyKey').textContent = 'Copied'; });
+    });
+
+    (async function start() {
+      if (!token() && window.GameTokSSO) {
+        const shared = await window.GameTokSSO.get();
+        if (shared) localStorage.setItem('gametok_auth_token', shared.token);
+      }
+      if (!token()) return goSignIn();
+      try {
+        const status = await api('/developer/me', { headers: authHeaders() });
+        me = status.developer;
+        agreementVersion = status.agreement.currentVersion;
+        $('usernameField').hidden = Boolean(me.username);
+        $('agreementField').hidden = status.agreement.accepted;
+        $('agreementVersion').textContent = agreementVersion;
+        $('loading').hidden = true;
+        $('startForm').hidden = false;
+      } catch (err) {
+        $('loading').textContent = err.message;
+      }
+    })();
+  </script>
+</body>
+</html>

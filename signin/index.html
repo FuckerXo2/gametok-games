@@ -1,0 +1,250 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Sign in — GameTok for Developers</title>
+  <link rel="icon" href="/assets/adaptive-icon.png">
+  <link rel="stylesheet" href="/assets/dev.css">
+  <script src="https://accounts.google.com/gsi/client" async defer></script>
+  <script src="/session-sso.js"></script>
+  <style>
+    .auth { max-width: 460px; margin: 0 auto; padding: 72px 24px 40px; }
+    .or { display: flex; align-items: center; gap: 14px; color: var(--dim); font-size: 13px; margin: 22px 0; }
+    .or::before, .or::after { content: ''; flex: 1; height: 1px; background: var(--border); }
+    #googleBtn { display: flex; justify-content: center; min-height: 44px; }
+    .switch { text-align: center; color: var(--muted); font-size: 14.5px; margin-top: 22px; }
+  </style>
+</head>
+<body>
+  <header class="site-header">
+    <div class="wrap">
+      <a class="brand" href="/"><img src="/assets/adaptive-icon.png" alt=""> GameTok <small>Developers</small></a>
+      <nav class="site-nav">
+        <a href="/docs/">Docs</a>
+        <a href="/sample/" class="hide-sm">Sample</a>
+      </nav>
+    </div>
+  </header>
+
+  <main class="auth">
+    <span class="eyebrow">Developers</span>
+    <h1 class="h1" id="title">Sign in</h1>
+    <p class="muted" id="subtitle" style="margin-top: 0;">Use your GameTok account. New here? It takes a minute.</p>
+
+    <div id="error" class="alert alert-error" hidden></div>
+
+    <section id="stepCredentials">
+      <div id="googleBtn"></div>
+      <p class="center" style="font-size: 13px; margin: 10px 0 0;">
+        <a href="#" id="bridgeLink" style="color: var(--dim);">Google button not working? Sign in via gametok.co</a>
+      </p>
+
+      <div class="or">or with email</div>
+
+      <form id="credsForm" novalidate>
+        <div class="field" id="usernameField" hidden>
+          <label for="username">Username</label>
+          <input class="input" id="username" autocomplete="username" placeholder="pixelforge" maxlength="20">
+          <div class="hint">Your @handle on games you publish. 3–20 lowercase letters, numbers or underscores.</div>
+        </div>
+        <div class="field">
+          <label for="email">Email</label>
+          <input class="input" id="email" type="email" autocomplete="email" placeholder="you@studio.com" required>
+        </div>
+        <div class="field">
+          <label for="password">Password</label>
+          <input class="input" id="password" type="password" autocomplete="current-password" placeholder="••••••••" required>
+        </div>
+        <button class="btn btn-primary btn-block" id="credsBtn" type="submit">Continue <span class="arrow">→</span></button>
+      </form>
+      <p class="switch"><span id="switchText">No account yet?</span> <a href="#" id="switchLink">Create one</a></p>
+    </section>
+
+    <section id="stepCode" hidden>
+      <p class="muted" id="codeText"></p>
+      <form id="codeForm" novalidate>
+        <div class="field">
+          <label for="code">6-digit code</label>
+          <input class="input" id="code" inputmode="numeric" autocomplete="one-time-code" maxlength="6" placeholder="123456">
+        </div>
+        <button class="btn btn-primary btn-block" id="codeBtn" type="submit">Verify and sign in</button>
+      </form>
+      <p class="switch"><a href="#" id="resendLink">Resend code</a> · <a href="#" id="backLink">Use a different email</a></p>
+    </section>
+  </main>
+
+  <footer class="site-footer">
+    <div class="wrap">
+      <span>© 2026 GameTok Inc.</span>
+      <nav><a href="/agreement.html">Developer Agreement</a><a href="/terms.html">Terms</a><a href="/privacy.html">Privacy</a></nav>
+    </div>
+  </footer>
+
+  <script>
+    const API_BASE = 'https://gametok-backend-267787411422.us-central1.run.app/api';
+    const GOOGLE_CLIENT_ID = '516560435127-l6db4akjqei5q57j764kgu3aoaedu45l.apps.googleusercontent.com';
+    const $ = (id) => document.getElementById(id);
+    let mode = 'login';
+    let pendingEmail = '';
+
+    // Only same-site paths, so ?next= can't send people to another website.
+    function nextPath() {
+      const next = new URLSearchParams(location.search).get('next') || '/dashboard/';
+      return /^\/(?!\/)/.test(next) ? next : '/dashboard/';
+    }
+
+    function showError(message) {
+      $('error').textContent = message;
+      $('error').hidden = !message;
+    }
+
+    function deviceId() {
+      let id = localStorage.getItem('gametok_device_id');
+      if (!id) {
+        id = 'dev_' + Math.random().toString(36).slice(2, 12) + '_' + Date.now().toString(36);
+        localStorage.setItem('gametok_device_id', id);
+      }
+      return id;
+    }
+
+    async function signedIn(user, token) {
+      localStorage.setItem('gametok_auth_token', token);
+      if (user) {
+        if (user.username) localStorage.setItem('gametok_creator_handle', user.username);
+        const name = user.displayName || user.name || user.username || '';
+        if (name) localStorage.setItem('gametok_user_name', name);
+        if (user.email) localStorage.setItem('gametok_user_email', user.email);
+      }
+      // Sign gametok.co in too (shared session, see session-sso.js).
+      if (window.GameTokSSO) await window.GameTokSSO.set(token, user);
+      location.replace(nextPath());
+    }
+
+    async function post(path, body) {
+      const res = await fetch(API_BASE + path, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(body) });
+      const data = await res.json().catch(() => ({}));
+      if (!res.ok) throw new Error(data.error || 'Something went wrong. Try again.');
+      return data;
+    }
+
+    function setMode(next) {
+      mode = next;
+      const signup = mode === 'signup';
+      $('title').textContent = signup ? 'Create your account' : 'Sign in';
+      $('usernameField').hidden = !signup;
+      $('password').autocomplete = signup ? 'new-password' : 'current-password';
+      $('credsBtn').innerHTML = signup ? 'Create account <span class="arrow">→</span>' : 'Continue <span class="arrow">→</span>';
+      $('switchText').textContent = signup ? 'Already have an account?' : 'No account yet?';
+      $('switchLink').textContent = signup ? 'Sign in' : 'Create one';
+      showError('');
+    }
+
+    $('switchLink').addEventListener('click', (e) => { e.preventDefault(); setMode(mode === 'login' ? 'signup' : 'login'); });
+
+    $('credsForm').addEventListener('submit', async (e) => {
+      e.preventDefault();
+      showError('');
+      const email = $('email').value.trim();
+      const password = $('password').value;
+      const username = $('username').value.trim().replace(/^@/, '').toLowerCase();
+      if (!email || !password) return showError('Enter your email and password.');
+      if (mode === 'signup' && !/^[a-z0-9_]{3,20}$/.test(username)) return showError('Choose a username: 3–20 lowercase letters, numbers or underscores.');
+      $('credsBtn').disabled = true;
+      try {
+        pendingEmail = email;
+        const data = mode === 'signup'
+          ? await post('/auth/signup', { username, email, password, displayName: username, deviceId: deviceId() })
+          : await post('/auth/login', { username: email, password, deviceId: deviceId() });
+        if (data.requireCode) {
+          $('codeText').textContent = `We sent a 6-digit code from login@gametok.co to ${email}.`;
+          $('stepCredentials').hidden = true;
+          $('stepCode').hidden = false;
+          $('code').focus();
+        } else if (data.token) {
+          await signedIn(data.user, data.token);
+        }
+      } catch (err) {
+        showError(err.message);
+      } finally {
+        $('credsBtn').disabled = false;
+      }
+    });
+
+    $('codeForm').addEventListener('submit', async (e) => {
+      e.preventDefault();
+      showError('');
+      $('codeBtn').disabled = true;
+      try {
+        const data = await post('/auth/verify-code', { email: pendingEmail, code: $('code').value.trim(), deviceId: deviceId() });
+        await signedIn(data.user, data.token);
+      } catch (err) {
+        showError(err.message);
+      } finally {
+        $('codeBtn').disabled = false;
+      }
+    });
+
+    $('resendLink').addEventListener('click', async (e) => {
+      e.preventDefault();
+      try {
+        const data = await post('/auth/resend-code', { email: pendingEmail, purpose: mode });
+        showError('');
+        $('codeText').textContent = data.message || 'A new code is on its way.';
+      } catch (err) { showError(err.message); }
+    });
+
+    $('backLink').addEventListener('click', (e) => {
+      e.preventDefault();
+      $('stepCode').hidden = true;
+      $('stepCredentials').hidden = false;
+    });
+
+    // Google: games.gametok.co is an authorized origin, so Google's own button works here.
+    async function onGoogleCredential(response) {
+      if (!response || !response.credential) return;
+      showError('');
+      try {
+        const data = await post('/auth/oauth', { provider: 'google', idToken: response.credential, deviceId: deviceId() });
+        if (!data.token) throw new Error('Google sign-in did not return a session.');
+        await signedIn(data.user, data.token);
+      } catch (err) {
+        showError(err.message);
+      }
+    }
+
+    function initGoogle() {
+      if (!window.google?.accounts?.id) return setTimeout(initGoogle, 150);
+      window.google.accounts.id.initialize({ client_id: GOOGLE_CLIENT_ID, callback: onGoogleCredential, auto_select: false, cancel_on_tap_outside: true });
+      window.google.accounts.id.renderButton($('googleBtn'), { type: 'standard', theme: 'filled_black', size: 'large', text: 'continue_with', shape: 'pill', width: 360 });
+    }
+
+    // Fallback: the gametok.co bridge popup, which posts the credential back to this origin only.
+    $('bridgeLink').addEventListener('click', (e) => {
+      e.preventDefault();
+      if (!window.open('https://gametok.co/auth-bridge.html', 'gametok_google_auth', 'width=500,height=620')) {
+        showError('Allow pop-ups for this site to sign in via gametok.co.');
+      }
+    });
+    window.addEventListener('message', (event) => {
+      if (event.origin !== 'https://gametok.co' || !event.data) return;
+      if (event.data.type === 'GAMETOK_GOOGLE_CREDENTIAL' && event.data.credential) onGoogleCredential({ credential: event.data.credential });
+    });
+
+    (async function start() {
+      if (new URLSearchParams(location.search).get('mode') === 'signup') setMode('signup');
+      // Already signed in here, or on gametok.co? Skip straight through.
+      if (localStorage.getItem('gametok_auth_token')) return location.replace(nextPath());
+      if (window.GameTokSSO) {
+        const shared = await window.GameTokSSO.get();
+        if (shared) {
+          localStorage.setItem('gametok_auth_token', shared.token);
+          if (shared.user && shared.user.username) localStorage.setItem('gametok_creator_handle', shared.user.username);
+          return location.replace(nextPath());
+        }
+      }
+      initGoogle();
+    })();
+  </script>
+</body>
+</html>

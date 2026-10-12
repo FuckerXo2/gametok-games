@@ -2128,7 +2128,7 @@
     async function goToSignIn(staleToken) {
       SESSION_KEYS.forEach(k => localStorage.removeItem(k));
       if (staleToken && window.GameTokSSO) await window.GameTokSSO.clear(staleToken);
-      window.location.replace('/?signin=1');
+      window.location.replace('/signin/?next=' + encodeURIComponent('/dashboard/'));
     }
 
     if (!localStorage.getItem('gametok_auth_token')) {

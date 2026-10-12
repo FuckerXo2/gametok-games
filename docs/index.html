@@ -6,55 +6,39 @@
   <title>Docs — GameTok for Developers</title>
   <meta name="description" content="Publish your web game on GameTok: the bridge script, player identity, test mode and the server API.">
   <link rel="icon" href="/assets/adaptive-icon.png">
+  <link rel="stylesheet" href="/assets/dev.css">
   <style>
-    :root {
-      --bg: #050913; --card: #0b1222; --border: #1c2740; --text: #e6ecf7; --dim: #8a97b2;
-      --cyan: #38bdf8; --green: #22c55e; --amber: #fbbf24;
-      --mono: ui-monospace, SFMono-Regular, Menlo, monospace;
-    }
-    * { box-sizing: border-box; }
-    html { scroll-behavior: smooth; scroll-padding-top: 20px; }
-    body { margin: 0; background: var(--bg); color: var(--text); font: 15px/1.65 -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; }
-    a { color: var(--cyan); }
-    header { border-bottom: 1px solid var(--border); padding: 14px 20px; display: flex; gap: 18px; align-items: center; flex-wrap: wrap; }
-    header strong { font-size: 16px; }
-    header nav { display: flex; gap: 16px; flex-wrap: wrap; font-size: 14px; }
-    .layout { display: grid; grid-template-columns: 220px minmax(0, 1fr); gap: 40px; max-width: 1100px; margin: 0 auto; padding: 28px 20px 80px; }
+    .layout { display: grid; grid-template-columns: 220px minmax(0, 1fr); gap: 48px; max-width: 1120px; margin: 0 auto; padding: 56px 24px 80px; }
     @media (max-width: 860px) { .layout { grid-template-columns: 1fr; } aside { display: none; } }
-    aside nav { position: sticky; top: 20px; display: flex; flex-direction: column; gap: 6px; font-size: 13.5px; }
-    aside nav a { color: var(--dim); text-decoration: none; }
-    aside nav a:hover { color: var(--text); }
-    h1 { font-size: 34px; line-height: 1.15; margin: 0 0 10px; }
-    h2 { font-size: 22px; margin: 48px 0 12px; padding-top: 8px; border-top: 1px solid var(--border); }
-    h3 { font-size: 16px; margin: 26px 0 8px; }
-    p.lead { color: var(--dim); font-size: 16.5px; max-width: 720px; }
-    code { font-family: var(--mono); font-size: 0.88em; background: #0e1730; border: 1px solid var(--border); border-radius: 5px; padding: 1px 5px; }
-    pre { background: #030610; border: 1px solid var(--border); border-radius: 12px; padding: 14px 16px; overflow-x: auto; font: 13px/1.55 var(--mono); }
-    pre code { background: none; border: 0; padding: 0; font-size: inherit; }
-    .table-wrap { overflow-x: auto; }
-    table { border-collapse: collapse; width: 100%; font-size: 13.5px; margin: 8px 0 16px; }
-    th, td { border-bottom: 1px solid var(--border); padding: 8px 10px; text-align: left; vertical-align: top; }
-    th { color: var(--dim); font-weight: 600; }
-    .cards { display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: 14px; margin: 18px 0; }
-    .card { background: var(--card); border: 1px solid var(--border); border-radius: 14px; padding: 16px; }
-    .card h3 { margin: 0 0 6px; font-size: 15px; }
-    .card p { margin: 0; color: var(--dim); font-size: 13.5px; }
-    ol.steps { padding-left: 20px; }
+    aside nav { position: sticky; top: 100px; display: flex; flex-direction: column; gap: 8px; font-size: 14px; }
+    aside nav a { color: var(--dim); }
+    aside nav a:hover { color: var(--text); text-decoration: none; }
+    main h1 { font-size: clamp(40px, 6vw, 64px); line-height: 1; letter-spacing: -0.045em; font-weight: 900; margin: 18px 0 16px; }
+    main h2 { font-size: 26px; letter-spacing: -0.03em; margin: 56px 0 14px; padding-top: 28px; border-top: 1px solid var(--border); }
+    main h3 { font-size: 17px; margin: 28px 0 10px; }
+    main p, main li { color: #d3d5de; }
+    main p.lead { color: var(--muted); }
+    .cards { display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: 14px; margin: 20px 0; }
+    .cards .card { padding: 20px; }
+    .cards .card h3 { margin: 0 0 6px; font-size: 16px; }
+    ol.steps { padding-left: 22px; }
     ol.steps li { margin-bottom: 18px; }
-    .note { border-left: 3px solid var(--amber); background: rgba(251,191,36,0.06); padding: 10px 14px; border-radius: 0 10px 10px 0; color: #e9dcb4; font-size: 14px; }
-    .method { font: 700 11px var(--mono); padding: 2px 6px; border-radius: 5px; background: #0e1730; color: var(--cyan); margin-right: 6px; }
+    .note { border-left: 3px solid var(--accent-strong); background: rgba(56, 189, 248, 0.06); padding: 12px 16px; border-radius: 0 12px 12px 0; }
+    .method { font: 700 11px var(--mono); padding: 2px 7px; border-radius: 6px; background: var(--surface-2); border: 1px solid var(--border); color: var(--accent-strong); margin-right: 6px; }
   </style>
 </head>
 <body>
-  <header>
-    <strong>GameTok for Developers</strong>
-    <nav>
-      <a href="/">Home</a>
-      <a href="/docs/">Docs</a>
-      <a href="/sample/">Sample game</a>
-      <a href="/agreement.html">Agreement</a>
-      <a href="/dashboard/">Dashboard</a>
-    </nav>
+  <header class="site-header">
+    <div class="wrap">
+      <a class="brand" href="/"><img src="/assets/adaptive-icon.png" alt=""> GameTok <small>Developers</small></a>
+      <nav class="site-nav">
+        <a href="/docs/" aria-current="page">Docs</a>
+        <a href="/sample/" class="hide-sm">Sample</a>
+        <a href="/agreement.html" class="hide-sm">Agreement</a>
+        <a href="/dashboard/">Dashboard</a>
+        <a class="btn btn-primary btn-sm" href="/start/">Get started</a>
+      </nav>
+    </div>
   </header>
 
   <div class="layout">
@@ -77,6 +61,7 @@
     </aside>
 
     <main>
+      <span class="eyebrow">GameTok games · bridge.js</span>
       <h1>Docs</h1>
       <p class="lead">Your game stays on your own HTTPS site. GameTok shows it in its feed, in a frame, and one script — <code>bridge.js</code> — lets it ask who's playing and report scores. Your server checks players with the GameTok API before trusting them.</p>
 
@@ -90,11 +75,11 @@
 
       <h2 id="quick-start">Quick start</h2>
       <ol class="steps">
-        <li><strong>Sign in</strong> at <a href="/dashboard/">games.gametok.co/dashboard</a>, choose your username and accept the <a href="/agreement.html">Developer Agreement</a>.</li>
+        <li><strong>Sign in</strong> and open <a href="/start/">Get started</a> — one short form: your username (first time), the game, how it's played, category, and the <a href="/agreement.html">Developer Agreement</a>.</li>
         <li><strong>Add the bridge</strong> to your game's <code>index.html</code>:
           <pre><code>&lt;script src="https://gametok.co/bridge.js"&gt;&lt;/script&gt;</code></pre></li>
         <li><strong>Allow GameTok to frame your page</strong> (see <a href="#framing">below</a>) and deploy.</li>
-        <li><strong>Try it as a draft:</strong> in the dashboard click <em>+ New Game</em>, paste your URL and tick <em>Save as a draft to test first</em>. It opens in the private <a href="#test-mode">test player</a>.</li>
+        <li><strong>Try it:</strong> the form saves a private draft and opens it in the <a href="#test-mode">test player</a>.</li>
         <li><strong>Go live:</strong> click <em>Go live</em> in the test player or on the game's page. If the <a href="#checks">automatic checks</a> pass, it's in the feed at <code>gametok.co/game/&lt;id&gt;</code>.</li>
       </ol>
 
@@ -114,7 +99,7 @@
       <h2 id="publish">Publishing</h2>
       <p>Three ways, all ending in the same automatic checks:</p>
       <ul>
-        <li><strong>Dashboard:</strong> <em>+ New Game</em> → your hosted URL, or upload a single self-contained <code>index.html</code>.</li>
+        <li><strong>Get started / Dashboard:</strong> <a href="/start/">Get started</a> or <em>+ New Game</em> → your hosted URL, or upload a single self-contained <code>index.html</code>.</li>
         <li><strong>API:</strong> <code>POST /api/publish</code> with an <a href="#keys">API key</a> (see <a href="#api">reference</a>).</li>
         <li><strong>AI agent:</strong> give Claude Code, Cursor or similar the prompt on the <a href="/">home page</a>; it follows <a href="/skill.md">skill.md</a>.</li>
       </ul>
@@ -219,5 +204,12 @@ Authorization: Bearer gtk_live_…        (gtk_test_… in the test player)
       <p class="note">Questions or problems: <a href="mailto:info@gametok.com">info@gametok.com</a></p>
     </main>
   </div>
+
+  <footer class="site-footer">
+    <div class="wrap">
+      <span>© 2026 GameTok Inc.</span>
+      <nav><a href="/agreement.html">Developer Agreement</a><a href="/terms.html">Terms</a><a href="/privacy.html">Privacy</a><a href="mailto:info@gametok.com">info@gametok.com</a></nav>
+    </div>
+  </footer>
 </body>
 </html>
