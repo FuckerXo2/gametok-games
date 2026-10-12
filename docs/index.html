@@ -1,0 +1,272 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Docs — GameTok for Developers</title>
+  <meta name="description" content="Publish your web game on GameTok: the bridge script, player identity, test mode, multiplayer lobby and the server API.">
+  <link rel="icon" href="/assets/adaptive-icon.png">
+  <style>
+    :root {
+      --bg: #050913; --card: #0b1222; --border: #1c2740; --text: #e6ecf7; --dim: #8a97b2;
+      --cyan: #38bdf8; --green: #22c55e; --amber: #fbbf24;
+      --mono: ui-monospace, SFMono-Regular, Menlo, monospace;
+    }
+    * { box-sizing: border-box; }
+    html { scroll-behavior: smooth; scroll-padding-top: 20px; }
+    body { margin: 0; background: var(--bg); color: var(--text); font: 15px/1.65 -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; }
+    a { color: var(--cyan); }
+    header { border-bottom: 1px solid var(--border); padding: 14px 20px; display: flex; gap: 18px; align-items: center; flex-wrap: wrap; }
+    header strong { font-size: 16px; }
+    header nav { display: flex; gap: 16px; flex-wrap: wrap; font-size: 14px; }
+    .layout { display: grid; grid-template-columns: 220px minmax(0, 1fr); gap: 40px; max-width: 1100px; margin: 0 auto; padding: 28px 20px 80px; }
+    @media (max-width: 860px) { .layout { grid-template-columns: 1fr; } aside { display: none; } }
+    aside nav { position: sticky; top: 20px; display: flex; flex-direction: column; gap: 6px; font-size: 13.5px; }
+    aside nav a { color: var(--dim); text-decoration: none; }
+    aside nav a:hover { color: var(--text); }
+    h1 { font-size: 34px; line-height: 1.15; margin: 0 0 10px; }
+    h2 { font-size: 22px; margin: 48px 0 12px; padding-top: 8px; border-top: 1px solid var(--border); }
+    h3 { font-size: 16px; margin: 26px 0 8px; }
+    p.lead { color: var(--dim); font-size: 16.5px; max-width: 720px; }
+    code { font-family: var(--mono); font-size: 0.88em; background: #0e1730; border: 1px solid var(--border); border-radius: 5px; padding: 1px 5px; }
+    pre { background: #030610; border: 1px solid var(--border); border-radius: 12px; padding: 14px 16px; overflow-x: auto; font: 13px/1.55 var(--mono); }
+    pre code { background: none; border: 0; padding: 0; font-size: inherit; }
+    .table-wrap { overflow-x: auto; }
+    table { border-collapse: collapse; width: 100%; font-size: 13.5px; margin: 8px 0 16px; }
+    th, td { border-bottom: 1px solid var(--border); padding: 8px 10px; text-align: left; vertical-align: top; }
+    th { color: var(--dim); font-weight: 600; }
+    .cards { display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: 14px; margin: 18px 0; }
+    .card { background: var(--card); border: 1px solid var(--border); border-radius: 14px; padding: 16px; }
+    .card h3 { margin: 0 0 6px; font-size: 15px; }
+    .card p { margin: 0; color: var(--dim); font-size: 13.5px; }
+    ol.steps { padding-left: 20px; }
+    ol.steps li { margin-bottom: 18px; }
+    .note { border-left: 3px solid var(--amber); background: rgba(251,191,36,0.06); padding: 10px 14px; border-radius: 0 10px 10px 0; color: #e9dcb4; font-size: 14px; }
+    .method { font: 700 11px var(--mono); padding: 2px 6px; border-radius: 5px; background: #0e1730; color: var(--cyan); margin-right: 6px; }
+  </style>
+</head>
+<body>
+  <header>
+    <strong>GameTok for Developers</strong>
+    <nav>
+      <a href="/">Home</a>
+      <a href="/docs/">Docs</a>
+      <a href="/sample/">Sample game</a>
+      <a href="/agreement.html">Agreement</a>
+      <a href="/dashboard/">Dashboard</a>
+    </nav>
+  </header>
+
+  <div class="layout">
+    <aside>
+      <nav>
+        <a href="#overview">How it fits together</a>
+        <a href="#quick-start">Quick start</a>
+        <a href="#framing">Allow GameTok to show your game</a>
+        <a href="#publish">Publishing</a>
+        <a href="#test-mode">Test mode</a>
+        <a href="#checks">Automatic checks</a>
+        <a href="#bridge">bridge.js reference</a>
+        <a href="#identity">Player identity</a>
+        <a href="#multiplayer">Multiplayer</a>
+        <a href="#api">Server API reference</a>
+        <a href="#keys">API keys</a>
+        <a href="#errors">Error codes</a>
+        <a href="#sample">Sample game</a>
+        <a href="#agents">Using an AI agent</a>
+      </nav>
+    </aside>
+
+    <main>
+      <h1>Docs</h1>
+      <p class="lead">Your game stays on your own HTTPS site. GameTok shows it in its feed, in a frame, and one script — <code>bridge.js</code> — lets it ask who's playing, report scores, and pair players for multiplayer. Your server checks players with the GameTok API before trusting them.</p>
+
+      <h2 id="overview">How it fits together</h2>
+      <div class="cards">
+        <div class="card"><h3>Your game</h3><p>Any web game (HTML5, Canvas, Phaser, Three.js, Unity WebGL, Godot…) on your own HTTPS address. It loads <code>bridge.js</code> and calls <code>GameTok.*</code>.</p></div>
+        <div class="card"><h3>The GameTok player</h3><p>The feed and game pages on gametok.co (and the GameTok app). It frames your game, pauses and resumes it, and answers <code>GameTok.init()</code> with the signed-in player.</p></div>
+        <div class="card"><h3>Your server (optional)</h3><p>Holds your secret API key. Checks player sessions, saves progress against the player's id, runs multiplayer rounds and reports results.</p></div>
+      </div>
+      <p>Updates are instant: GameTok loads your hosted URL, so every time you deploy, players get the new version.</p>
+
+      <h2 id="quick-start">Quick start</h2>
+      <ol class="steps">
+        <li><strong>Sign in</strong> at <a href="/dashboard/">games.gametok.co/dashboard</a>, choose your username and accept the <a href="/agreement.html">Developer Agreement</a>.</li>
+        <li><strong>Add the bridge</strong> to your game's <code>index.html</code>:
+          <pre><code>&lt;script src="https://gametok.co/bridge.js"&gt;&lt;/script&gt;</code></pre></li>
+        <li><strong>Allow GameTok to frame your page</strong> (see <a href="#framing">below</a>) and deploy.</li>
+        <li><strong>Try it as a draft:</strong> in the dashboard click <em>+ New Game</em>, paste your URL and tick <em>Save as a draft to test first</em>. It opens in the private <a href="#test-mode">test player</a>.</li>
+        <li><strong>Go live:</strong> click <em>Go live</em> in the test player or on the game's page. If the <a href="#checks">automatic checks</a> pass, it's in the feed at <code>gametok.co/game/&lt;id&gt;</code>.</li>
+      </ol>
+
+      <h2 id="framing">Allow GameTok to show your game</h2>
+      <p>GameTok shows your game inside a frame on <code>https://gametok.co</code> (and the test player on <code>https://games.gametok.co</code>). Your page must not send <code>X-Frame-Options: DENY</code> or <code>SAMEORIGIN</code>. If you send a Content-Security-Policy, include:</p>
+      <pre><code>Content-Security-Policy: frame-ancestors 'self' https://gametok.co https://games.gametok.co</code></pre>
+      <h3>Examples</h3>
+      <div class="table-wrap"><table>
+        <tr><th>Host</th><th>Where</th></tr>
+        <tr><td>Vercel</td><td><code>vercel.json</code> → <code>"headers": [{ "source": "/(.*)", "headers": [{ "key": "Content-Security-Policy", "value": "frame-ancestors 'self' https://gametok.co https://games.gametok.co" }] }]</code></td></tr>
+        <tr><td>Netlify / Cloudflare Pages</td><td><code>_headers</code> file: <code>/*</code> then <code>&nbsp;&nbsp;Content-Security-Policy: frame-ancestors 'self' https://gametok.co https://games.gametok.co</code></td></tr>
+        <tr><td>GitHub Pages</td><td>Nothing to do — it doesn't block framing.</td></tr>
+        <tr><td>itch.io</td><td>Publish the game file URL (<code>html-classic.itch.zone/…</code>), not the store page: right-click the game → <em>Open frame in new tab</em>.</td></tr>
+      </table></div>
+      <p>Players' browsers block <code>http://</code> pages inside GameTok, so your game must be served over <code>https://</code>.</p>
+
+      <h2 id="publish">Publishing</h2>
+      <p>Three ways, all ending in the same automatic checks:</p>
+      <ul>
+        <li><strong>Dashboard:</strong> <em>+ New Game</em> → your hosted URL, or upload a single self-contained <code>index.html</code>.</li>
+        <li><strong>API:</strong> <code>POST /api/publish</code> with an <a href="#keys">API key</a> (see <a href="#api">reference</a>).</li>
+        <li><strong>AI agent:</strong> give Claude Code, Cursor or similar the prompt on the <a href="/">home page</a>; it follows <a href="/skill.md">skill.md</a>.</li>
+      </ul>
+      <p>Publishing again with the same title updates your game. Re-check a live game any time from its <em>Checks</em> tab.</p>
+
+      <h2 id="test-mode">Test mode</h2>
+      <p>Drafts are private: they aren't in the feed, search or your public profile, and their GameTok page isn't public. You play them in the <strong>test player</strong> (<code>games.gametok.co/sandbox/?game=&lt;id&gt;</code>) — the real GameTok player in TEST mode:</p>
+      <ul>
+        <li><code>GameTok.init()</code> returns a test player (id <code>t_…</code>) and a test session.</li>
+        <li>Every message between your game and GameTok is shown in a log.</li>
+        <li>An integration checklist ticks itself: bridge loaded, player requested, session verified by your server, score submitted.</li>
+        <li>Buttons send pause/resume so you can check your game handles them.</li>
+      </ul>
+      <p>Make drafts with a <strong>test key</strong> (<code>gtk_test_…</code>) — anything it publishes is a draft and it can never change a live game — or with the dashboard's <em>Save as a draft</em>. When it works, click <em>Go live</em>.</p>
+      <div class="table-wrap"><table>
+        <tr><th></th><th>Test</th><th>Live</th></tr>
+        <tr><td>API key</td><td><code>gtk_test_…</code></td><td><code>gtk_live_…</code></td></tr>
+        <tr><td>Publishing creates</td><td>a private draft</td><td>a live game (if checks pass)</td></tr>
+        <tr><td>Where it plays</td><td>the test player</td><td>the GameTok feed and app</td></tr>
+        <tr><td>Player ids</td><td><code>t_…</code></td><td><code>p_…</code></td></tr>
+        <tr><td>Sessions / matches it can verify</td><td>test only</td><td>live only</td></tr>
+      </table></div>
+
+      <h2 id="checks">Automatic checks</h2>
+      <p>Every publish and Go live runs these. There's no manual review queue: the game goes live when every required check passes. You are still responsible for following the <a href="/agreement.html">Developer Agreement</a>.</p>
+      <div class="table-wrap"><table>
+        <tr><th>Check</th><th>Required</th><th>Fails when</th></tr>
+        <tr><td>Served over HTTPS</td><td>yes</td><td>the URL, or where it redirects, is <code>http://</code></td></tr>
+        <tr><td>Game URL loads</td><td>yes</td><td>it returns an HTTP error (404, 500…)</td></tr>
+        <tr><td>Can be shown inside GameTok</td><td>yes</td><td><code>X-Frame-Options</code> or <code>frame-ancestors</code> blocks gametok.co</td></tr>
+        <tr><td>Is a web page</td><td>yes</td><td>the URL returns something other than HTML (e.g. a .zip)</td></tr>
+        <tr><td>Mobile viewport meta tag</td><td>recommended</td><td>no <code>&lt;meta name="viewport"&gt;</code></td></tr>
+        <tr><td>GameTok bridge script</td><td>recommended</td><td>no <code>bridge.js</code> tag</td></tr>
+      </table></div>
+      <p>If GameTok can't reach your URL at all (timeout, your host blocks bots), the game still publishes with a warning — open the GameTok link to make sure it plays.</p>
+
+      <h2 id="bridge">bridge.js reference</h2>
+      <p>Load it from <code>https://gametok.co/bridge.js</code> (never a copy: it gets fixes). Outside GameTok it stays dormant and your game works normally. Promise-returning calls reject with an <code>Error</code> that has a <code>.code</code> (see <a href="#errors">Error codes</a>).</p>
+      <div class="table-wrap"><table>
+        <tr><th>Call</th><th>What it does</th></tr>
+        <tr><td><code>GameTok.init()</code><br>→ <code>{ player, session, mode, expiresIn }</code></td><td>Who's playing. <code>player</code> is <code>{ id, name, avatar, guest }</code>. Call it when the game starts. See <a href="#identity">Player identity</a>.</td></tr>
+        <tr><td><code>GameTok.session()</code><br>→ <code>{ session, expiresIn }</code></td><td>A fresh session token (they last 15 minutes). Ask for one whenever you call your server.</td></tr>
+        <tr><td><code>GameTok.getPlayer()</code></td><td>The player from the last <code>init()</code>, or <code>null</code>.</td></tr>
+        <tr><td><code>GameTok.on(event, fn)</code></td><td><code>'pause'</code> / <code>'resume'</code> (another game is on screen or the app went to the background — stop timers and sound), <code>'mute'</code> / <code>'unmute'</code>, <code>'restart'</code>.</td></tr>
+        <tr><td><code>GameTok.submitScore(n)</code></td><td>Report a score (whole number).</td></tr>
+        <tr><td><code>GameTok.gameOver(score?)</code></td><td>The run ended; also reports session length to your analytics.</td></tr>
+        <tr><td><code>GameTok.recordEvent(name, data)</code></td><td>A custom analytics event.</td></tr>
+        <tr><td><code>GameTok.match.*</code></td><td>The multiplayer lobby — see <a href="#multiplayer">Multiplayer</a>.</td></tr>
+      </table></div>
+
+      <h2 id="identity">Player identity</h2>
+      <p>Players are already signed in to GameTok, so your game doesn't need its own login.</p>
+      <pre><code>const { player, session, mode } = await GameTok.init()
+// player = { id: "p_3QmZ…", name: "Tolu", avatar: "https://…", guest: false }
+// Send `session` to your server and verify it there before trusting `player`.</code></pre>
+      <ul>
+        <li><strong><code>player.id</code> is a pseudonym for your game only.</strong> The same player always gets the same id in your game and a different one in every other game. Use it as your user id (progress, unlocks, saves).</li>
+        <li><strong>Guests:</strong> players who aren't signed in get <code>guest: true</code>, the name "Guest" and an id tied to their device.</li>
+        <li><strong>Never trust the browser.</strong> Anyone can edit game code. Your server must check the session:</li>
+      </ul>
+      <pre><code><span class="method">POST</span>https://gametok-backend-267787411422.us-central1.run.app/api/developer/sessions/verify
+Authorization: Bearer gtk_live_…        (gtk_test_… in the test player)
+{ "session": "&lt;session from the game&gt;" }
+
+→ 200 { "valid": true, "gameId": "tap-tap", "mode": "live",
+        "player": { "id": "p_3QmZ…", "name": "Tolu", "guest": false }, "expiresAt": "…" }
+→ 401 { "valid": false, "code": "SESSION_EXPIRED" | "SESSION_INVALID" }
+→ 403 { "valid": false, "code": "WRONG_GAME" | "WRONG_MODE" }</code></pre>
+      <p>Full server example: <a href="/sample/server.js">sample/server.js</a>.</p>
+
+      <h2 id="multiplayer">Multiplayer</h2>
+      <p>GameTok runs the lobby; <strong>your server runs the gameplay</strong>. Players create a match and share its six-letter code, join by code, or quick-match with someone waiting in your game. When every seat is filled the match starts; your server plays the round (over your own WebSocket, etc.) and reports who won. Matches have no stakes.</p>
+      <pre><code>// In the game
+const m = await GameTok.match.quick({ seats: 2 })     // or match.create({ seats }) / match.join(code)
+showCode(m.code)                                      // friends can join with GameTok.match.join(code)
+const stop = GameTok.match.onUpdate(async (m) =&gt; {
+  if (m?.status === 'playing') connectToMyServer(m.id, await GameTok.session())   // your server checks the session
+  if (m?.status === 'done') showWinner(m.winner)
+})</code></pre>
+      <div class="table-wrap"><table>
+        <tr><th>Call</th><th>Result</th></tr>
+        <tr><td><code>GameTok.match.create({ seats })</code></td><td>A new match for 2–4 players with a <code>code</code> to share.</td></tr>
+        <tr><td><code>GameTok.match.join(code)</code></td><td>Join by code. Starts the match if it fills it.</td></tr>
+        <tr><td><code>GameTok.match.quick({ seats })</code></td><td>Join the oldest open quick match in your game with a free seat, or open one.</td></tr>
+        <tr><td><code>GameTok.match.current()</code></td><td>Your open or playing match in this game, or <code>null</code>.</td></tr>
+        <tr><td><code>GameTok.match.leave()</code></td><td>Before the start you leave the match; after it you're marked as left (your server decides the result).</td></tr>
+        <tr><td><code>GameTok.match.onUpdate(fn)</code></td><td>Calls <code>fn(match)</code> whenever it changes. Returns <code>unsubscribe()</code>.</td></tr>
+      </table></div>
+      <p>A match is <code>{ id, code, status, seats, players: [{ id, name }], me, winner, result, createdAt, startedAt, endsAt, mode }</code>. <code>status</code> is <code>open</code>, <code>playing</code>, <code>done</code>, <code>cancelled</code> (never filled within 15 minutes) or <code>void</code> (no result within 2 hours of the start). A player can be in one open/playing match per game.</p>
+      <h3>Reporting the result (your server only)</h3>
+      <p>Only your server can settle a match: it needs your API key <em>and</em> a signature with the <strong>results secret</strong> shown when you created that key. A phone can never post a result.</p>
+      <pre><code>// Node 18+
+const crypto = require('crypto')
+const API = 'https://gametok-backend-267787411422.us-central1.run.app'
+
+async function reportResult(matchId, winner /* player id or "draw" */) {
+  const auth = { Authorization: `Bearer ${process.env.GAMETOK_API_KEY}` }
+  const { match } = await (await fetch(`${API}/api/developer/matches/${matchId}`, { headers: auth })).json()
+  const path = `/api/developer/matches/${matchId}/result`
+  const body = JSON.stringify({ winner })
+  const timestamp = String(Math.floor(Date.now() / 1000))
+  const bodyHash = crypto.createHash('sha256').update(body).digest('hex')
+  const signature = 'v1=' + crypto.createHmac('sha256', process.env.GAMETOK_RESULTS_SECRET)
+    .update(['POST', path, timestamp, match.nonce, bodyHash].join('\n')).digest('hex')
+  const res = await fetch(API + path, {
+    method: 'POST',
+    headers: { ...auth, 'Content-Type': 'application/json', 'X-GameTok-Timestamp': timestamp, 'X-GameTok-Signature': signature },
+    body,
+  })
+  return res.json()   // { match: { status: "done", winner, … } }
+}</code></pre>
+      <p>Settled once: sending the same winner again returns the same match; a different winner afterwards is <code>409 ALREADY_SETTLED</code>. Check each player's session (<code>sessions/verify</code>) when they connect to your server so you know the ids in the match are really them.</p>
+
+      <h2 id="api">Server API reference</h2>
+      <p>Base URL <code>https://gametok-backend-267787411422.us-central1.run.app/api</code>. Authenticate with <code>Authorization: Bearer &lt;API key&gt;</code>. Keep keys on your server.</p>
+      <div class="table-wrap"><table>
+        <tr><th>Endpoint</th><th>What it does</th></tr>
+        <tr><td><span class="method">POST</span><code>/publish</code></td><td>Publish (or update) a game. Body: <code>url</code> <em>or</em> <code>html</code>, <code>title</code>, <code>description</code>, <code>orientation</code> (<code>portrait</code>|<code>landscape</code>), <code>category</code>, <code>draft</code>. Returns <code>gameId</code>, <code>url</code>, <code>status</code>, <code>checks</code>, and <code>testUrl</code> for drafts.</td></tr>
+        <tr><td><span class="method">GET</span><code>/developer/games</code></td><td>Your games with plays, unique players, checks and integration status.</td></tr>
+        <tr><td><span class="method">POST</span><code>/developer/games/:id/verify</code></td><td>Re-run the automatic checks.</td></tr>
+        <tr><td><span class="method">POST</span><code>/developer/games/:id/submit</code></td><td>Go live (live key or dashboard). Runs the checks.</td></tr>
+        <tr><td><span class="method">GET</span><code>/developer/games/:id/analytics</code></td><td>Plays, unique players, average session, high score.</td></tr>
+        <tr><td><span class="method">DELETE</span><code>/developer/games/:id</code></td><td>Unpublish and delete a game (test keys: drafts only).</td></tr>
+        <tr><td><span class="method">POST</span><code>/developer/sessions/verify</code></td><td>Check a player session (see <a href="#identity">Player identity</a>).</td></tr>
+        <tr><td><span class="method">GET</span><code>/developer/matches/:id</code></td><td>A match in your game, including its <code>nonce</code>.</td></tr>
+        <tr><td><span class="method">POST</span><code>/developer/matches/:id/result</code></td><td>Settle a match (signed — see <a href="#multiplayer">Multiplayer</a>).</td></tr>
+      </table></div>
+
+      <h2 id="keys">API keys</h2>
+      <p>Create keys in <a href="/dashboard/">Dashboard → Settings → API Keys</a>. Each key and its results secret are shown once; GameTok stores only a hash of the key. Revoke a key there at any time — it stops working immediately. Keys can't accept the Developer Agreement or create other keys; that needs you, signed in.</p>
+
+      <h2 id="errors">Error codes</h2>
+      <div class="table-wrap"><table>
+        <tr><th>Code</th><th>Meaning</th></tr>
+        <tr><td><code>AGREEMENT_REQUIRED</code></td><td>Accept the current Developer Agreement in the dashboard.</td></tr>
+        <tr><td><code>GAME_URL_NOT_HTTPS</code> · <code>GAME_URL_UNREACHABLE</code> · <code>GAME_NOT_EMBEDDABLE</code> · <code>GAME_URL_NOT_HTML</code> · <code>GAME_HTML_INVALID</code></td><td>An automatic check failed; <code>error</code> says how to fix it.</td></tr>
+        <tr><td><code>TEST_KEY_CANNOT_GO_LIVE</code> · <code>TEST_KEY_LIVE_GAME</code></td><td>Test keys only work on drafts.</td></tr>
+        <tr><td><code>NOT_IN_GAMETOK</code> · <code>NO_RESPONSE</code></td><td><code>GameTok.init()</code> outside GameTok, or the player didn't answer.</td></tr>
+        <tr><td><code>SESSION_EXPIRED</code> · <code>SESSION_INVALID</code> · <code>WRONG_GAME</code> · <code>WRONG_MODE</code></td><td>Session verification failed; ask the game for a fresh <code>GameTok.session()</code>.</td></tr>
+        <tr><td><code>ALREADY_IN_MATCH</code> · <code>MATCH_NOT_FOUND</code> · <code>MATCH_FULL</code> · <code>BAD_SEATS</code></td><td>Lobby errors.</td></tr>
+        <tr><td><code>BAD_SIGNATURE</code> · <code>STALE_TIMESTAMP</code> · <code>NOT_PLAYING</code> · <code>ALREADY_SETTLED</code> · <code>BAD_WINNER</code></td><td>Match result errors.</td></tr>
+      </table></div>
+
+      <h2 id="sample">Sample game</h2>
+      <p><a href="/sample/">Tap Tap</a> is a complete 40-line game using player identity, pause/resume and scores — view its source, copy it, and publish it as a draft to see the test player in action. <a href="/sample/server.js">sample/server.js</a> is the matching Node server that verifies sessions.</p>
+
+      <h2 id="agents">Using an AI agent</h2>
+      <p>Prefer to let an agent do it? Give Claude Code, Cursor or another coding agent this prompt from your game's folder. It follows <a href="/skill.md">skill.md</a> and asks you for your API key.</p>
+      <pre><code>Read https://games.gametok.co/skill.md and publish this game to GameTok. Ask me for my GameTok API key (games.gametok.co/dashboard → Settings → API Keys) before publishing.</code></pre>
+      <p class="note">Questions or problems: <a href="mailto:info@gametok.com">info@gametok.com</a></p>
+    </main>
+  </div>
+</body>
+</html>
