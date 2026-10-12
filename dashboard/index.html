@@ -1168,6 +1168,7 @@
       *, *::before, *::after { scroll-behavior: auto !important; animation-duration: 0.01ms !important; animation-iteration-count: 1 !important; transition-duration: 0.01ms !important; }
     }
   </style>
+  <script src="/session-sso.js"></script>
 </head>
 <body>
 
@@ -2331,12 +2332,29 @@
     let activeDetailGame = null;
 
     // The dashboard is for a signed-in account only; the landing page owns sign-in.
-    function goToSignIn() {
-      ['gametok_auth_token', 'gametok_creator_handle', 'gametok_user_name', 'gametok_user_email', 'gametok_user_avatar']
-        .forEach(k => localStorage.removeItem(k));
+    const SESSION_KEYS = ['gametok_auth_token', 'gametok_creator_handle', 'gametok_user_name', 'gametok_user_email', 'gametok_user_avatar'];
+
+    // staleToken: a token the backend rejected. Clear it on gametok.co too, or the shared
+    // sign-in would hand the same dead token straight back (redirect loop).
+    async function goToSignIn(staleToken) {
+      SESSION_KEYS.forEach(k => localStorage.removeItem(k));
+      if (staleToken && window.GameTokSSO) await window.GameTokSSO.clear(staleToken);
       window.location.replace('/?signin=1');
     }
-    if (!localStorage.getItem('gametok_auth_token')) goToSignIn();
+
+    if (!localStorage.getItem('gametok_auth_token')) {
+      // Not signed in here — reuse a gametok.co session if there is one (session-sso.js).
+      document.documentElement.style.visibility = 'hidden';
+      (window.GameTokSSO ? window.GameTokSSO.get() : Promise.resolve(null)).then(shared => {
+        if (!shared) return goToSignIn();
+        localStorage.setItem('gametok_auth_token', shared.token);
+        const u = shared.user || {};
+        if (u.username) localStorage.setItem('gametok_creator_handle', u.username);
+        if (u.displayName) localStorage.setItem('gametok_user_name', u.displayName);
+        if (u.email) localStorage.setItem('gametok_user_email', u.email);
+        window.location.reload();
+      });
+    }
 
     // Dynamic Payouts State
     let payoutHistory = [];
@@ -3036,6 +3054,12 @@
         });
         const data = await res.json();
         if (data.token && data.user) {
+          // Move the shared gametok.co session over to the new account as well.
+          const previousToken = localStorage.getItem('gametok_auth_token');
+          if (window.GameTokSSO) {
+            if (previousToken) await window.GameTokSSO.clear(previousToken);
+            await window.GameTokSSO.set(data.token, data.user);
+          }
           localStorage.setItem('gametok_auth_token', data.token);
           if (data.user.username) localStorage.setItem('gametok_creator_handle', data.user.username);
           const name = data.user.displayName || data.user.name || data.user.username || '';
@@ -3059,7 +3083,8 @@
       if (!data || typeof data !== 'object') return;
 
       // Handle Cross-Domain Google Auth Credential from gametok.co bridge
-      if (data.type === 'GAMETOK_GOOGLE_CREDENTIAL' && data.credential) {
+      // Only the gametok.co bridge may hand us a Google credential (prevents login CSRF).
+      if (data.type === 'GAMETOK_GOOGLE_CREDENTIAL' && data.credential && event.origin === 'https://gametok.co') {
         handleGoogleCredential(data.credential);
         return;
       }
@@ -3564,7 +3589,7 @@ Read https://games.gametok.co/skill.md and follow it exactly:
             headers: { 'Authorization': `Bearer ${token}` }
           });
           if (res.status === 401) {
-            goToSignIn();
+            goToSignIn(token);
             return;
           }
           if (res.ok) {
@@ -3963,12 +3988,13 @@ Read https://games.gametok.co/skill.md and follow it exactly:
       }
     }
 
-    function logout() {
-      localStorage.removeItem('gametok_auth_token');
-      localStorage.removeItem('gametok_creator_handle');
-      localStorage.removeItem('gametok_user_name');
-      localStorage.removeItem('gametok_user_email');
+    async function logout() {
+      const token = localStorage.getItem('gametok_auth_token');
+      SESSION_KEYS.forEach(k => localStorage.removeItem(k));
       showToast('Signed out from GameTok Studio');
+      // Sign out of gametok.co too; otherwise the shared sign-in would log straight back in.
+      // The backend token stays valid so the mobile app (same token) isn't signed out.
+      if (token && window.GameTokSSO) await window.GameTokSSO.clear(token);
       setTimeout(() => { window.location.href = '/'; }, 600);
     }
 

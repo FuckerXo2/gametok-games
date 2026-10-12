@@ -920,6 +920,7 @@
   </style>
   <!-- Google Identity Services (GIS) for Web -->
   <script src="https://accounts.google.com/gsi/client" async defer></script>
+  <script src="/session-sso.js"></script>
 </head>
 <body>
 
@@ -1310,7 +1311,17 @@
     function init() {
       // The dashboard sends signed-out visitors here with ?signin=1.
       const urlParams = new URLSearchParams(window.location.search);
-      if (urlParams.get('signin') === '1' && !localStorage.getItem('gametok_auth_token')) openAuthModal();
+      if (!localStorage.getItem('gametok_auth_token')) {
+        adoptSharedSession().then(found => {
+          if (found) {
+            // Signed in on gametok.co already: skip the sign-in prompt.
+            if (urlParams.get('signin') === '1') window.location.replace('/dashboard');
+            else checkLoggedInNavbar();
+          } else if (urlParams.get('signin') === '1') {
+            openAuthModal();
+          }
+        });
+      }
       // Identity comes from sign-in only; never seed a placeholder handle into storage.
       if (localStorage.getItem('gametok_creator_handle') === 'indie_dev' && !localStorage.getItem('gametok_auth_token')) {
         localStorage.removeItem('gametok_creator_handle');
@@ -1692,20 +1703,16 @@
       }
     }
 
-    function openPublisherModal() {
-      const token = localStorage.getItem('gametok_auth_token');
-      if (token) {
+    async function openPublisherModal() {
+      if (localStorage.getItem('gametok_auth_token') || await adoptSharedSession()) {
         window.location.href = '/dashboard';
       } else {
         openAuthModal();
       }
     }
 
-    function toggleDashboardView() {
-      window.location.href = '/dashboard';
-    }
-
-    function onAuthSuccess(user, token) {
+    // Store a session in this site's keys (the dashboard reads these).
+    function storeSession(user, token) {
       localStorage.setItem('gametok_auth_token', token);
       if (user) {
         if (user.username) localStorage.setItem('gametok_creator_handle', user.username);
@@ -1713,6 +1720,25 @@
         if (name) localStorage.setItem('gametok_user_name', name);
         if (user.email) localStorage.setItem('gametok_user_email', user.email);
       }
+    }
+
+    // Already signed in on gametok.co? Reuse that session here (see session-sso.js).
+    async function adoptSharedSession() {
+      if (!window.GameTokSSO) return false;
+      const shared = await window.GameTokSSO.get();
+      if (!shared) return false;
+      storeSession(shared.user, shared.token);
+      return true;
+    }
+
+    function toggleDashboardView() {
+      window.location.href = '/dashboard';
+    }
+
+    async function onAuthSuccess(user, token) {
+      storeSession(user, token);
+      // Sign gametok.co in too, so both sites share one session.
+      if (window.GameTokSSO) await window.GameTokSSO.set(token, user);
       closeAuthModal();
       window.location.href = '/dashboard';
     }
@@ -1742,7 +1768,8 @@
 
     // Listen for credential posted from auth-bridge on gametok.co
     window.addEventListener('message', function(event) {
-      if (!event.data) return;
+      // Only the gametok.co bridge may hand us a Google credential (prevents login CSRF).
+      if (event.origin !== 'https://gametok.co' || !event.data) return;
       if (event.data.type === 'GAMETOK_GOOGLE_CREDENTIAL' && event.data.credential) {
         handleGoogleCredentialResponse({ credential: event.data.credential });
       }
