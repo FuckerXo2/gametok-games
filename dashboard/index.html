@@ -7,29 +7,32 @@
   <link rel="icon" type="image/png" href="assets/adaptive-icon.png">
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
   <style>
     :root {
-      --bg: #070c17;
-      --bg-sidebar: #090f1e;
-      --bg-card: #0c1424;
-      --bg-card-inner: #101a2f;
-      --bg-card-hover: #13203b;
-      --bg-input: #080e1c;
-      --border: #17243c;
-      --border-subtle: rgba(255, 255, 255, 0.07);
-      --text: #ffffff;
-      --text-muted: #8b9bb4;
-      --text-dim: #546482;
-      --blue: #2563eb;
-      --blue-hover: #1d4ed8;
+      /* Same palette as the developer site (assets/dev.css). */
+      --bg: #050507;
+      --bg-sidebar: #08080b;
+      --bg-card: #101015;
+      --bg-card-inner: #16161d;
+      --bg-card-hover: #1a1a22;
+      --bg-input: #16161d;
+      --border: #24242e;
+      --border-subtle: rgba(255, 255, 255, 0.06);
+      --text: #f4f5f8;
+      --text-muted: #a3a6b4;
+      --text-dim: #6f7282;
+      --accent: #bfe3ff;
+      --accent-ink: #061626;
+      --blue: #38bdf8;
+      --blue-hover: #7dd3fc;
       --cyan: #38bdf8;
       --green: #22c55e;
       --green-bg: rgba(34, 197, 94, 0.14);
       --amber: #f59e0b;
       --amber-bg: rgba(245, 158, 11, 0.14);
       --purple: #a855f7;
-      --font: 'Plus Jakarta Sans', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+      --font: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
       --font-mono: 'JetBrains Mono', monospace;
     }
 
@@ -1167,6 +1170,65 @@
     @media (prefers-reduced-motion: reduce) {
       *, *::before, *::after { scroll-behavior: auto !important; animation-duration: 0.01ms !important; animation-iteration-count: 1 !important; transition-duration: 0.01ms !important; }
     }
+  
+    /* ===== Developer-site theme (matches assets/dev.css) ===== */
+    body { color-scheme: dark; }
+    .main-viewport { position: relative; isolation: isolate; }
+    .main-viewport::before {
+      content: ''; position: fixed; inset: 0; z-index: -1; pointer-events: none;
+      background:
+        radial-gradient(55% 45% at 85% -5%, rgba(56, 132, 255, 0.16), transparent 70%),
+        linear-gradient(rgba(255, 255, 255, 0.022) 1px, transparent 1px) 0 0 / 56px 56px,
+        linear-gradient(90deg, rgba(255, 255, 255, 0.022) 1px, transparent 1px) 0 0 / 56px 56px;
+      -webkit-mask-image: linear-gradient(to bottom, #000, transparent 70%);
+      mask-image: linear-gradient(to bottom, #000, transparent 70%);
+    }
+    aside.sidebar { background: var(--bg-sidebar); border-right-color: var(--border-subtle); }
+    .sidebar-brand { font-weight: 800; letter-spacing: -0.03em; }
+    .nav-item { border-radius: 999px; font-size: 14px; font-weight: 600; padding: 10px 16px; }
+    .nav-item:hover { background: var(--bg-card-inner); color: var(--text); }
+    .nav-item.active { background: var(--text); color: #050507; box-shadow: none; }
+    .nav-item.active .nav-icon { color: #050507; }
+
+    .view-header-left h1 { font-size: clamp(26px, 3vw, 34px); font-weight: 900; letter-spacing: -0.04em; }
+    .view-header-left p { font-size: 14px; }
+
+    .btn-blue-action, .btn-primary {
+      background: var(--accent); color: var(--accent-ink);
+      border-radius: 999px; font-weight: 700; font-size: 13.5px; padding: 10px 18px;
+      box-shadow: 0 8px 30px rgba(120, 190, 255, 0.18);
+    }
+    .btn-blue-action:hover, .btn-primary:hover { background: #d4ecff; color: var(--accent-ink); }
+    .btn-outline-action { border-radius: 999px; border-color: #34343f; color: var(--text); padding: 9px 16px; }
+    .btn-outline-action:hover { background: var(--bg-card-inner); }
+    .btn-table-action { border-radius: 999px; }
+    .btn-table-action.play-btn { background: var(--accent); color: var(--accent-ink); border-color: var(--accent); }
+    .filter-pill { border-radius: 999px; }
+
+    .card-panel, .card-stat, .game-grid-card, .game-hero-banner { border-radius: 20px; border-color: var(--border); background: var(--bg-card); }
+    .card-panel-header { letter-spacing: -0.025em; }
+    .card-stat-value { letter-spacing: -0.04em; font-weight: 900; }
+    .card-stat-icon-wrap { border-radius: 12px; background: var(--bg-card-inner) !important; border: 1px solid var(--border); color: var(--blue); }
+
+    .form-input { border-radius: 14px; padding: 12px 16px; font-size: 14.5px; background: var(--bg-input); }
+    .form-input:focus { border-color: var(--blue); background: #1a1a22; }
+    .form-label { font-size: 13.5px; font-weight: 700; color: var(--text); }
+    .code-snippet { background: #0a0a0e; border: 1px solid var(--border); border-radius: 14px; }
+
+    .data-table th { color: var(--text-dim); font-weight: 600; }
+    .data-table td { color: #d3d5de; }
+
+    .detail-nav-tab { border-radius: 999px; }
+    .detail-nav-tab.active { background: var(--text); color: #050507; }
+    .modal-overlay { background: rgba(0, 0, 0, 0.78); }
+    .modal-box { border-radius: 24px; background: #0c0c11; border-color: var(--border); box-shadow: 0 30px 80px rgba(0, 0, 0, 0.6); }
+    .badge-status { border-radius: 999px; letter-spacing: 0.04em; }
+    #dashboardToast { border-radius: 999px; }
+    a { color: var(--blue); }
+    .filter-pill.active, .page-btn.active, .wizard-step-item.active .wizard-step-num {
+      background: var(--accent); color: var(--accent-ink); border-color: var(--accent); box-shadow: none;
+    }
+    .brand-icon-box { background: transparent; box-shadow: none; }
   </style>
   <script src="/session-sso.js"></script>
 </head>
@@ -2406,7 +2468,7 @@
                 <div style="width: 48px; height: 48px; border-radius: 12px; background: rgba(255,255,255,0.04); display: flex; align-items: center; justify-content: center; font-size: 24px;">🎮</div>
                 <div style="font-size: 15px; font-weight: 600; color: #fff;">No games submitted yet</div>
                 <div style="font-size: 13px; max-width: 380px;">Publish your first web game or external URL to start tracking players and plays.</div>
-                <button class="btn-primary" onclick="openNewGameWizard()" style="margin-top: 8px; font-size: 13px; padding: 9px 18px; background: var(--blue); color: #fff; border: none; border-radius: 8px; cursor: pointer; font-weight: 600;">+ Submit Your First Game</button>
+                <button class="btn-primary" onclick="openNewGameWizard()" style="margin-top: 8px; font-size: 13.5px; padding: 11px 20px; background: var(--accent); color: var(--accent-ink); border: none; border-radius: 999px; cursor: pointer; font-weight: 700;">+ Put your first game on GameTok</button>
               </div>
             </td>
           </tr>
