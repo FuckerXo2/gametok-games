@@ -5,8 +5,7 @@
  * The official client-side SDK for publishing HTML5 & WebGL games on GameTok.
  * - Zero dependencies, ~4KB footprint
  * - Instant Player Identity (auto-login without sign-in forms)
- * - In-App Purchases & Microtransactions with 1-click checkout
- * - Rewarded Ads & Interstitials
+ * - In-app purchases and ads: NOT available yet (calls reject with code NOT_AVAILABLE)
  * - Global Leaderboards & Real-time Analytics
  * - Built-in Local Sandbox mode for seamless localhost development
  */
@@ -50,6 +49,12 @@
     mute: [],
     unmute: []
   };
+
+  function notAvailable(feature) {
+    var err = new Error(feature + ' are not available on GameTok yet.');
+    err.code = 'NOT_AVAILABLE';
+    return Promise.reject(err);
+  }
 
   function generateReqId() {
     return 'gt_' + Date.now() + '_' + Math.floor(Math.random() * 1000000);
@@ -174,117 +179,19 @@
     },
 
     /**
-     * In-App Purchases & Payments API (Platform Revenue Split)
+     * In-app purchases and ads are NOT available on GameTok yet. These used to simulate a
+     * checkout / ad and return fake receipts; they now reject with code NOT_AVAILABLE so a
+     * game never grants items for money that was never taken. Kept so existing calls fail
+     * cleanly instead of throwing "undefined is not a function".
      */
     payments: {
-      /**
-       * Trigger a 1-click in-game purchase (Apple Pay, Card, GameTok Coins)
-       * @param {Object} item - { itemId, title, amount, currency }
-       * @returns {Promise<Object>} { success, receiptId, itemId, amount, timestamp }
-       */
-      purchase: function (item) {
-        if (!item || !item.itemId || item.amount === undefined) {
-          return Promise.reject(new Error('Invalid purchase item: itemId and amount are required.'));
-        }
-
-        var payload = {
-          itemId: String(item.itemId),
-          title: item.title || 'In-game item',
-          amount: parseFloat(item.amount),
-          currency: item.currency || 'USD',
-          gameId: config.gameId
-        };
-
-        if (!isInIframe) {
-          // Localhost dev simulation modal
-          return new Promise(function (resolve) {
-            var confirmed = confirm('[GameTok Sandbox Checkout]\n\n' +
-              'Item: ' + payload.title + ' (' + payload.itemId + ')\n' +
-              'Price: $' + payload.amount.toFixed(2) + ' ' + payload.currency + '\n\n' +
-              'Approve simulated payment?');
-
-            if (confirmed) {
-              resolve({
-                success: true,
-                receiptId: 'rcpt_sandbox_' + Math.floor(Math.random() * 1000000),
-                itemId: payload.itemId,
-                amount: payload.amount,
-                currency: payload.currency,
-                sandbox: true,
-                timestamp: Date.now()
-              });
-            } else {
-              resolve({
-                success: false,
-                error: 'USER_CANCELLED',
-                itemId: payload.itemId
-              });
-            }
-          });
-        }
-
-        return new Promise(function (resolve, reject) {
-          var reqId = generateReqId();
-          pendingRequests[reqId] = { resolve: resolve, reject: reject };
-
-          postToParent({
-            type: 'GAMETOK_PURCHASE_REQUEST',
-            requestId: reqId,
-            payload: payload
-          });
-        });
-      },
-
-      /**
-       * Get available items configured for this game
-       */
-      getCatalog: function () {
-        return Promise.resolve([
-          { itemId: 'gems_100', title: '100 Gems', amount: 0.99, currency: 'USD' },
-          { itemId: 'gems_500', title: '500 Gems Bundle', amount: 3.99, currency: 'USD' },
-          { itemId: 'vip_pass', title: 'Season VIP Pass', amount: 9.99, currency: 'USD' }
-        ]);
-      }
+      purchase: function () { return notAvailable('In-app purchases'); },
+      getCatalog: function () { return Promise.resolve([]); }
     },
 
-    /**
-     * Ads Monetization API (Rewarded Video & Interstitials)
-     */
     ads: {
-      showRewardedAd: function () {
-        if (!isInIframe) {
-          return new Promise(function (resolve) {
-            console.log('[GameTok Sandbox] Rewarded video simulated');
-            setTimeout(function () {
-              resolve({ rewarded: true });
-            }, 1000);
-          });
-        }
-
-        return new Promise(function (resolve, reject) {
-          var reqId = generateReqId();
-          pendingRequests[reqId] = { resolve: resolve, reject: reject };
-          postToParent({
-            type: 'GAMETOK_SHOW_REWARDED_AD',
-            requestId: reqId
-          });
-        });
-      },
-
-      showInterstitial: function () {
-        if (!isInIframe) {
-          return Promise.resolve({ complete: true });
-        }
-
-        return new Promise(function (resolve, reject) {
-          var reqId = generateReqId();
-          pendingRequests[reqId] = { resolve: resolve, reject: reject };
-          postToParent({
-            type: 'GAMETOK_SHOW_INTERSTITIAL',
-            requestId: reqId
-          });
-        });
-      }
+      showRewardedAd: function () { return notAvailable('Rewarded ads'); },
+      showInterstitial: function () { return notAvailable('Interstitial ads'); }
     },
 
     /**

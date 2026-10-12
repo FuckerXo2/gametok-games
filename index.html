@@ -8,7 +8,7 @@
   </script>
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>GameTok for Developers — Build once. Reach millions. On GameTok.</title>
-  <meta name="description" content="Publish your games, get real players, earn revenue. Integrate with your AI agent in minutes and let us handle distribution, analytics and payments.">
+  <meta name="description" content="Publish your web game on GameTok, reach new players and track how it performs. Integrate with your AI agent in minutes.">
   <link rel="icon" type="image/png" href="/assets/adaptive-icon.png">
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -1006,7 +1006,7 @@
           <div class="section-tag">WHY PUBLISH ON GAMETOK?</div>
           <h2>
             More players.<br>
-            More revenue.<br>
+            Real analytics.<br>
             Less friction.
           </h2>
           <p>
@@ -1055,20 +1055,20 @@
               </svg>
             </div>
             <h3>Real Analytics</h3>
-            <p>Track players, engagement, revenue and more — all in one dashboard.</p>
+            <p>Track plays, players and session length for every game in one dashboard.</p>
           </div>
 
-          <!-- Column 1, Row 2: Built-in Payments -->
+          <!-- Column 1, Row 2: Instant Updates -->
           <div class="feature-item">
             <div class="feature-icon-circle">
-              <!-- Clean Wallet / Card SVG -->
+              <!-- Refresh SVG -->
               <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
-                <rect x="2" y="5" width="20" height="14" rx="2"></rect>
-                <line x1="2" y1="10" x2="22" y2="10"></line>
+                <polyline points="23 4 23 10 17 10"></polyline>
+                <path d="M20.49 15a9 9 0 1 1-2.12-9.36L23 10"></path>
               </svg>
             </div>
-            <h3>Built-in Payments</h3>
-            <p>Let us handle the payment infrastructure. You get paid. We handle the rest.</p>
+            <h3>Instant Updates</h3>
+            <p>Your game stays on your own hosting. Every time you deploy, GameTok players get the new version.</p>
           </div>
 
           <!-- Column 2, Row 2: Developer Friendly -->
@@ -1155,7 +1155,7 @@
             <div>
               <div class="step-num-circle">3</div>
               <h3>Connect & publish</h3>
-              <p>Your game gets integrated with GameTok. Add details, set pricing and hit publish.</p>
+              <p>Your agent adds the GameTok bridge and publishes with your API key. Your game goes live in the feed.</p>
             </div>
             <div class="step-bottom-icons">
               <!-- Clean Cloud Upload Vector Icon -->
@@ -1173,8 +1173,8 @@
           <div class="step-card" onclick="openPublisherModal()">
             <div>
               <div class="step-num-circle">4</div>
-              <h3>Track & earn</h3>
-              <p>See your stats, manage your games and get paid through your dashboard.</p>
+              <h3>Track & improve</h3>
+              <p>See plays and players for each game, and manage your games and API keys in your dashboard.</p>
             </div>
             <div class="step-bottom-icons">
               <!-- Clean Growth Analytics Vector Icon -->
@@ -1201,7 +1201,7 @@
           <div class="chalk-title-large">
             YOUR GAMES.<br>
             REAL PLAYERS.<br>
-            REAL EARNINGS.
+            REAL ANALYTICS.
             <svg class="chalk-sparkle" width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="var(--cyan)" stroke-width="2.5" stroke-linecap="round" style="position: absolute; top: -10px; right: -28px;">
               <line x1="12" y1="2" x2="12" y2="7"/>
               <line x1="2" y1="12" x2="7" y2="12"/>
@@ -1275,10 +1275,6 @@
           <div class="form-group">
             <label class="form-label">Creator Handle (@username) *</label>
             <input type="text" id="modalHandleInput" class="form-input" placeholder="e.g. alex" value="indie_dev" oninput="updatePromptHandle(this.value)" required>
-          </div>
-          <div class="form-group">
-            <label class="form-label">Payout Email / Address (PayPal / USDC) *</label>
-            <input type="text" id="modalPayoutInput" class="form-input" placeholder="payouts@example.com" required>
           </div>
         </div>
 
