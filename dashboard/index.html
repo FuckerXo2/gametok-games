@@ -1860,6 +1860,31 @@
                 <textarea id="wizGameDesc" class="form-input" rows="3" placeholder="Describe gameplay, features, and controls..." oninput="updateCharCount(this.value)" required></textarea>
               </div>
 
+              <div class="form-group" style="display: grid; grid-template-columns: 1fr 1fr; gap: 12px;">
+                <div>
+                  <label class="form-label">How is it played? *</label>
+                  <div style="display: flex; gap: 8px;">
+                    <label class="btn-outline-action" style="flex: 1; display: flex; align-items: center; gap: 8px; cursor: pointer; padding: 10px;"><input type="radio" name="wizOrientation" value="portrait" style="accent-color: var(--blue);"> Phone upright</label>
+                    <label class="btn-outline-action" style="flex: 1; display: flex; align-items: center; gap: 8px; cursor: pointer; padding: 10px;"><input type="radio" name="wizOrientation" value="landscape" style="accent-color: var(--blue);"> Sideways</label>
+                  </div>
+                </div>
+                <div>
+                  <label class="form-label" for="wizCategory">Category *</label>
+                  <select id="wizCategory" class="form-input">
+                    <option value="">Choose…</option>
+                    <option value="action">Action</option>
+                    <option value="adventure">Adventure</option>
+                    <option value="arcade">Arcade</option>
+                    <option value="sports">Sports</option>
+                    <option value="rpg">RPG</option>
+                    <option value="visual-novel">Visual Novel</option>
+                    <option value="horror">Horror</option>
+                    <option value="racing">Racing</option>
+                    <option value="puzzle">Puzzles</option>
+                  </select>
+                </div>
+              </div>
+
               <div class="form-group">
                 <label class="form-label">Hosting Method *</label>
                 <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-bottom: 8px;">
@@ -3054,6 +3079,12 @@
       reader.readAsText(file);
     }
 
+    // Portrait = phone held upright, landscape = sideways. Never assumed: the developer picks.
+    function wizardOrientation() {
+      const picked = document.querySelector('input[name="wizOrientation"]:checked');
+      return picked ? picked.value : '';
+    }
+
     function openNewGameWizard() {
       wizardCurrentStep = 1;
       uploadedGameHtml = '';
@@ -3063,6 +3094,9 @@
       const u = document.getElementById('wizGameUrl');
       if (n) n.value = '';
       if (d) d.value = '';
+      document.querySelectorAll('input[name="wizOrientation"]').forEach(r => { r.checked = false; });
+      const cat = document.getElementById('wizCategory');
+      if (cat) cat.value = '';
       if (u) u.value = '';
       const c = document.getElementById('descCharCount');
       if (c) c.textContent = '0/500';
@@ -3112,6 +3146,14 @@
       }
       if (currentHostMode === 'file' && !uploadedGameHtml) {
         alert('Please select an HTML game bundle file to upload.');
+        return;
+      }
+      if (!wizardOrientation()) {
+        alert('Choose how the game is played: phone upright or sideways.');
+        return;
+      }
+      if (!document.getElementById('wizCategory').value) {
+        alert('Choose a category.');
         return;
       }
 
@@ -3175,7 +3217,8 @@
             description: desc,
             url: currentHostMode === 'link' ? url : undefined,
             html: currentHostMode === 'file' ? uploadedGameHtml : undefined,
-            orientation: 'landscape',
+            orientation: wizardOrientation(),
+            category: document.getElementById('wizCategory').value,
             draft: asDraft
           })
         });
@@ -3694,6 +3737,7 @@ Read https://games.gametok.co/skill.md and follow it exactly:
               fileSize: g.embed_url ? 'External URL' : 'HTML5 Web',
               engine: 'HTML5 Web',
               embedUrl: g.embed_url || g.embedUrl || `/game/${g.id}`,
+              orientation: g.orientation || 'portrait',
               verificationStatus: g.verificationStatus,
               checks: (() => { try { const v = JSON.parse(g.verificationNotes || 'null'); return Array.isArray(v) ? v : []; } catch { return []; } })()
             }));
