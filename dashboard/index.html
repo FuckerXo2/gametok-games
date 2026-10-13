@@ -1930,7 +1930,8 @@
                   <label class="form-label" style="margin-top: 12px;">Works on</label>
                   <div style="display: flex; gap: 8px;">
                     <label class="wiz-choice"><input type="radio" name="wizPlatform" value="auto" checked> Detect</label>
-                    <label class="wiz-choice"><input type="radio" name="wizPlatform" value="all"> Phones too</label>
+                    <label class="wiz-choice"><input type="radio" name="wizPlatform" value="all"> Home feed</label>
+                    <label class="wiz-choice"><input type="radio" name="wizPlatform" value="explore"> Explore only</label>
                     <label class="wiz-choice"><input type="radio" name="wizPlatform" value="desktop"> Desktop only</label>
                   </div>
                 </div>
@@ -2712,12 +2713,12 @@
       const howSet = { developer: 'your choice', detected: 'detected from the game', default: 'default, nothing detected' }[g.orientationSource] || '';
       document.getElementById('detailOrientationText').textContent =
         (g.orientation === 'landscape' ? 'Landscape' : 'Portrait') + (howSet ? ` · ${howSet}` : '');
-      // e.g. "Desktop only · detected · 72.0 MB, keyboard"
+      // e.g. "Explore only · detected · 22.0 MB, 3 s load, touch controls"
       const mc = g.mobileCheck || {};
       const platformHow = { developer: 'your choice', detected: 'detected', default: 'not measured yet' }[g.platformSource] || '';
-      const measured = [mc.bytes ? `${(mc.bytes / 1024 / 1024).toFixed(1)} MB` : '', { touch: 'touch controls', keyboard: 'keyboard only', none: 'no controls seen' }[mc.controls] || ''].filter(Boolean).join(', ');
+      const measured = [mc.bytes ? `${(mc.bytes / 1024 / 1024).toFixed(1)} MB` : '', mc.loadMs ? `${(mc.loadMs / 1000).toFixed(0)} s load` : '', { touch: 'touch controls', keyboard: 'keyboard only', none: 'no controls seen' }[mc.controls] || ''].filter(Boolean).join(', ');
       document.getElementById('detailPlatformText').textContent =
-        (g.platform === 'desktop' ? 'Desktop only' : 'Phones + desktop') + (platformHow ? ` · ${platformHow}` : '') + (measured ? ` · ${measured}` : '');
+        ({ desktop: 'Desktop only', explore: 'Explore only on phones' }[g.platform] || 'Home feed + Explore') + (platformHow ? ` · ${platformHow}` : '') + (measured ? ` · ${measured}` : '');
       const why = [...(mc.reasons || []), ...(mc.warnings || [])];
       const whyEl = document.getElementById('detailPlatformWhy');
       whyEl.textContent = why.join(' ');
@@ -3157,8 +3158,8 @@
     function sizeVerdict(bytes, isZip) {
       const size = `${(bytes / 1024 / 1024).toFixed(1)} MB${isZip ? ' zipped' : ''}`;
       if (bytes > 50 * 1024 * 1024) return `${size}: over 50 MB, so it will be shown on desktop only.`;
-      if (bytes > 15 * 1024 * 1024) return `${size}: large for mobile data, so it's shown lower on phones. Under 15 MB is best.`;
-      return isZip ? `${size}. The full download is measured after upload.` : `${size}: fine for phones.`;
+      if (bytes > 15 * 1024 * 1024) return `${size}: over 15 MB, so phones see it in Explore, not the home feed.`;
+      return isZip ? `${size}. The full download is measured after upload.` : `${size}: light enough for the home feed.`;
     }
 
     function handleGameFileSelected(files) {

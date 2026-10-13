@@ -79,10 +79,11 @@
         <span class="label">Works on</span>
         <div class="choice-row">
           <label class="choice"><input type="radio" name="platform" value="auto" checked><span>Detect it<small>From its controls and size</small></span></label>
-          <label class="choice"><input type="radio" name="platform" value="all"><span>Phones too<small>And desktop</small></span></label>
+          <label class="choice"><input type="radio" name="platform" value="all"><span>Home feed<small>Swipe feed + Explore</small></span></label>
+          <label class="choice"><input type="radio" name="platform" value="explore"><span>Explore only<small>Browse and search</small></span></label>
           <label class="choice"><input type="radio" name="platform" value="desktop"><span>Desktop only<small>Hidden on phones</small></span></label>
         </div>
-        <div class="hint">Keyboard-only games, and games that download over 50 MB, are shown on desktop only. Games over 15 MB are shown lower on phones.</div>
+        <div class="hint">Where phone players find it. The home feed needs a game under 15 MB that loads in under 8 seconds; bigger or slower games go to Explore. Keyboard-only games and games over 50 MB are desktop only. On desktop every game shows everywhere.</div>
       </div>
 
       <div class="field">
@@ -150,7 +151,7 @@
     let uploadedZip = null;
     const MAX_ZIP_BYTES = 32 * 1024 * 1024;
     // Same limits as the server (src/mobile-fit.js).
-    const SOFT_LIMIT_BYTES = 15 * 1024 * 1024;
+    const FEED_LIMIT_BYTES = 15 * 1024 * 1024;
     const HARD_LIMIT_BYTES = 50 * 1024 * 1024;
     const mb = (bytes) => `${(bytes / 1024 / 1024).toFixed(1)} MB`;
     // Size verdict for the chosen file. A zip unpacks bigger, so its size is a lower bound.
@@ -158,8 +159,8 @@
       const el = $('sizeNote');
       const size = isZip ? `at least ${mb(file.size)} (zipped)` : mb(file.size);
       el.textContent = file.size > HARD_LIMIT_BYTES ? `Download size ${size}: over 50 MB, so it will be shown on desktop only.`
-        : file.size > SOFT_LIMIT_BYTES ? `Download size ${size}: large for mobile data, so it's shown lower on phones. Under 15 MB is best.`
-        : isZip ? `Zipped size ${mb(file.size)}. GameTok measures the full download after upload.` : `Download size ${size}: fine for phones.`;
+        : file.size > FEED_LIMIT_BYTES ? `Download size ${size}: over 15 MB, so phones see it in Explore, not the home feed.`
+        : isZip ? `Zipped size ${mb(file.size)}. GameTok measures the full download after upload.` : `Download size ${size}: light enough for the home feed.`;
       el.hidden = false;
     }
     let me = null;
