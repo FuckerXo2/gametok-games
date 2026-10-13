@@ -1991,7 +1991,7 @@
                   <input type="file" id="wizGameFileInput" accept=".zip,.html,.htm,application/zip" style="display: none;" onchange="handleGameFileSelected(this.files)">
                   <div style="font-size: 28px; margin-bottom: 8px;">📁</div>
                   <div style="font-size: 13px; font-weight: 600; color: #fff;" id="fileUploadPrompt">Click to select or drag &amp; drop your game .zip</div>
-                  <div style="font-size: 11px; color: var(--text-dim); margin-top: 4px;" id="fileUploadDetails">Zip the folder your build makes (with index.html in it), up to 32 MB. A single self-contained .html works too.</div>
+                  <div style="font-size: 11px; color: var(--text-dim); margin-top: 4px;" id="fileUploadDetails">Zip the folder your build makes (with index.html in it), up to 200 MB. A single self-contained .html works too.</div>
                 </div>
               </div>
 
@@ -3162,6 +3162,19 @@
       return isZip ? `${size}. The full download is measured after upload.` : `${size}: light enough for the home feed.`;
     }
 
+    // Sends the zip straight to storage at a signed URL (no size cap from our server), with progress.
+    function putToStorage(url, file, onProgress) {
+      return new Promise((resolve, reject) => {
+        const xhr = new XMLHttpRequest();
+        xhr.open('PUT', url);
+        xhr.setRequestHeader('Content-Type', 'application/zip');
+        xhr.upload.onprogress = (e) => { if (e.lengthComputable) onProgress(Math.round((e.loaded / e.total) * 100)); };
+        xhr.onload = () => (xhr.status >= 200 && xhr.status < 300 ? resolve() : reject(new Error(`Upload failed (HTTP ${xhr.status}). Try again.`)));
+        xhr.onerror = () => reject(new Error('Upload failed: check your connection and try again.'));
+        xhr.send(file);
+      });
+    }
+
     function handleGameFileSelected(files) {
       if (!files || files.length === 0) return;
       const file = files[0];
@@ -3170,8 +3183,8 @@
         showToast('Upload your game as a .zip (or one self-contained .html file).');
         return;
       }
-      if (isZip && file.size > 32 * 1024 * 1024) {
-        showToast('That zip is over 32 MB. Host the game yourself and use External Web Link.');
+      if (isZip && file.size > 200 * 1024 * 1024) {
+        showToast('That zip is over 200 MB. Host the game yourself and use External Web Link.');
         return;
       }
       uploadedGameHtml = '';
@@ -3233,7 +3246,7 @@
       const promptEl = document.getElementById('fileUploadPrompt');
       if (promptEl) promptEl.textContent = 'Click to select or drag & drop your game .zip';
       const detailsEl = document.getElementById('fileUploadDetails');
-      if (detailsEl) detailsEl.textContent = 'Zip the folder your build makes (with index.html in it), up to 32 MB. A single self-contained .html works too.';
+      if (detailsEl) detailsEl.textContent = 'Zip the folder your build makes (with index.html in it), up to 200 MB. A single self-contained .html works too.';
       switchHostMode('link');
       jumpToWizardStep(1);
       document.getElementById('newGameWizardModal').classList.add('active');
@@ -3338,11 +3351,16 @@
         let hostedUrl = '';
         if (currentHostMode === 'file' && uploadedGameZip) {
           if (btn) btn.textContent = 'Uploading your game…';
-          const up = await fetch(`${API_BASE}/developer/uploads`, {
+          const start = await fetch(`${API_BASE}/developer/uploads/start`, {
             method: 'POST',
-            headers: authHeaders({ 'Content-Type': 'application/zip' }),
-            body: uploadedGameZip
+            headers: authHeaders({ 'Content-Type': 'application/json' }),
+            body: JSON.stringify({ size: uploadedGameZip.size })
           });
+          const slot = await start.json().catch(() => ({}));
+          if (!start.ok || !slot.uploadUrl) throw new Error(slot.error || `Upload failed (HTTP ${start.status})`);
+          await putToStorage(slot.uploadUrl, uploadedGameZip, (pct) => { if (btn) btn.textContent = `Uploading your game… ${pct}%`; });
+          if (btn) btn.textContent = 'Unpacking your game…';
+          const up = await fetch(`${API_BASE}/developer/uploads/${slot.uploadId}/finish`, { method: 'POST', headers: authHeaders() });
           const upData = await up.json().catch(() => ({}));
           if (!up.ok || !upData.url) throw new Error(upData.error || `Upload failed (HTTP ${up.status})`);
           hostedUrl = upData.url;
