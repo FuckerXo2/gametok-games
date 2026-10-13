@@ -68,9 +68,9 @@
       <div class="field">
         <span class="label">How is it played?</span>
         <div class="choice-row">
-          <label class="choice"><input type="radio" name="orientation" value="auto" checked><span>Detect it<small>We read it from your game</small></span></label>
-          <label class="choice"><input type="radio" name="orientation" value="portrait"><span>Phone upright<small>Portrait</small></span></label>
-          <label class="choice"><input type="radio" name="orientation" value="landscape"><span>Sideways<small>Landscape</small></span></label>
+          <label class="choice"><input type="radio" name="orientation" value="auto" checked><svg class="ori-icon" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" aria-hidden="true"><path d="M12 3v3M12 18v3M3 12h3M18 12h3M5.6 5.6l2.1 2.1M16.3 16.3l2.1 2.1M5.6 18.4l2.1-2.1M16.3 7.7l2.1-2.1"/></svg><span>Detect it<small>We read it from your game</small></span></label>
+          <label class="choice"><input type="radio" name="orientation" value="portrait"><svg class="ori-icon" width="14" height="20" viewBox="0 0 14 20" fill="none" stroke="currentColor" stroke-width="1.8" aria-hidden="true"><rect x="1" y="1" width="12" height="18" rx="2.5"/><line x1="5.5" y1="16" x2="8.5" y2="16"/></svg><span>Portrait<small>Phone held upright</small></span></label>
+          <label class="choice"><input type="radio" name="orientation" value="landscape"><svg class="ori-icon" width="20" height="14" viewBox="0 0 20 14" fill="none" stroke="currentColor" stroke-width="1.8" aria-hidden="true"><rect x="1" y="1" width="18" height="12" rx="2.5"/><line x1="16" y1="5.5" x2="16" y2="8.5"/></svg><span>Landscape<small>Phone held sideways</small></span></label>
         </div>
         <div class="hint">GameTok checks what your game declares (manifest, meta tag, orientation lock) and how it draws. Pick one yourself only if it gets it wrong.</div>
       </div>

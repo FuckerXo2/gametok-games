@@ -1235,6 +1235,7 @@
     .game-preview-stage img[src="/assets/adaptive-icon.png"], .game-hero-banner-thumb img[src="/assets/adaptive-icon.png"] { object-fit: contain; padding: 14%; background: var(--bg-card-inner); }
     .wiz-choice { flex: 1; display: flex; align-items: center; gap: 8px; cursor: pointer; padding: 11px 12px; border-radius: 14px; border: 1px solid var(--border); background: var(--bg-input); font-size: 13.5px; font-weight: 600; white-space: nowrap; }
     .wiz-choice input { accent-color: var(--blue); margin: 0; }
+    .wiz-choice .ori-icon { flex: none; opacity: 0.85; }
     .wiz-choice:has(input:checked) { border-color: var(--blue); background: rgba(56, 189, 248, 0.08); }
   </style>
   <script src="/session-sso.js"></script>
@@ -1919,24 +1920,8 @@
                 <textarea id="wizGameDesc" class="form-input" rows="3" placeholder="Describe gameplay, features, and controls..." oninput="updateCharCount(this.value)" required></textarea>
               </div>
 
-              <div class="form-group" style="display: grid; grid-template-columns: 1fr 1fr; gap: 12px;">
-                <div>
-                  <label class="form-label">How is it played?</label>
-                  <div style="display: flex; gap: 8px;">
-                    <label class="wiz-choice"><input type="radio" name="wizOrientation" value="auto" checked> Detect</label>
-                    <label class="wiz-choice"><input type="radio" name="wizOrientation" value="portrait"> Upright</label>
-                    <label class="wiz-choice"><input type="radio" name="wizOrientation" value="landscape"> Sideways</label>
-                  </div>
-                  <label class="form-label" style="margin-top: 12px;">Works on</label>
-                  <div style="display: flex; gap: 8px;">
-                    <label class="wiz-choice"><input type="radio" name="wizPlatform" value="auto" checked> Detect</label>
-                    <label class="wiz-choice"><input type="radio" name="wizPlatform" value="all"> Home feed</label>
-                    <label class="wiz-choice"><input type="radio" name="wizPlatform" value="explore"> Explore only</label>
-                    <label class="wiz-choice"><input type="radio" name="wizPlatform" value="desktop"> Desktop only</label>
-                  </div>
-                </div>
-                <div>
-                  <label class="form-label" for="wizCategory">Category *</label>
+              <div class="form-group">
+                <label class="form-label" for="wizCategory">Category *</label>
                   <select id="wizCategory" class="form-input">
                     <option value="">Choose…</option>
                     <option value="action">Action</option>
@@ -1949,6 +1934,24 @@
                     <option value="racing">Racing</option>
                     <option value="puzzle">Puzzles</option>
                   </select>
+              </div>
+
+              <div class="form-group">
+                <label class="form-label">How is it played?</label>
+                <div style="display: flex; gap: 8px;">
+                  <label class="wiz-choice"><input type="radio" name="wizOrientation" value="auto" checked> <svg class="ori-icon" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" aria-hidden="true"><path d="M12 3v3M12 18v3M3 12h3M18 12h3M5.6 5.6l2.1 2.1M16.3 16.3l2.1 2.1M5.6 18.4l2.1-2.1M16.3 7.7l2.1-2.1"/></svg> Detect</label>
+                  <label class="wiz-choice"><input type="radio" name="wizOrientation" value="portrait"> <svg class="ori-icon" width="14" height="20" viewBox="0 0 14 20" fill="none" stroke="currentColor" stroke-width="1.8" aria-hidden="true"><rect x="1" y="1" width="12" height="18" rx="2.5"/><line x1="5.5" y1="16" x2="8.5" y2="16"/></svg> Portrait</label>
+                  <label class="wiz-choice"><input type="radio" name="wizOrientation" value="landscape"> <svg class="ori-icon" width="20" height="14" viewBox="0 0 20 14" fill="none" stroke="currentColor" stroke-width="1.8" aria-hidden="true"><rect x="1" y="1" width="18" height="12" rx="2.5"/><line x1="16" y1="5.5" x2="16" y2="8.5"/></svg> Landscape</label>
+                </div>
+              </div>
+
+              <div class="form-group">
+                <label class="form-label">Works on</label>
+                <div style="display: flex; gap: 8px; flex-wrap: wrap;">
+                  <label class="wiz-choice"><input type="radio" name="wizPlatform" value="auto" checked> Detect</label>
+                  <label class="wiz-choice"><input type="radio" name="wizPlatform" value="all"> Home feed</label>
+                  <label class="wiz-choice"><input type="radio" name="wizPlatform" value="explore"> Explore only</label>
+                  <label class="wiz-choice"><input type="radio" name="wizPlatform" value="desktop"> Desktop only</label>
                 </div>
               </div>
 

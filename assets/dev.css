@@ -188,3 +188,5 @@ th { color: var(--dim); font-weight: 600; }
 .site-footer a:hover { color: var(--text); }
 
 [hidden] { display: none !important; }
+.choice .ori-icon { flex: none; color: var(--text-dim, currentColor); }
+.choice:has(input:checked) .ori-icon { color: inherit; }
