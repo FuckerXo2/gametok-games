@@ -190,3 +190,7 @@ th { color: var(--dim); font-weight: 600; }
 [hidden] { display: none !important; }
 .choice .ori-icon { flex: none; color: var(--text-dim, currentColor); }
 .choice:has(input:checked) .ori-icon { color: inherit; }
+.dropzone.dragging { border-color: var(--accent-strong); background: var(--surface-3, var(--surface-2)); }
+.dz-actions { display: flex; gap: 8px; justify-content: center; flex-wrap: wrap; margin-top: 12px; }
+.dz-btn { padding: 7px 14px; border-radius: 999px; border: 1px solid var(--border-strong); color: var(--text, inherit); font-size: 13px; cursor: pointer; }
+.dz-btn:hover { border-color: var(--accent-strong); }

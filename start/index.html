@@ -7,6 +7,8 @@
   <link rel="icon" href="/assets/adaptive-icon.png">
   <link rel="stylesheet" href="/assets/dev.css">
   <script src="/session-sso.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/fflate@0.8.2/umd/index.js" defer></script>
+  <script src="/assets/game-folder.js" defer></script>
   <style>
     .start { padding-top: 64px; padding-bottom: 40px; }
     .count { font-size: 13px; color: var(--dim); margin-top: 8px; }
@@ -58,9 +60,16 @@
           <div class="hint">Your HTTPS address. It must allow GameTok to show it in a frame — <a href="/docs/#framing">see how</a>.</div>
         </div>
         <div id="hostFile" hidden>
-          <label class="dropzone" for="file"><span id="fileLabel">Choose your game's <code>.zip</code></span></label>
+          <div class="dropzone" id="dropzone">
+            <span id="fileLabel">Drop your game folder here</span>
+            <div class="dz-actions">
+              <label class="dz-btn" for="folder">Choose folder</label>
+              <label class="dz-btn" for="file">Choose .zip or .html</label>
+            </div>
+          </div>
+          <input id="folder" type="file" webkitdirectory multiple hidden>
           <input id="file" type="file" accept=".zip,.html,.htm,application/zip" hidden>
-          <div class="hint">Zip the folder your build makes (the one with <code>index.html</code> in it), up to 200 MB. GameTok hosts every file. A single self-contained .html works too.</div>
+          <div class="hint">The folder your build makes (the one with <code>index.html</code> in it, usually <code>dist</code> or <code>build</code>), up to 200 MB zipped. GameTok hosts every file. A .zip of it or a single self-contained .html works too.</div>
           <div class="hint" id="sizeNote" hidden></div>
         </div>
       </div>
@@ -201,8 +210,34 @@
       $('hostFile').hidden = host !== 'file';
     }));
 
-    $('file').addEventListener('change', () => {
-      const file = $('file').files[0];
+    $('file').addEventListener('change', () => pickFile($('file').files[0]));
+    $('folder').addEventListener('change', () => { if ($('folder').files.length) useFolder(window.GameFolder.fromInput($('folder').files)); });
+    $('dropzone').addEventListener('dragover', (e) => { e.preventDefault(); $('dropzone').classList.add('dragging'); });
+    $('dropzone').addEventListener('dragleave', () => $('dropzone').classList.remove('dragging'));
+    $('dropzone').addEventListener('drop', async (e) => {
+      e.preventDefault();
+      $('dropzone').classList.remove('dragging');
+      const dropped = await window.GameFolder.fromDrop(e.dataTransfer).catch(() => null);
+      if (!dropped) return;
+      if (dropped.file) pickFile(dropped.file); else useFolder(dropped);
+    });
+
+    // A folder is zipped here, then handled exactly like a .zip the developer made.
+    async function useFolder(folder) {
+      uploadedHtml = '';
+      uploadedZip = null;
+      $('sizeNote').hidden = true;
+      try {
+        $('fileLabel').textContent = 'Packing your game…';
+        const zipFile = await window.GameFolder.zip(folder, (pct) => { $('fileLabel').textContent = `Packing your game… ${pct}%`; });
+        pickFile(zipFile);
+        if (uploadedZip) $('fileLabel').textContent = `✓ ${folder.name} folder (${Math.round(zipFile.size / 1024)} KB packed)`;
+      } catch (err) {
+        $('fileLabel').textContent = err.message;
+      }
+    }
+
+    function pickFile(file) {
       uploadedHtml = '';
       uploadedZip = null;
       $('sizeNote').hidden = true;
@@ -220,7 +255,7 @@
       const reader = new FileReader();
       reader.onload = () => { uploadedHtml = String(reader.result || ''); $('fileLabel').textContent = `✓ ${file.name} (${Math.round(file.size / 1024)} KB)`; };
       reader.readAsText(file);
-    });
+    }
 
     $('description').addEventListener('input', () => { $('descCount').textContent = $('description').value.length; });
 
