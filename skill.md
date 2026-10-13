@@ -78,6 +78,7 @@ Check for `GAMETOK_API_KEY` in the environment. If it is not set, ask the user f
 1. Inspect `package.json` or `index.html` for:
    - Game Title (from `<title>` or package name)
    - Orientation: leave `orientation` out and GameTok detects it from the game (manifest, `screen-orientation` meta tag, `screen.orientation.lock(...)`, or how its canvas is drawn). Send `'portrait'` or `'landscape'` only if you know for sure.
+   - Works on: leave `platform` out and GameTok decides from the game's controls and download size. Keyboard-only games and games over 50 MB are shown on desktop only; over 15 MB is shown lower on phones. Send `'all'` (phones + desktop) or `'desktop'` to choose; over 50 MB is always desktop only. Make the game respond to taps (touch, pointer or click events) to reach phone players.
    - Category (one of): `'arcade'`, `'action'`, `'adventure'`, `'puzzle'`, `'sports'`, `'racing'`, `'rpg'`, `'horror'`, `'visual-novel'`
 2. Check if the project is already hosted online (e.g., `https://mygame.vercel.app`, `https://user.github.io/mygame`, or custom domain).
 

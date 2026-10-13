@@ -1511,6 +1511,8 @@
                 <div style="display: flex; justify-content: space-between;"><span style="color: var(--text-dim);">Created</span><span id="detailCreatedDate">–</span></div>
                 <div style="display: flex; justify-content: space-between;"><span style="color: var(--text-dim);">Last Updated</span><span id="detailUpdatedDate">–</span></div>
                 <div style="display: flex; justify-content: space-between; gap: 12px;"><span style="color: var(--text-dim);">Orientation</span><span id="detailOrientationText" style="text-align: right;">–</span></div>
+                <div style="display: flex; justify-content: space-between; gap: 12px;"><span style="color: var(--text-dim);">Works on</span><span id="detailPlatformText" style="text-align: right;">–</span></div>
+                <div id="detailPlatformWhy" style="font-size: 12px; color: #fbbf24;" hidden></div>
                 <div style="display: flex; justify-content: space-between;"><span style="color: var(--text-dim);">Game Link</span><span id="detailFileSize" style="color: var(--cyan); max-width: 170px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;">Hosted Link</span></div>
                 <div style="display: flex; justify-content: space-between;"><span style="color: var(--text-dim);">Source</span><span id="detailEngine">External URL</span></div>
               </div>
@@ -1924,6 +1926,12 @@
                     <label class="wiz-choice"><input type="radio" name="wizOrientation" value="auto" checked> Detect</label>
                     <label class="wiz-choice"><input type="radio" name="wizOrientation" value="portrait"> Upright</label>
                     <label class="wiz-choice"><input type="radio" name="wizOrientation" value="landscape"> Sideways</label>
+                  </div>
+                  <label class="form-label" style="margin-top: 12px;">Works on</label>
+                  <div style="display: flex; gap: 8px;">
+                    <label class="wiz-choice"><input type="radio" name="wizPlatform" value="auto" checked> Detect</label>
+                    <label class="wiz-choice"><input type="radio" name="wizPlatform" value="all"> Phones too</label>
+                    <label class="wiz-choice"><input type="radio" name="wizPlatform" value="desktop"> Desktop only</label>
                   </div>
                 </div>
                 <div>
@@ -2704,6 +2712,16 @@
       const howSet = { developer: 'your choice', detected: 'detected from the game', default: 'default, nothing detected' }[g.orientationSource] || '';
       document.getElementById('detailOrientationText').textContent =
         (g.orientation === 'landscape' ? 'Landscape' : 'Portrait') + (howSet ? ` · ${howSet}` : '');
+      // e.g. "Desktop only · detected · 72.0 MB, keyboard"
+      const mc = g.mobileCheck || {};
+      const platformHow = { developer: 'your choice', detected: 'detected', default: 'not measured yet' }[g.platformSource] || '';
+      const measured = [mc.bytes ? `${(mc.bytes / 1024 / 1024).toFixed(1)} MB` : '', { touch: 'touch controls', keyboard: 'keyboard only', none: 'no controls seen' }[mc.controls] || ''].filter(Boolean).join(', ');
+      document.getElementById('detailPlatformText').textContent =
+        (g.platform === 'desktop' ? 'Desktop only' : 'Phones + desktop') + (platformHow ? ` · ${platformHow}` : '') + (measured ? ` · ${measured}` : '');
+      const why = [...(mc.reasons || []), ...(mc.warnings || [])];
+      const whyEl = document.getElementById('detailPlatformWhy');
+      whyEl.textContent = why.join(' ');
+      whyEl.hidden = !why.length;
       document.getElementById('detailFileSize').textContent = g.embedUrl ? (g.embedUrl.length > 28 ? g.embedUrl.slice(0, 28) + '...' : g.embedUrl) : 'Hosted Link';
       document.getElementById('detailEngine').textContent = 'External Web URL';
 
@@ -3135,6 +3153,14 @@
       }
     }
 
+    // Same limits as the server (src/mobile-fit.js). A zip unpacks bigger, so its size is a lower bound.
+    function sizeVerdict(bytes, isZip) {
+      const size = `${(bytes / 1024 / 1024).toFixed(1)} MB${isZip ? ' zipped' : ''}`;
+      if (bytes > 50 * 1024 * 1024) return `${size}: over 50 MB, so it will be shown on desktop only.`;
+      if (bytes > 15 * 1024 * 1024) return `${size}: large for mobile data, so it's shown lower on phones. Under 15 MB is best.`;
+      return isZip ? `${size}. The full download is measured after upload.` : `${size}: fine for phones.`;
+    }
+
     function handleGameFileSelected(files) {
       if (!files || files.length === 0) return;
       const file = files[0];
@@ -3156,7 +3182,7 @@
       if (isZip) {
         uploadedGameZip = file;
         if (promptEl) promptEl.textContent = `✓ Selected: ${file.name} (${Math.round(file.size / 1024)} KB)`;
-        if (detailsEl) detailsEl.textContent = 'Ready — GameTok will host every file in it.';
+        if (detailsEl) detailsEl.textContent = 'Ready — GameTok will host every file in it. ' + sizeVerdict(file.size, true);
         return;
       }
 
@@ -3166,7 +3192,7 @@
       const reader = new FileReader();
       reader.onload = function(evt) {
         uploadedGameHtml = evt.target.result;
-        if (detailsEl) detailsEl.textContent = 'Ready — GameTok will host this file.';
+        if (detailsEl) detailsEl.textContent = 'Ready — GameTok will host this file. ' + sizeVerdict(file.size, false);
         showToast(`✓ Game bundle loaded (${Math.round(file.size / 1024)} KB)`);
       };
       reader.onerror = function() {
@@ -3181,6 +3207,11 @@
       return picked ? picked.value : 'auto';
     }
 
+    function wizardPlatform() {
+      const picked = document.querySelector('input[name="wizPlatform"]:checked');
+      return picked ? picked.value : 'auto';
+    }
+
     function openNewGameWizard() {
       wizardCurrentStep = 1;
       uploadedGameHtml = '';
@@ -3192,6 +3223,7 @@
       if (n) n.value = '';
       if (d) d.value = '';
       document.querySelectorAll('input[name="wizOrientation"]').forEach(r => { r.checked = r.value === 'auto'; });
+      document.querySelectorAll('input[name="wizPlatform"]').forEach(r => { r.checked = r.value === 'auto'; });
       const cat = document.getElementById('wizCategory');
       if (cat) cat.value = '';
       if (u) u.value = '';
@@ -3324,6 +3356,7 @@
             url: currentHostMode === 'link' ? url : (hostedUrl || undefined),
             html: currentHostMode === 'file' && !hostedUrl ? uploadedGameHtml : undefined,
             ...(wizardOrientation() !== 'auto' ? { orientation: wizardOrientation() } : {}),
+            ...(wizardPlatform() !== 'auto' ? { platform: wizardPlatform() } : {}),
             category: document.getElementById('wizCategory').value,
             draft: asDraft
           })
@@ -3846,6 +3879,9 @@ Read https://games.gametok.co/skill.md and follow it exactly:
               embedUrl: g.embed_url || g.embedUrl || `/game/${g.id}`,
               orientation: g.orientation || 'portrait',
               orientationSource: g.orientationSource || null,
+              platform: g.platform || 'all',
+              platformSource: g.platformSource || null,
+              mobileCheck: g.mobileCheck || null,
               verificationStatus: g.verificationStatus,
               checks: (() => { try { const v = JSON.parse(g.verificationNotes || 'null'); return Array.isArray(v) ? v : []; } catch { return []; } })()
             }));

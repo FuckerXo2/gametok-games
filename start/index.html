@@ -61,6 +61,7 @@
           <label class="dropzone" for="file"><span id="fileLabel">Choose your game's <code>.zip</code></span></label>
           <input id="file" type="file" accept=".zip,.html,.htm,application/zip" hidden>
           <div class="hint">Zip the folder your build makes (the one with <code>index.html</code> in it), up to 32 MB. GameTok hosts every file. A single self-contained .html works too.</div>
+          <div class="hint" id="sizeNote" hidden></div>
         </div>
       </div>
 
@@ -72,6 +73,16 @@
           <label class="choice"><input type="radio" name="orientation" value="landscape"><span>Sideways<small>Landscape</small></span></label>
         </div>
         <div class="hint">GameTok checks what your game declares (manifest, meta tag, orientation lock) and how it draws. Pick one yourself only if it gets it wrong.</div>
+      </div>
+
+      <div class="field">
+        <span class="label">Works on</span>
+        <div class="choice-row">
+          <label class="choice"><input type="radio" name="platform" value="auto" checked><span>Detect it<small>From its controls and size</small></span></label>
+          <label class="choice"><input type="radio" name="platform" value="all"><span>Phones too<small>And desktop</small></span></label>
+          <label class="choice"><input type="radio" name="platform" value="desktop"><span>Desktop only<small>Hidden on phones</small></span></label>
+        </div>
+        <div class="hint">Keyboard-only games, and games that download over 50 MB, are shown on desktop only. Games over 15 MB are shown lower on phones.</div>
       </div>
 
       <div class="field">
@@ -138,6 +149,19 @@
     let uploadedHtml = '';
     let uploadedZip = null;
     const MAX_ZIP_BYTES = 32 * 1024 * 1024;
+    // Same limits as the server (src/mobile-fit.js).
+    const SOFT_LIMIT_BYTES = 15 * 1024 * 1024;
+    const HARD_LIMIT_BYTES = 50 * 1024 * 1024;
+    const mb = (bytes) => `${(bytes / 1024 / 1024).toFixed(1)} MB`;
+    // Size verdict for the chosen file. A zip unpacks bigger, so its size is a lower bound.
+    function showSizeNote(file, isZip) {
+      const el = $('sizeNote');
+      const size = isZip ? `at least ${mb(file.size)} (zipped)` : mb(file.size);
+      el.textContent = file.size > HARD_LIMIT_BYTES ? `Download size ${size}: over 50 MB, so it will be shown on desktop only.`
+        : file.size > SOFT_LIMIT_BYTES ? `Download size ${size}: large for mobile data, so it's shown lower on phones. Under 15 MB is best.`
+        : isZip ? `Zipped size ${mb(file.size)}. GameTok measures the full download after upload.` : `Download size ${size}: fine for phones.`;
+      el.hidden = false;
+    }
     let me = null;
     let agreementVersion = null;
     // The account check (username? agreement?) runs in the background; the form shows at once.
@@ -179,15 +203,18 @@
       const file = $('file').files[0];
       uploadedHtml = '';
       uploadedZip = null;
+      $('sizeNote').hidden = true;
       if (!file) return;
       const kb = Math.round(file.size / 1024);
       if (/\.zip$/i.test(file.name)) {
         if (file.size > MAX_ZIP_BYTES) { $('fileLabel').textContent = `${file.name} is over 32 MB — host it and use a link`; return; }
         uploadedZip = file;
         $('fileLabel').textContent = `✓ ${file.name} (${kb} KB)`;
+        showSizeNote(file, true);
         return;
       }
       if (!/\.html?$/i.test(file.name)) { $('fileLabel').textContent = 'Choose a .zip or one .html file'; return; }
+      showSizeNote(file, false);
       const reader = new FileReader();
       reader.onload = () => { uploadedHtml = String(reader.result || ''); $('fileLabel').textContent = `✓ ${file.name} (${Math.round(file.size / 1024)} KB)`; };
       reader.readAsText(file);
@@ -202,6 +229,7 @@
       const title = $('title').value.trim();
       const url = $('url').value.trim();
       const orientation = (document.querySelector('input[name="orientation"]:checked') || {}).value || '';
+      const platform = (document.querySelector('input[name="platform"]:checked') || {}).value || 'auto';
       const category = $('category').value;
       const description = $('description').value.trim();
 
@@ -239,7 +267,7 @@
         const published = await api('/publish', {
           method: 'POST',
           headers: authHeaders({ 'Content-Type': 'application/json' }),
-          body: JSON.stringify({ title, description, category, draft: true, ...(orientation && orientation !== 'auto' ? { orientation } : {}), ...(host === 'file' && !uploadedZip ? { html: uploadedHtml } : { url: gameUrl }) })
+          body: JSON.stringify({ title, description, category, draft: true, ...(orientation && orientation !== 'auto' ? { orientation } : {}), ...(platform !== 'auto' ? { platform } : {}), ...(host === 'file' && !uploadedZip ? { html: uploadedHtml } : { url: gameUrl }) })
         });
         const testUrl = published.testUrl || `/sandbox/?game=${encodeURIComponent(published.gameId)}`;
 
