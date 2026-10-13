@@ -114,7 +114,7 @@ jq -n --rawfile html index.html --arg title "<GAME_TITLE>" \
 ```
 
 #### Option C: Upload the Build Folder as a .zip (GameTok hosts it)
-For a multi-file build (e.g. Vite/Phaser `dist/` with `index.html` + JS + assets), zip the build folder and upload it. Up to 32 MB can be POSTed directly (below); up to 200 MB, call `POST /api/developer/uploads/start` with `{"size": <bytes>}`, PUT the zip to the returned `uploadUrl` with `Content-Type: application/zip`, then `POST /api/developer/uploads/<uploadId>/finish`. Either way the response's `url` is the hosted `index.html`; publish it like Option A:
+For a multi-file build (e.g. Vite/Phaser `dist/` with `index.html` + JS + assets), upload the build folder. Any size: `POST /api/developer/uploads/files/start` with `{"files": [{"path": "dist/index.html", "size": <bytes>}, ...]}`, PUT each file to its returned `url` with its returned `contentType` as `Content-Type`, then `POST /api/developer/uploads/files/<uploadId>/finish`. A zip also works: up to 32 MB POSTed directly (below), or up to 200 MB via `POST /api/developer/uploads/start` with `{"size": <bytes>}`, PUT to `uploadUrl`, then `POST /api/developer/uploads/<uploadId>/finish`. Every route returns `url`, the hosted `index.html`; publish it like Option A:
 ```bash
 (cd dist && zip -qr ../game.zip .)
 GAME_URL=$(curl -s -X POST https://gametok-backend-267787411422.us-central1.run.app/api/developer/uploads \

@@ -69,7 +69,7 @@
           </div>
           <input id="folder" type="file" webkitdirectory multiple hidden>
           <input id="file" type="file" accept=".zip,.html,.htm,application/zip" hidden>
-          <div class="hint">The folder your build makes (the one with <code>index.html</code> in it, usually <code>dist</code> or <code>build</code>), up to 200 MB zipped. GameTok hosts every file. A .zip of it or a single self-contained .html works too.</div>
+          <div class="hint">The folder your build makes (the one with <code>index.html</code> in it, usually <code>dist</code> or <code>build</code>), any size. GameTok hosts every file. A .zip of it or a single self-contained .html works too.</div>
           <div class="hint" id="sizeNote" hidden></div>
         </div>
       </div>
@@ -145,32 +145,21 @@
     const token = () => localStorage.getItem('gametok_auth_token') || '';
     const authHeaders = (extra) => ({ ...(extra || {}), Authorization: `Bearer ${token()}` });
     let host = 'link';
-    let uploadedHtml = '';
-    let uploadedZip = null;
-    const MAX_ZIP_BYTES = 200 * 1024 * 1024;
-    // Sends the zip straight to storage at a signed URL (no size cap from our server), with progress.
-    function putToStorage(url, file, onProgress) {
-      return new Promise((resolve, reject) => {
-        const xhr = new XMLHttpRequest();
-        xhr.open('PUT', url);
-        xhr.setRequestHeader('Content-Type', 'application/zip');
-        xhr.upload.onprogress = (e) => { if (e.lengthComputable) onProgress(Math.round((e.loaded / e.total) * 100)); };
-        xhr.onload = () => (xhr.status >= 200 && xhr.status < 300 ? resolve() : reject(new Error(`Upload failed (HTTP ${xhr.status}). Try again.`)));
-        xhr.onerror = () => reject(new Error('Upload failed: check your connection and try again.'));
-        xhr.send(file);
-      });
-    }
+    // The chosen game (see /assets/game-folder.js): a folder, a .zip or one .html. Any size.
+    let pickedGame = null;
     // Same limits as the server (src/mobile-fit.js).
     const FEED_LIMIT_BYTES = 15 * 1024 * 1024;
     const HARD_LIMIT_BYTES = 50 * 1024 * 1024;
     const mb = (bytes) => `${(bytes / 1024 / 1024).toFixed(1)} MB`;
-    // Size verdict for the chosen file. A zip unpacks bigger, so its size is a lower bound.
-    function showSizeNote(file, isZip) {
+    // What the chosen game means for phones. A one-file game downloads all of it; a folder's
+    // total isn't what the game loads, so that's measured after upload.
+    function showSizeNote(game) {
       const el = $('sizeNote');
-      const size = isZip ? `at least ${mb(file.size)} (zipped)` : mb(file.size);
-      el.textContent = file.size > HARD_LIMIT_BYTES ? `Download size ${size}: over 50 MB, so it will be shown on desktop only.`
-        : file.size > FEED_LIMIT_BYTES ? `Download size ${size}: over 15 MB, so phones see it in Explore, not the home feed.`
-        : isZip ? `Zipped size ${mb(file.size)}. GameTok measures the full download after upload.` : `Download size ${size}: light enough for the home feed.`;
+      el.textContent = game.kind === 'html'
+        ? (game.bytes > HARD_LIMIT_BYTES ? `Download size ${mb(game.bytes)}: over 50 MB, so it won't be shown on phones.`
+          : game.bytes > FEED_LIMIT_BYTES ? `Download size ${mb(game.bytes)}: over 15 MB, so phones see it in Explore, not the home feed.`
+          : `Download size ${mb(game.bytes)}: light enough for the home feed.`)
+        : `Any size is fine. Where phones see it depends on what the game actually loads when played, which GameTok measures after upload.`;
       el.hidden = false;
     }
     let me = null;
@@ -210,51 +199,31 @@
       $('hostFile').hidden = host !== 'file';
     }));
 
-    $('file').addEventListener('change', () => pickFile($('file').files[0]));
-    $('folder').addEventListener('change', () => { if ($('folder').files.length) useFolder(window.GameFolder.fromInput($('folder').files)); });
+    $('file').addEventListener('change', () => { if ($('file').files[0]) choose(() => window.GameFolder.fromFile($('file').files[0])); });
+    $('folder').addEventListener('change', () => { if ($('folder').files.length) choose(() => window.GameFolder.fromFolderInput($('folder').files)); });
     $('dropzone').addEventListener('dragover', (e) => { e.preventDefault(); $('dropzone').classList.add('dragging'); });
     $('dropzone').addEventListener('dragleave', () => $('dropzone').classList.remove('dragging'));
-    $('dropzone').addEventListener('drop', async (e) => {
+    $('dropzone').addEventListener('drop', (e) => {
       e.preventDefault();
       $('dropzone').classList.remove('dragging');
-      const dropped = await window.GameFolder.fromDrop(e.dataTransfer).catch(() => null);
-      if (!dropped) return;
-      if (dropped.file) pickFile(dropped.file); else useFolder(dropped);
+      const dt = e.dataTransfer;
+      choose(() => window.GameFolder.fromDrop(dt));
     });
 
-    // A folder is zipped here, then handled exactly like a .zip the developer made.
-    async function useFolder(folder) {
-      uploadedHtml = '';
-      uploadedZip = null;
+    async function choose(read) {
+      pickedGame = null;
       $('sizeNote').hidden = true;
+      $('fileLabel').textContent = 'Reading your game…';
       try {
-        $('fileLabel').textContent = 'Packing your game…';
-        const zipFile = await window.GameFolder.zip(folder, (pct) => { $('fileLabel').textContent = `Packing your game… ${pct}%`; });
-        pickFile(zipFile);
-        if (uploadedZip) $('fileLabel').textContent = `✓ ${folder.name} folder (${Math.round(zipFile.size / 1024)} KB packed)`;
+        const game = await read();
+        if (!game) { $('fileLabel').textContent = 'Drop your game folder here'; return; }
+        pickedGame = game;
+        const what = game.kind === 'html' ? game.name : `${game.name} (${game.entries.length} files)`;
+        $('fileLabel').textContent = `✓ ${what}, ${mb(game.bytes)}`;
+        showSizeNote(game);
       } catch (err) {
         $('fileLabel').textContent = err.message;
       }
-    }
-
-    function pickFile(file) {
-      uploadedHtml = '';
-      uploadedZip = null;
-      $('sizeNote').hidden = true;
-      if (!file) return;
-      const kb = Math.round(file.size / 1024);
-      if (/\.zip$/i.test(file.name)) {
-        if (file.size > MAX_ZIP_BYTES) { $('fileLabel').textContent = `${file.name} is over 200 MB — host it and use a link`; return; }
-        uploadedZip = file;
-        $('fileLabel').textContent = `✓ ${file.name} (${kb} KB)`;
-        showSizeNote(file, true);
-        return;
-      }
-      if (!/\.html?$/i.test(file.name)) { $('fileLabel').textContent = 'Choose a .zip or one .html file'; return; }
-      showSizeNote(file, false);
-      const reader = new FileReader();
-      reader.onload = () => { uploadedHtml = String(reader.result || ''); $('fileLabel').textContent = `✓ ${file.name} (${Math.round(file.size / 1024)} KB)`; };
-      reader.readAsText(file);
     }
 
     $('description').addEventListener('input', () => { $('descCount').textContent = $('description').value.length; });
@@ -273,7 +242,7 @@
       if (!$('usernameField').hidden && !/^[a-z0-9_]{3,20}$/.test(username)) problems.push('Choose a username: 3–20 lowercase letters, numbers or underscores.');
       if (!title) problems.push('Give your game a name.');
       if (host === 'link' && !/^https:\/\//i.test(url)) problems.push('Paste your game\'s https:// address.');
-      if (host === 'file' && !uploadedHtml && !uploadedZip) problems.push('Choose your game\'s .zip (or one .html file).');
+      if (host === 'file' && !pickedGame) problems.push('Choose your game folder (or a .zip of it, or one .html file).');
       if (!category) problems.push('Choose a category.');
       if (!$('agreementField').hidden && !$('agree').checked) problems.push('Accept the Developer Agreement.');
       if (problems.length) return showError('Almost there:', problems);
@@ -294,19 +263,17 @@
           $('agreementField').hidden = true;
         }
         let gameUrl = url;
-        if (host === 'file' && uploadedZip) {
+        if (host === 'file') {
           btn.textContent = 'Uploading your game…';
-          const slot = await api('/developer/uploads/start', { method: 'POST', headers: authHeaders({ 'Content-Type': 'application/json' }), body: JSON.stringify({ size: uploadedZip.size }) });
-          await putToStorage(slot.uploadUrl, uploadedZip, (pct) => { btn.textContent = `Uploading your game… ${pct}%`; });
-          btn.textContent = 'Unpacking your game…';
-          const hosted = await api(`/developer/uploads/${slot.uploadId}/finish`, { method: 'POST', headers: authHeaders() });
+          const request = (path, body) => api(path, { method: 'POST', headers: authHeaders({ 'Content-Type': 'application/json' }), body: JSON.stringify(body) });
+          const hosted = await window.GameFolder.upload(pickedGame, request, (pct) => { btn.textContent = `Uploading your game… ${pct}%`; });
           gameUrl = hosted.url;
           btn.textContent = 'Checking your game…';
         }
         const published = await api('/publish', {
           method: 'POST',
           headers: authHeaders({ 'Content-Type': 'application/json' }),
-          body: JSON.stringify({ title, description, category, draft: true, ...(orientation && orientation !== 'auto' ? { orientation } : {}), ...(host === 'file' && !uploadedZip ? { html: uploadedHtml } : { url: gameUrl }) })
+          body: JSON.stringify({ title, description, category, draft: true, ...(orientation && orientation !== 'auto' ? { orientation } : {}), url: gameUrl })
         });
         const testUrl = published.testUrl || `/sandbox/?game=${encodeURIComponent(published.gameId)}`;
 

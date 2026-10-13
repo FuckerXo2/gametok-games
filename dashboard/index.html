@@ -1985,11 +1985,11 @@
               <div class="form-group" id="groupHostFile" style="display: none;">
                 <label class="form-label">Game build *</label>
                 <div style="border: 2px dashed rgba(255,255,255,0.18); border-radius: 12px; padding: 24px 16px; text-align: center; background: rgba(0,0,0,0.25); cursor: pointer; transition: all 0.2s;" id="dropZoneGameFile" onclick="document.getElementById('wizGameFolderInput').click()" ondragover="event.preventDefault(); this.style.borderColor='var(--blue)'" ondragleave="this.style.borderColor=''" ondrop="handleGameDrop(event)">
-                  <input type="file" id="wizGameFileInput" accept=".zip,.html,.htm,application/zip" style="display: none;" onchange="handleGameFileSelected(this.files)">
-                  <input type="file" id="wizGameFolderInput" webkitdirectory multiple style="display: none;" onchange="if (this.files.length) handleGameFolder(GameFolder.fromInput(this.files))">
+                  <input type="file" id="wizGameFileInput" accept=".zip,.html,.htm,application/zip" style="display: none;" onchange="if (this.files[0]) chooseGame(() => GameFolder.fromFile(this.files[0]))">
+                  <input type="file" id="wizGameFolderInput" webkitdirectory multiple style="display: none;" onchange="if (this.files.length) chooseGame(() => GameFolder.fromFolderInput(this.files))">
                   <div style="font-size: 28px; margin-bottom: 8px;">📁</div>
                   <div style="font-size: 13px; font-weight: 600; color: #fff;" id="fileUploadPrompt">Drop your game folder here, or click to choose it</div>
-                  <div style="font-size: 11px; color: var(--text-dim); margin-top: 4px;" id="fileUploadDetails">The folder your build makes (with index.html in it, usually dist or build), up to 200 MB zipped. A .zip or one self-contained .html works too.</div>
+                  <div style="font-size: 11px; color: var(--text-dim); margin-top: 4px;" id="fileUploadDetails">The folder your build makes (with index.html in it, usually dist or build), any size. A .zip or one self-contained .html works too.</div>
                   <button type="button" class="btn-outline-action" style="margin-top: 10px; font-size: 12px; padding: 6px 12px;" onclick="event.stopPropagation(); document.getElementById('wizGameFileInput').click()">Choose a .zip or .html instead</button>
                 </div>
               </div>
@@ -3126,9 +3126,7 @@
     // Wizard: Create New Game (Screen 5)
     let wizardCurrentStep = 1;
     let currentHostMode = 'link';
-    let uploadedGameHtml = '';
-    let uploadedGameZip = null;
-    let uploadedGameFileName = '';
+    let pickedGame = null;
 
     function switchHostMode(mode) {
       currentHostMode = mode;
@@ -3153,87 +3151,39 @@
       }
     }
 
-    // Same limits as the server (src/mobile-fit.js). A zip unpacks bigger, so its size is a lower bound.
-    function sizeVerdict(bytes, isZip) {
-      const size = `${(bytes / 1024 / 1024).toFixed(1)} MB${isZip ? ' zipped' : ''}`;
-      if (bytes > 50 * 1024 * 1024) return `${size}: over 50 MB, so it will be shown on desktop only.`;
-      if (bytes > 15 * 1024 * 1024) return `${size}: over 15 MB, so phones see it in Explore, not the home feed.`;
-      return isZip ? `${size}. The full download is measured after upload.` : `${size}: light enough for the home feed.`;
+    // What the chosen game means for phones (same limits as the server, src/mobile-fit.js). A
+    // one-file game downloads all of it; a folder's total isn't what it loads, so that's measured.
+    function sizeVerdict(game) {
+      const size = `${(game.bytes / 1024 / 1024).toFixed(1)} MB`;
+      if (game.kind !== 'html') return `${size}. Any size is fine; where phones see it depends on what the game loads when played, measured after upload.`;
+      if (game.bytes > 50 * 1024 * 1024) return `${size}: over 50 MB, so it won't be shown on phones.`;
+      if (game.bytes > 15 * 1024 * 1024) return `${size}: over 15 MB, so phones see it in Explore, not the home feed.`;
+      return `${size}: light enough for the home feed.`;
     }
 
-    // Sends the zip straight to storage at a signed URL (no size cap from our server), with progress.
-    function putToStorage(url, file, onProgress) {
-      return new Promise((resolve, reject) => {
-        const xhr = new XMLHttpRequest();
-        xhr.open('PUT', url);
-        xhr.setRequestHeader('Content-Type', 'application/zip');
-        xhr.upload.onprogress = (e) => { if (e.lengthComputable) onProgress(Math.round((e.loaded / e.total) * 100)); };
-        xhr.onload = () => (xhr.status >= 200 && xhr.status < 300 ? resolve() : reject(new Error(`Upload failed (HTTP ${xhr.status}). Try again.`)));
-        xhr.onerror = () => reject(new Error('Upload failed: check your connection and try again.'));
-        xhr.send(file);
-      });
-    }
-
-    async function handleGameDrop(event) {
+    function handleGameDrop(event) {
       event.preventDefault();
       event.currentTarget.style.borderColor = '';
-      const dropped = await GameFolder.fromDrop(event.dataTransfer).catch(() => null);
-      if (!dropped) return;
-      if (dropped.file) handleGameFileSelected([dropped.file]); else handleGameFolder(dropped);
+      const dt = event.dataTransfer;
+      chooseGame(() => GameFolder.fromDrop(dt));
     }
 
-    // A folder is zipped in the browser, then handled exactly like a .zip the developer made.
-    async function handleGameFolder(folder) {
+    // The chosen game (see /assets/game-folder.js): a folder, a .zip or one .html. Any size.
+    async function chooseGame(read) {
       const promptEl = document.getElementById('fileUploadPrompt');
+      const detailsEl = document.getElementById('fileUploadDetails');
+      pickedGame = null;
       try {
-        if (promptEl) promptEl.textContent = 'Packing your game…';
-        const zipFile = await GameFolder.zip(folder, (pct) => { if (promptEl) promptEl.textContent = `Packing your game… ${pct}%`; });
-        handleGameFileSelected([zipFile]);
-        if (uploadedGameZip && promptEl) promptEl.textContent = `✓ ${folder.name} folder (${Math.round(zipFile.size / 1024)} KB packed)`;
+        if (promptEl) promptEl.textContent = 'Reading your game…';
+        const game = await read();
+        if (!game) { if (promptEl) promptEl.textContent = 'Drop your game folder here, or click to choose it'; return; }
+        pickedGame = game;
+        if (promptEl) promptEl.textContent = `✓ ${game.kind === 'html' ? game.name : `${game.name} (${game.entries.length} files)`}`;
+        if (detailsEl) detailsEl.textContent = 'Ready — GameTok will host it. ' + sizeVerdict(game);
       } catch (err) {
         if (promptEl) promptEl.textContent = 'Drop your game folder here, or click to choose it';
         showToast(err.message);
       }
-    }
-
-    function handleGameFileSelected(files) {
-      if (!files || files.length === 0) return;
-      const file = files[0];
-      const isZip = /\.zip$/i.test(file.name);
-      if (!isZip && !/\.html?$/i.test(file.name)) {
-        showToast('Upload your game as a .zip (or one self-contained .html file).');
-        return;
-      }
-      if (isZip && file.size > 200 * 1024 * 1024) {
-        showToast('That zip is over 200 MB. Host the game yourself and use External Web Link.');
-        return;
-      }
-      uploadedGameHtml = '';
-      uploadedGameZip = null;
-      uploadedGameFileName = file.name;
-      const promptEl = document.getElementById('fileUploadPrompt');
-      const detailsEl = document.getElementById('fileUploadDetails');
-
-      if (isZip) {
-        uploadedGameZip = file;
-        if (promptEl) promptEl.textContent = `✓ Selected: ${file.name} (${Math.round(file.size / 1024)} KB)`;
-        if (detailsEl) detailsEl.textContent = 'Ready — GameTok will host every file in it. ' + sizeVerdict(file.size, true);
-        return;
-      }
-
-      if (promptEl) promptEl.textContent = `✓ Selected: ${file.name} (${Math.round(file.size / 1024)} KB)`;
-      if (detailsEl) detailsEl.textContent = 'Reading game bundle...';
-
-      const reader = new FileReader();
-      reader.onload = function(evt) {
-        uploadedGameHtml = evt.target.result;
-        if (detailsEl) detailsEl.textContent = 'Ready — GameTok will host this file. ' + sizeVerdict(file.size, false);
-        showToast(`✓ Game bundle loaded (${Math.round(file.size / 1024)} KB)`);
-      };
-      reader.onerror = function() {
-        showToast('Failed to read file');
-      };
-      reader.readAsText(file);
     }
 
     // 'auto' lets GameTok detect it from the game; portrait/landscape is the developer's override.
@@ -3244,9 +3194,7 @@
 
     function openNewGameWizard() {
       wizardCurrentStep = 1;
-      uploadedGameHtml = '';
-      uploadedGameZip = null;
-      uploadedGameFileName = '';
+      pickedGame = null;
       const n = document.getElementById('wizGameName');
       const d = document.getElementById('wizGameDesc');
       const u = document.getElementById('wizGameUrl');
@@ -3261,7 +3209,7 @@
       const promptEl = document.getElementById('fileUploadPrompt');
       if (promptEl) promptEl.textContent = 'Drop your game folder here, or click to choose it';
       const detailsEl = document.getElementById('fileUploadDetails');
-      if (detailsEl) detailsEl.textContent = 'The folder your build makes (with index.html in it, usually dist or build), up to 200 MB zipped. A .zip or one self-contained .html works too.';
+      if (detailsEl) detailsEl.textContent = 'The folder your build makes (with index.html in it, usually dist or build), any size. A .zip or one self-contained .html works too.';
       switchHostMode('link');
       jumpToWizardStep(1);
       document.getElementById('newGameWizardModal').classList.add('active');
@@ -3302,7 +3250,7 @@
         alert('Please provide a valid web URL for your game.');
         return;
       }
-      if (currentHostMode === 'file' && !uploadedGameHtml && !uploadedGameZip) {
+      if (currentHostMode === 'file' && !pickedGame) {
         alert('Please select your game .zip (or .html file) to upload.');
         return;
       }
@@ -3313,7 +3261,7 @@
 
       document.getElementById('wizSummaryName').textContent = name || 'Untitled Game';
       document.getElementById('wizSummaryDesc').textContent = desc || 'No description provided';
-      document.getElementById('wizSummaryUrl').textContent = currentHostMode === 'link' ? url : `GameTok Hosted (${uploadedGameFileName || 'HTML Bundle'})`;
+      document.getElementById('wizSummaryUrl').textContent = currentHostMode === 'link' ? url : `GameTok Hosted (${pickedGame ? pickedGame.name : 'your game'})`;
       jumpToWizardStep(2);
     }
 
@@ -3343,7 +3291,7 @@
         jumpToWizardStep(1);
         return;
       }
-      if (currentHostMode === 'file' && !uploadedGameHtml && !uploadedGameZip) {
+      if (currentHostMode === 'file' && !pickedGame) {
         alert('Please select your game .zip (or .html file).');
         jumpToWizardStep(1);
         return;
@@ -3364,21 +3312,16 @@
       let publishError = '';
       try {
         let hostedUrl = '';
-        if (currentHostMode === 'file' && uploadedGameZip) {
+        if (currentHostMode === 'file') {
           if (btn) btn.textContent = 'Uploading your game…';
-          const start = await fetch(`${API_BASE}/developer/uploads/start`, {
-            method: 'POST',
-            headers: authHeaders({ 'Content-Type': 'application/json' }),
-            body: JSON.stringify({ size: uploadedGameZip.size })
-          });
-          const slot = await start.json().catch(() => ({}));
-          if (!start.ok || !slot.uploadUrl) throw new Error(slot.error || `Upload failed (HTTP ${start.status})`);
-          await putToStorage(slot.uploadUrl, uploadedGameZip, (pct) => { if (btn) btn.textContent = `Uploading your game… ${pct}%`; });
-          if (btn) btn.textContent = 'Unpacking your game…';
-          const up = await fetch(`${API_BASE}/developer/uploads/${slot.uploadId}/finish`, { method: 'POST', headers: authHeaders() });
-          const upData = await up.json().catch(() => ({}));
-          if (!up.ok || !upData.url) throw new Error(upData.error || `Upload failed (HTTP ${up.status})`);
-          hostedUrl = upData.url;
+          const request = async (path, body) => {
+            const r = await fetch(`${API_BASE}${path}`, { method: 'POST', headers: authHeaders({ 'Content-Type': 'application/json' }), body: JSON.stringify(body) });
+            const data = await r.json().catch(() => ({}));
+            if (!r.ok) throw new Error(data.error || `Upload failed (HTTP ${r.status})`);
+            return data;
+          };
+          const hosted = await GameFolder.upload(pickedGame, request, (pct) => { if (btn) btn.textContent = `Uploading your game… ${pct}%`; });
+          hostedUrl = hosted.url;
           if (btn) btn.textContent = 'Running checks…';
         }
         const res = await fetch(`${API_BASE}/publish`, {
@@ -3387,8 +3330,7 @@
           body: JSON.stringify({
             title: name,
             description: desc,
-            url: currentHostMode === 'link' ? url : (hostedUrl || undefined),
-            html: currentHostMode === 'file' && !hostedUrl ? uploadedGameHtml : undefined,
+            url: currentHostMode === 'link' ? url : hostedUrl,
             ...(wizardOrientation() !== 'auto' ? { orientation: wizardOrientation() } : {}),
             category: document.getElementById('wizCategory').value,
             draft: asDraft
