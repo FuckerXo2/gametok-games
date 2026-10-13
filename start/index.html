@@ -33,9 +33,7 @@
     <p class="lead" style="margin-bottom: 18px;">Tell us about your game. It's saved as a private draft and opens in the test player, where you can try it inside GameTok before it goes live.</p>
     <p style="margin: 0 0 40px;"><a href="/dashboard/">Already have games? Your dashboard →</a></p>
 
-    <div id="loading" class="muted">Loading your account…</div>
-
-    <form id="startForm" novalidate hidden>
+    <form id="startForm" novalidate>
       <div id="formError" class="alert alert-error" hidden></div>
 
       <div class="field" id="usernameField" hidden>
@@ -140,6 +138,8 @@
     let uploadedHtml = '';
     let me = null;
     let agreementVersion = null;
+    // The account check (username? agreement?) runs in the background; the form shows at once.
+    let accountReady = null;
 
     function showError(message, list) {
       const el = $('formError');
@@ -208,6 +208,8 @@
       btn.disabled = true;
       btn.textContent = 'Checking your game…';
       try {
+        await accountReady;
+        if (!me) throw new Error('Could not load your account. Refresh and try again.');
         if (!$('usernameField').hidden) {
           await api(`/users/${encodeURIComponent(me.id)}`, { method: 'PUT', headers: authHeaders({ 'Content-Type': 'application/json' }), body: JSON.stringify({ username }) });
           localStorage.setItem('gametok_creator_handle', username);
@@ -249,7 +251,7 @@
       navigator.clipboard.writeText($('keyValue').value).then(() => { $('copyKey').textContent = 'Copied'; });
     });
 
-    (async function start() {
+    accountReady = (async function start() {
       if (!token() && window.GameTokSSO) {
         const shared = await window.GameTokSSO.get();
         if (shared) localStorage.setItem('gametok_auth_token', shared.token);
@@ -259,13 +261,12 @@
         const status = await api('/developer/me', { headers: authHeaders() });
         me = status.developer;
         agreementVersion = status.agreement.currentVersion;
+        // Only ask for what's missing (first-timers: username and/or agreement).
         $('usernameField').hidden = Boolean(me.username);
         $('agreementField').hidden = status.agreement.accepted;
         $('agreementVersion').textContent = agreementVersion;
-        $('loading').hidden = true;
-        $('startForm').hidden = false;
       } catch (err) {
-        $('loading').textContent = err.message;
+        showError(err.message);
       }
     })();
   </script>
