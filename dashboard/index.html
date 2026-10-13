@@ -1172,6 +1172,8 @@
     }
   
     /* ===== Developer-site theme (matches assets/dev.css) ===== */
+    /* Buttons/pills set display, which beat the hidden attribute (Go live showed on live games). */
+    [hidden] { display: none !important; }
     body { color-scheme: dark; }
     .main-viewport { position: relative; isolation: isolate; }
     .main-viewport::before {
