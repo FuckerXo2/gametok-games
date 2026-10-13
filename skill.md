@@ -103,7 +103,7 @@ curl -s -X POST https://gametok-backend-267787411422.us-central1.run.app/api/pub
 ```
 
 #### Option B: Standalone Single-File HTML Upload
-If the game is contained in a single self-contained `index.html` (send it as the JSON `html` field; multipart uploads are not supported):
+If the game is contained in a single self-contained `index.html` (send it as the JSON `html` field):
 ```bash
 jq -n --rawfile html index.html --arg title "<GAME_TITLE>" \
   '{html: $html, title: $title, category: "arcade"}' \
@@ -111,6 +111,16 @@ jq -n --rawfile html index.html --arg title "<GAME_TITLE>" \
   -H "Authorization: Bearer $GAMETOK_API_KEY" \
   -H "Content-Type: application/json" --data-binary @-
 ```
+
+#### Option C: Upload the Build Folder as a .zip (GameTok hosts it)
+For a multi-file build (e.g. Vite/Phaser `dist/` with `index.html` + JS + assets), zip the build folder (up to 32 MB) and upload it. The response's `url` is the hosted `index.html`; publish it like Option A:
+```bash
+(cd dist && zip -qr ../game.zip .)
+GAME_URL=$(curl -s -X POST https://gametok-backend-267787411422.us-central1.run.app/api/developer/uploads \
+  -H "Authorization: Bearer $GAMETOK_API_KEY" \
+  -H "Content-Type: application/zip" --data-binary @game.zip | jq -r .url)
+```
+Asset paths inside the game must be relative (`./assets/x.png`, Vite `base: './'`), not absolute (`/assets/x.png`).
 
 Publishing again with the same title updates the existing game instead of creating a new one.
 

@@ -58,9 +58,9 @@
           <div class="hint">Your HTTPS address. It must allow GameTok to show it in a frame — <a href="/docs/#framing">see how</a>.</div>
         </div>
         <div id="hostFile" hidden>
-          <label class="dropzone" for="file"><span id="fileLabel">Choose your game's <code>index.html</code></span></label>
-          <input id="file" type="file" accept=".html,.htm" hidden>
-          <div class="hint">One self-contained .html file (code, images and sounds inside it). GameTok hosts it. Games with several files: host them and use a link.</div>
+          <label class="dropzone" for="file"><span id="fileLabel">Choose your game's <code>.zip</code></span></label>
+          <input id="file" type="file" accept=".zip,.html,.htm,application/zip" hidden>
+          <div class="hint">Zip the folder your build makes (the one with <code>index.html</code> in it), up to 32 MB. GameTok hosts every file. A single self-contained .html works too.</div>
         </div>
       </div>
 
@@ -136,6 +136,8 @@
     const authHeaders = (extra) => ({ ...(extra || {}), Authorization: `Bearer ${token()}` });
     let host = 'link';
     let uploadedHtml = '';
+    let uploadedZip = null;
+    const MAX_ZIP_BYTES = 32 * 1024 * 1024;
     let me = null;
     let agreementVersion = null;
     // The account check (username? agreement?) runs in the background; the form shows at once.
@@ -176,8 +178,16 @@
     $('file').addEventListener('change', () => {
       const file = $('file').files[0];
       uploadedHtml = '';
+      uploadedZip = null;
       if (!file) return;
-      if (!/\.html?$/i.test(file.name)) { $('fileLabel').textContent = 'Choose one .html file'; return; }
+      const kb = Math.round(file.size / 1024);
+      if (/\.zip$/i.test(file.name)) {
+        if (file.size > MAX_ZIP_BYTES) { $('fileLabel').textContent = `${file.name} is over 32 MB — host it and use a link`; return; }
+        uploadedZip = file;
+        $('fileLabel').textContent = `✓ ${file.name} (${kb} KB)`;
+        return;
+      }
+      if (!/\.html?$/i.test(file.name)) { $('fileLabel').textContent = 'Choose a .zip or one .html file'; return; }
       const reader = new FileReader();
       reader.onload = () => { uploadedHtml = String(reader.result || ''); $('fileLabel').textContent = `✓ ${file.name} (${Math.round(file.size / 1024)} KB)`; };
       reader.readAsText(file);
@@ -199,7 +209,7 @@
       if (!$('usernameField').hidden && !/^[a-z0-9_]{3,20}$/.test(username)) problems.push('Choose a username: 3–20 lowercase letters, numbers or underscores.');
       if (!title) problems.push('Give your game a name.');
       if (host === 'link' && !/^https:\/\//i.test(url)) problems.push('Paste your game\'s https:// address.');
-      if (host === 'file' && !uploadedHtml) problems.push('Choose your game\'s .html file.');
+      if (host === 'file' && !uploadedHtml && !uploadedZip) problems.push('Choose your game\'s .zip (or one .html file).');
       if (!category) problems.push('Choose a category.');
       if (!$('agreementField').hidden && !$('agree').checked) problems.push('Accept the Developer Agreement.');
       if (problems.length) return showError('Almost there:', problems);
@@ -219,10 +229,17 @@
           await api('/developer/agreement', { method: 'POST', headers: authHeaders({ 'Content-Type': 'application/json' }), body: JSON.stringify({ version: agreementVersion }) });
           $('agreementField').hidden = true;
         }
+        let gameUrl = url;
+        if (host === 'file' && uploadedZip) {
+          btn.textContent = 'Uploading your game…';
+          const hosted = await api('/developer/uploads', { method: 'POST', headers: authHeaders({ 'Content-Type': 'application/zip' }), body: uploadedZip });
+          gameUrl = hosted.url;
+          btn.textContent = 'Checking your game…';
+        }
         const published = await api('/publish', {
           method: 'POST',
           headers: authHeaders({ 'Content-Type': 'application/json' }),
-          body: JSON.stringify({ title, description, category, draft: true, ...(orientation && orientation !== 'auto' ? { orientation } : {}), ...(host === 'link' ? { url } : { html: uploadedHtml }) })
+          body: JSON.stringify({ title, description, category, draft: true, ...(orientation && orientation !== 'auto' ? { orientation } : {}), ...(host === 'file' && !uploadedZip ? { html: uploadedHtml } : { url: gameUrl }) })
         });
         const testUrl = published.testUrl || `/sandbox/?game=${encodeURIComponent(published.gameId)}`;
 
