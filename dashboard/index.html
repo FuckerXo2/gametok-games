@@ -1229,6 +1229,8 @@
       background: var(--accent); color: var(--accent-ink); border-color: var(--accent); box-shadow: none;
     }
     .brand-icon-box { background: transparent; box-shadow: none; }
+    /* Games without a thumbnail yet show the GameTok logo, centred, not stretched. */
+    .game-preview-stage img[src="/assets/adaptive-icon.png"], .game-hero-banner-thumb img[src="/assets/adaptive-icon.png"] { object-fit: contain; padding: 14%; background: var(--bg-card-inner); }
     .wiz-choice { flex: 1; display: flex; align-items: center; gap: 8px; cursor: pointer; padding: 11px 12px; border-radius: 14px; border: 1px solid var(--border); background: var(--bg-input); font-size: 13.5px; font-weight: 600; white-space: nowrap; }
     .wiz-choice input { accent-color: var(--blue); margin: 0; }
     .wiz-choice:has(input:checked) { border-color: var(--blue); background: rgba(56, 189, 248, 0.08); }
@@ -1450,7 +1452,7 @@
         <!-- Hero Card -->
         <div class="game-hero-banner">
           <div class="game-hero-banner-thumb">
-            <img src="assets/neon-drift-hero.jpg" id="detailCoverImg" alt="Cover" onerror="handleImgError(this, 'neon-drift-hero.jpg')">
+            <img src="/assets/adaptive-icon.png" id="detailCoverImg" alt="Cover">
           </div>
           <div style="flex: 1;">
             <div style="display: flex; align-items: center; gap: 10px; margin-bottom: 6px;">
@@ -1462,9 +1464,9 @@
               Game overview and integration settings.
             </p>
             <div style="display: flex; gap: 8px;">
-              <span class="tag-pill" id="detailTag1">Racing</span>
-              <span class="tag-pill" id="detailTag2">Arcade</span>
-              <span class="tag-pill" id="detailTag3">Multiplayer</span>
+              <span class="tag-pill" id="detailTag1" hidden></span>
+              <span class="tag-pill" id="detailTag2" hidden></span>
+              <span class="tag-pill" id="detailTag3" hidden></span>
             </div>
           </div>
         </div>
@@ -1482,7 +1484,7 @@
           <!-- Left Column -->
           <div>
             <div class="game-preview-stage" onclick="launchGamePlayer(activeDetailGame)" title="Click to play">
-              <img src="assets/neon-drift-hero.jpg" id="detailStageImg" alt="Gameplay Preview" onerror="handleImgError(this, 'neon-drift-hero.jpg')">
+              <img src="/assets/adaptive-icon.png" id="detailStageImg" alt="Gameplay preview">
               <div style="position: absolute; width: 56px; height: 56px; border-radius: 50%; background: rgba(37,99,235,0.9); display: flex; align-items: center; justify-content: center; color: #fff; box-shadow: 0 4px 20px rgba(0,0,0,0.6); pointer-events: none;">
                 <svg width="22" height="22" viewBox="0 0 24 24" fill="currentColor"><polygon points="6 3 20 12 6 21 6 3"></polygon></svg>
               </div>
@@ -2172,6 +2174,7 @@
 
     // Games come only from the backend — no demo entries, so a new developer sees the empty state.
     let myGames = [];
+    const PLACEHOLDER_COVER = '/assets/adaptive-icon.png';
     let activeDetailGame = null;
 
     // The dashboard is for a signed-in account only; the landing page owns sign-in.
@@ -2362,10 +2365,10 @@
       container.innerHTML = sorted.map(g => {
         const gPlayers = Number(g.players || 0);
         const pct = Math.max(1, Math.round((gPlayers / totalPlayers) * 100));
-        const coverUrl = g.thumbnail || g.cover || 'assets/neon-drift-hero.jpg';
+        const coverUrl = g.thumbnail || g.cover || PLACEHOLDER_COVER;
         return `
           <div style="display: flex; align-items: center; gap: 12px;">
-            <img src="${coverUrl}" style="width: 28px; height: 28px; border-radius: 6px; object-fit: cover;" onerror="handleImgError(this, 'neon-drift-hero.jpg')">
+            <img src="${coverUrl}" style="width: 28px; height: 28px; border-radius: 6px; object-fit: cover;" onerror="this.src = PLACEHOLDER_COVER">
             <span style="width: 100px; font-size: 13px; font-weight: 600; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;">${g.name}</span>
             <div style="flex: 1; height: 7px; background: #131c30; border-radius: 999px; overflow: hidden;">
               <div style="width: ${pct}%; height: 100%; background: #2563eb; border-radius: 999px;"></div>
@@ -2702,11 +2705,11 @@
       document.getElementById('detailFileSize').textContent = g.embedUrl ? (g.embedUrl.length > 28 ? g.embedUrl.slice(0, 28) + '...' : g.embedUrl) : 'Hosted Link';
       document.getElementById('detailEngine').textContent = 'External Web URL';
 
-      if (g.tags && g.tags.length >= 3) {
-        document.getElementById('detailTag1').textContent = g.tags[0];
-        document.getElementById('detailTag2').textContent = g.tags[1];
-        document.getElementById('detailTag3').textContent = g.tags[2];
-      }
+      ['detailTag1', 'detailTag2', 'detailTag3'].forEach((id, i) => {
+        const el = document.getElementById(id);
+        el.textContent = (g.tags || [])[i] || '';
+        el.hidden = !el.textContent;
+      });
 
       const badge = document.getElementById('detailStatusBadge');
       document.getElementById('btnGoLive').hidden = g.status !== 'draft';
@@ -3800,9 +3803,10 @@ Read https://games.gametok.co/skill.md and follow it exactly:
               plays: g.plays || 0,
               earnings: parseFloat(g.earnings || 0),
               status: g.status === 'draft' ? 'draft' : 'published',
-              cover: g.thumbnail || g.cover || 'assets/neon-drift-hero.jpg',
+              cover: g.thumbnail || g.cover || PLACEHOLDER_COVER,
               desc: g.description || '',
-              tags: [g.category || 'Arcade', 'Web'],
+              tags: (Array.isArray(g.categories) && g.categories.length ? g.categories : (g.category ? [g.category] : []))
+                .map(c => String(c).replace(/-/g, ' ').replace(/\b\w/g, ch => ch.toUpperCase())),
               gameId: 'g_' + String(g.id).slice(0, 8),
               created: g.created_at ? new Date(g.created_at).toLocaleDateString() : 'Recent',
               updated: g.updated_at ? new Date(g.updated_at).toLocaleDateString() : 'Recent',
