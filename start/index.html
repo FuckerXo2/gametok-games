@@ -76,17 +76,6 @@
       </div>
 
       <div class="field">
-        <span class="label">Works on</span>
-        <div class="choice-row">
-          <label class="choice"><input type="radio" name="platform" value="auto" checked><span>Detect it<small>From its controls and size</small></span></label>
-          <label class="choice"><input type="radio" name="platform" value="all"><span>Home feed<small>Swipe feed + Explore</small></span></label>
-          <label class="choice"><input type="radio" name="platform" value="explore"><span>Explore only<small>Browse and search</small></span></label>
-          <label class="choice"><input type="radio" name="platform" value="desktop"><span>Desktop only<small>Hidden on phones</small></span></label>
-        </div>
-        <div class="hint">Where phone players find it. The home feed needs a game under 15 MB that loads in under 8 seconds; bigger or slower games go to Explore. Keyboard-only games and games over 50 MB are desktop only. On desktop every game shows everywhere.</div>
-      </div>
-
-      <div class="field">
         <label for="category">Category</label>
         <select class="input" id="category">
           <option value="">Choose a category</option>
@@ -242,7 +231,6 @@
       const title = $('title').value.trim();
       const url = $('url').value.trim();
       const orientation = (document.querySelector('input[name="orientation"]:checked') || {}).value || '';
-      const platform = (document.querySelector('input[name="platform"]:checked') || {}).value || 'auto';
       const category = $('category').value;
       const description = $('description').value.trim();
 
@@ -283,7 +271,7 @@
         const published = await api('/publish', {
           method: 'POST',
           headers: authHeaders({ 'Content-Type': 'application/json' }),
-          body: JSON.stringify({ title, description, category, draft: true, ...(orientation && orientation !== 'auto' ? { orientation } : {}), ...(platform !== 'auto' ? { platform } : {}), ...(host === 'file' && !uploadedZip ? { html: uploadedHtml } : { url: gameUrl }) })
+          body: JSON.stringify({ title, description, category, draft: true, ...(orientation && orientation !== 'auto' ? { orientation } : {}), ...(host === 'file' && !uploadedZip ? { html: uploadedHtml } : { url: gameUrl }) })
         });
         const testUrl = published.testUrl || `/sandbox/?game=${encodeURIComponent(published.gameId)}`;
 
