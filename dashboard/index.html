@@ -1506,7 +1506,7 @@
                 </div>
                 <div style="display: flex; justify-content: space-between;"><span style="color: var(--text-dim);">Created</span><span id="detailCreatedDate">–</span></div>
                 <div style="display: flex; justify-content: space-between;"><span style="color: var(--text-dim);">Last Updated</span><span id="detailUpdatedDate">–</span></div>
-                <div style="display: flex; justify-content: space-between;"><span style="color: var(--text-dim);">Platform</span><span id="detailOrientationText">Web Game</span></div>
+                <div style="display: flex; justify-content: space-between; gap: 12px;"><span style="color: var(--text-dim);">Orientation</span><span id="detailOrientationText" style="text-align: right;">–</span></div>
                 <div style="display: flex; justify-content: space-between;"><span style="color: var(--text-dim);">Game Link</span><span id="detailFileSize" style="color: var(--cyan); max-width: 170px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;">Hosted Link</span></div>
                 <div style="display: flex; justify-content: space-between;"><span style="color: var(--text-dim);">Source</span><span id="detailEngine">External URL</span></div>
               </div>
@@ -1915,8 +1915,9 @@
 
               <div class="form-group" style="display: grid; grid-template-columns: 1fr 1fr; gap: 12px;">
                 <div>
-                  <label class="form-label">How is it played? *</label>
+                  <label class="form-label">How is it played?</label>
                   <div style="display: flex; gap: 8px;">
+                    <label class="wiz-choice"><input type="radio" name="wizOrientation" value="auto" checked> Detect</label>
                     <label class="wiz-choice"><input type="radio" name="wizOrientation" value="portrait"> Upright</label>
                     <label class="wiz-choice"><input type="radio" name="wizOrientation" value="landscape"> Sideways</label>
                   </div>
@@ -2694,7 +2695,10 @@
       document.getElementById('detailGameId').innerHTML = `${escapeHtml(g.id)} <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor"><rect x="9" y="9" width="13" height="13" rx="2"></rect><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"></path></svg>`;
       document.getElementById('detailCreatedDate').textContent = g.created;
       document.getElementById('detailUpdatedDate').textContent = g.updated;
-      document.getElementById('detailOrientationText').textContent = 'Web Game';
+      // e.g. "Landscape · detected from the game" / "Portrait · your choice"
+      const howSet = { developer: 'your choice', detected: 'detected from the game', default: 'default, nothing detected' }[g.orientationSource] || '';
+      document.getElementById('detailOrientationText').textContent =
+        (g.orientation === 'landscape' ? 'Landscape' : 'Portrait') + (howSet ? ` · ${howSet}` : '');
       document.getElementById('detailFileSize').textContent = g.embedUrl ? (g.embedUrl.length > 28 ? g.embedUrl.slice(0, 28) + '...' : g.embedUrl) : 'Hosted Link';
       document.getElementById('detailEngine').textContent = 'External Web URL';
 
@@ -3151,10 +3155,10 @@
       reader.readAsText(file);
     }
 
-    // Portrait = phone held upright, landscape = sideways. Never assumed: the developer picks.
+    // 'auto' lets GameTok detect it from the game; portrait/landscape is the developer's override.
     function wizardOrientation() {
       const picked = document.querySelector('input[name="wizOrientation"]:checked');
-      return picked ? picked.value : '';
+      return picked ? picked.value : 'auto';
     }
 
     function openNewGameWizard() {
@@ -3166,7 +3170,7 @@
       const u = document.getElementById('wizGameUrl');
       if (n) n.value = '';
       if (d) d.value = '';
-      document.querySelectorAll('input[name="wizOrientation"]').forEach(r => { r.checked = false; });
+      document.querySelectorAll('input[name="wizOrientation"]').forEach(r => { r.checked = r.value === 'auto'; });
       const cat = document.getElementById('wizCategory');
       if (cat) cat.value = '';
       if (u) u.value = '';
@@ -3218,10 +3222,6 @@
       }
       if (currentHostMode === 'file' && !uploadedGameHtml) {
         alert('Please select an HTML game bundle file to upload.');
-        return;
-      }
-      if (!wizardOrientation()) {
-        alert('Choose how the game is played: phone upright or sideways.');
         return;
       }
       if (!document.getElementById('wizCategory').value) {
@@ -3289,7 +3289,7 @@
             description: desc,
             url: currentHostMode === 'link' ? url : undefined,
             html: currentHostMode === 'file' ? uploadedGameHtml : undefined,
-            orientation: wizardOrientation(),
+            ...(wizardOrientation() !== 'auto' ? { orientation: wizardOrientation() } : {}),
             category: document.getElementById('wizCategory').value,
             draft: asDraft
           })
@@ -3810,6 +3810,7 @@ Read https://games.gametok.co/skill.md and follow it exactly:
               engine: 'HTML5 Web',
               embedUrl: g.embed_url || g.embedUrl || `/game/${g.id}`,
               orientation: g.orientation || 'portrait',
+              orientationSource: g.orientationSource || null,
               verificationStatus: g.verificationStatus,
               checks: (() => { try { const v = JSON.parse(g.verificationNotes || 'null'); return Array.isArray(v) ? v : []; } catch { return []; } })()
             }));

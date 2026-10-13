@@ -69,9 +69,11 @@
       <div class="field">
         <span class="label">How is it played?</span>
         <div class="choice-row">
+          <label class="choice"><input type="radio" name="orientation" value="auto" checked><span>Detect it<small>We read it from your game</small></span></label>
           <label class="choice"><input type="radio" name="orientation" value="portrait"><span>Phone upright<small>Portrait</small></span></label>
           <label class="choice"><input type="radio" name="orientation" value="landscape"><span>Sideways<small>Landscape</small></span></label>
         </div>
+        <div class="hint">GameTok checks what your game declares (manifest, meta tag, orientation lock) and how it draws. Pick one yourself only if it gets it wrong.</div>
       </div>
 
       <div class="field">
@@ -198,7 +200,6 @@
       if (!title) problems.push('Give your game a name.');
       if (host === 'link' && !/^https:\/\//i.test(url)) problems.push('Paste your game\'s https:// address.');
       if (host === 'file' && !uploadedHtml) problems.push('Choose your game\'s .html file.');
-      if (!orientation) problems.push('Choose how the game is played: phone upright or sideways.');
       if (!category) problems.push('Choose a category.');
       if (!$('agreementField').hidden && !$('agree').checked) problems.push('Accept the Developer Agreement.');
       if (problems.length) return showError('Almost there:', problems);
@@ -219,7 +220,7 @@
         const published = await api('/publish', {
           method: 'POST',
           headers: authHeaders({ 'Content-Type': 'application/json' }),
-          body: JSON.stringify({ title, description, orientation, category, draft: true, ...(host === 'link' ? { url } : { html: uploadedHtml }) })
+          body: JSON.stringify({ title, description, category, draft: true, ...(orientation && orientation !== 'auto' ? { orientation } : {}), ...(host === 'link' ? { url } : { html: uploadedHtml }) })
         });
         const testUrl = published.testUrl || `/sandbox/?game=${encodeURIComponent(published.gameId)}`;
 
