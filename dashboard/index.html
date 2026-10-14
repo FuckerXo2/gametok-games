@@ -1939,15 +1939,6 @@
               </div>
 
               <div class="form-group">
-                <label class="form-label">How is it played?</label>
-                <div style="display: flex; gap: 8px;">
-                  <label class="wiz-choice"><input type="radio" name="wizOrientation" value="auto" checked> <svg class="ori-icon" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" aria-hidden="true"><path d="M12 3v3M12 18v3M3 12h3M18 12h3M5.6 5.6l2.1 2.1M16.3 16.3l2.1 2.1M5.6 18.4l2.1-2.1M16.3 7.7l2.1-2.1"/></svg> Detect</label>
-                  <label class="wiz-choice"><input type="radio" name="wizOrientation" value="portrait"> <svg class="ori-icon" width="14" height="20" viewBox="0 0 14 20" fill="none" stroke="currentColor" stroke-width="1.8" aria-hidden="true"><rect x="1" y="1" width="12" height="18" rx="2.5"/><line x1="5.5" y1="16" x2="8.5" y2="16"/></svg> Portrait</label>
-                  <label class="wiz-choice"><input type="radio" name="wizOrientation" value="landscape"> <svg class="ori-icon" width="20" height="14" viewBox="0 0 20 14" fill="none" stroke="currentColor" stroke-width="1.8" aria-hidden="true"><rect x="1" y="1" width="18" height="12" rx="2.5"/><line x1="16" y1="5.5" x2="16" y2="8.5"/></svg> Landscape</label>
-                </div>
-              </div>
-
-              <div class="form-group">
                 <label class="form-label">Hosting Method *</label>
                 <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-bottom: 8px;">
                   <button type="button" class="btn-outline-action active" id="btnHostLink" onclick="switchHostMode('link')" style="text-align: left; padding: 12px; border-radius: 10px; display: flex; align-items: flex-start; gap: 10px; border-color: var(--blue); background: rgba(37,99,235,0.12);">
@@ -3154,12 +3145,6 @@
       }
     }
 
-    // 'auto' lets GameTok detect it from the game; portrait/landscape is the developer's override.
-    function wizardOrientation() {
-      const picked = document.querySelector('input[name="wizOrientation"]:checked');
-      return picked ? picked.value : 'auto';
-    }
-
     function openNewGameWizard() {
       wizardCurrentStep = 1;
       pickedGame = null;
@@ -3168,7 +3153,6 @@
       const u = document.getElementById('wizGameUrl');
       if (n) n.value = '';
       if (d) d.value = '';
-      document.querySelectorAll('input[name="wizOrientation"]').forEach(r => { r.checked = r.value === 'auto'; });
       const cat = document.getElementById('wizCategory');
       if (cat) cat.value = '';
       if (u) u.value = '';
@@ -3288,7 +3272,6 @@
             title: name,
             description: desc,
             url: currentHostMode === 'link' ? url : hostedUrl,
-            ...(wizardOrientation() !== 'auto' ? { orientation: wizardOrientation() } : {}),
             category: document.getElementById('wizCategory').value,
             draft: asDraft
           })

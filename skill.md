@@ -59,7 +59,7 @@ Check for `GAMETOK_API_KEY` in the environment. If it is not set, ask the user f
 ### Step 2: Detect Metadata & Project Type
 1. Inspect `package.json` or `index.html` for:
    - Game Title (from `<title>` or package name)
-   - Orientation: leave `orientation` out and GameTok detects it from the game (manifest, `screen-orientation` meta tag, `screen.orientation.lock(...)`, or how its canvas is drawn). Send `'portrait'` or `'landscape'` only if you know for sure.
+   - Orientation: GameTok works it out from the game (manifest, `screen-orientation` meta tag, `screen.orientation.lock(...)`, or how its canvas is drawn). Don't send `orientation`.
    - Where phone players find it is GameTok's call, from the game's controls, download size and load time: the home swipe feed needs under 15 MB and under 8 s to load; bigger or slower games are shown in Explore; keyboard-only games and games over 50 MB aren't shown on phones. Make the game respond to taps (touch, pointer or click events) and keep it light to reach the home feed.
    - Category (one of): `'arcade'`, `'action'`, `'adventure'`, `'puzzle'`, `'sports'`, `'racing'`, `'rpg'`, `'horror'`, `'visual-novel'`
 2. Check if the project is already hosted online (e.g., `https://mygame.vercel.app`, `https://user.github.io/mygame`, or custom domain).
