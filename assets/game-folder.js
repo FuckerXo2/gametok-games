@@ -22,13 +22,43 @@
     }
   }
 
+  const INDEX = /(^|\/)index\.html?$/i;
+  const depth = (p) => p.split('/').length;
+
+  // A project's source page, not a build: it loads code browsers can't run (TypeScript, JSX, Vue,
+  // Svelte) or still has build-time placeholders like {{APP_VERSION}}. Returns why, or null.
+  function sourceReason(html) {
+    if (/<script[^>]+src=["'][^"']+\.(ts|tsx|jsx|vue|svelte)(\?[^"']*)?["']/i.test(html)) return 'it loads TypeScript/JSX source files that browsers can\'t run';
+    if (/\{\{\s*[A-Z][A-Z0-9_]{2,}\s*\}\}/.test(html)) return 'it still has build placeholders like {{APP_VERSION}}';
+    return null;
+  }
+  const readText = async (e) => (e.blob || e.read()).text();
+
   // A game is { name, kind: 'folder' | 'zip' | 'html', entries: [{ path, size, blob | read() }] }.
-  function finish(name, kind, entries) {
-    const kept = entries.filter((e) => !SKIP.test(e.path));
-    if (!kept.some((e) => /(^|\/)index\.html?$/i.test(e.path))) {
+  // If the chosen folder is a project's source, its built folder (dist, build, out) is used
+  // instead when it's there; otherwise the developer is told to build first.
+  async function finish(name, kind, entries) {
+    let kept = entries.filter((e) => !SKIP.test(e.path));
+    const indexes = kept.filter((e) => INDEX.test(e.path)).sort((a, b) => depth(a.path) - depth(b.path));
+    if (!indexes.length) {
       throw new Error(kind === 'zip'
         ? 'That zip has no index.html. Zip the folder your build makes (usually dist or build).'
         : 'That folder has no index.html. Choose the folder your build makes (usually dist or build).');
+    }
+    const why = sourceReason(await readText(indexes[0]));
+    if (why) {
+      const root = indexes[0].path.slice(0, indexes[0].path.length - indexes[0].path.split('/').pop().length);
+      let built = null;
+      for (const e of indexes.slice(1)) {
+        const m = e.path.slice(root.length).match(/^(dist|build|out|www)\/index\.html?$/i);
+        if (m && !sourceReason(await readText(e))) { built = root + m[1] + '/'; break; }
+      }
+      if (!built) {
+        throw new Error(`That's your game's source code, not a playable build: ${why}. Run your build (usually npm install, then npm run build) and upload the folder it creates, usually dist.`);
+      }
+      // Upload just the built folder, as if it had been chosen directly.
+      kept = kept.filter((e) => e.path.startsWith(built)).map((e) => ({ ...e, path: e.path.slice(built.length) }));
+      name = `${name} (${built.replace(root, '').replace(/\/$/, '')})`;
     }
     return { name, kind, entries: kept, bytes: kept.reduce((n, e) => n + e.size, 0) };
   }
@@ -67,7 +97,7 @@
   }
 
   // From <input type="file" webkitdirectory>.
-  function fromFolderInput(fileList) {
+  async function fromFolderInput(fileList) {
     const entries = [...fileList].map((file) => ({ path: file.webkitRelativePath || file.name, size: file.size, blob: file }));
     return finish((entries[0] && entries[0].path.split('/')[0]) || 'game', 'folder', entries);
   }
