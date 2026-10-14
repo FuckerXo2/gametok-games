@@ -9,7 +9,7 @@ version: 2.0.0
 
 This skill enables any AI coding assistant (Cursor, Claude Code, Windsurf, Devin, GitHub Copilot) to adapt, package, and publish any HTML5 / WebGL / Canvas / Three.js game to **GameTok** (`https://gametok.co`).
 
-Full human-readable docs (bridge reference, player identity, test mode, error codes): `https://games.gametok.co/docs/`. A complete sample game: `https://games.gametok.co/sample/`.
+Full human-readable docs (test mode, publish checks, error codes): `https://games.gametok.co/docs/`. A complete sample game: `https://games.gametok.co/sample/`.
 
 ---
 
@@ -43,27 +43,9 @@ A `403` asking for a username, or with `code: "AGREEMENT_REQUIRED"`, means the a
 
 ---
 
-## 3. Integration: The GameTok Bridge
+## 3. No SDK needed
 
-To ensure responsive fitting and score synchronization on GameTok, inject the bridge script into the `<head>` or before `</body>` of the game's `index.html`:
-
-```html
-<script src="https://gametok.co/bridge.js"></script>
-```
-
-Optional attribute: `data-game-title="Your Game Title"` overrides `<title>` as the game's name on GameTok.
-
-### Optional: Player identity
-Players are already signed in to GameTok. `GameTok.init()` resolves `{ player: { id, name, avatar, guest }, session, mode }`; `player.id` is unique to this player in this game. If the game has a backend, send `session` to it and verify it there with `POST /api/developer/sessions/verify` (the developer's key) before trusting the player — see the docs. Don't add this unless the game needs accounts or saved progress.
-
-### Optional: Submitting Scores & Game Over
-If the game has a score or game-over state:
-```javascript
-if (window.GameTok) {
-  window.GameTok.submitScore(score);
-  window.GameTok.gameOver(score);
-}
-```
+GameTok shows the game as it is, in a frame. Don't add any GameTok script or code to the game. What helps it play well on phones: a mobile viewport tag (`<meta name="viewport" content="width=device-width, initial-scale=1">`), controls that respond to taps, and a light download.
 
 ---
 
@@ -82,13 +64,7 @@ Check for `GAMETOK_API_KEY` in the environment. If it is not set, ask the user f
    - Category (one of): `'arcade'`, `'action'`, `'adventure'`, `'puzzle'`, `'sports'`, `'racing'`, `'rpg'`, `'horror'`, `'visual-novel'`
 2. Check if the project is already hosted online (e.g., `https://mygame.vercel.app`, `https://user.github.io/mygame`, or custom domain).
 
-### Step 3: Inject the Bridge Script
-If `index.html` does not already have `https://gametok.co/bridge.js`, insert:
-```html
-<script src="https://gametok.co/bridge.js"></script>
-```
-
-### Step 4: Publish to GameTok
+### Step 3: Publish to GameTok
 
 #### Option A: Hosted Game URL (Recommended for auto-updates)
 ```bash
@@ -136,7 +112,7 @@ GameTok runs automatic checks on every publish and approves the game if the requ
 | `GAME_URL_NOT_HTML` | The URL isn't a web page (e.g. a .zip or .js file). | Publish the URL of the page that runs the game, usually its `index.html`. |
 | `GAME_HTML_INVALID` | An uploaded `html` file has no `<html>`, `<body>`, `<script>` or `<canvas>`. | Upload the game's real `index.html`. |
 
-Successful responses list the same `checks`; recommended ones (mobile viewport tag, bridge script) never block — suggest fixing any that failed. A `200` response may also include `warnings` (e.g. the URL couldn't be reached to verify it). Show them to the user and ask them to open the GameTok link to confirm the game plays.
+Successful responses list the same `checks`; recommended ones (mobile viewport tag) never block — suggest fixing any that failed. A `200` response may also include `warnings` (e.g. the URL couldn't be reached to verify it). Show them to the user and ask them to open the GameTok link to confirm the game plays.
 
 ---
 

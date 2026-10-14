@@ -1447,7 +1447,7 @@
               Copy GameTok Link
             </button>
             <button class="btn-outline-action" id="btnRetakeScreenshot" onclick="recaptureGameScreenshot()">📸 Retake Thumbnail</button>
-            <button class="btn-outline-action" onclick="openDeveloperPromptModal()">Inspect</button>
+            <button class="btn-outline-action" onclick="openDeveloperPromptModal()">AI agent prompt</button>
             <button class="btn-outline-action" onclick="openTestPlayer()">Test player</button>
             <button class="btn-blue-action" id="btnGoLive" onclick="goLiveFromDashboard()" hidden>Go live</button>
             <button class="btn-blue-action" onclick="launchGamePlayer(activeDetailGame)">Play Game</button>
@@ -1481,7 +1481,6 @@
           <div class="detail-nav-tab active" onclick="switchDetailTab('overview', this)">Overview</div>
           <div class="detail-nav-tab" onclick="switchDetailTab('analytics', this)">Analytics</div>
           <div class="detail-nav-tab" onclick="switchDetailTab('verification', this)">Checks</div>
-          <div class="detail-nav-tab" onclick="switchDetailTab('integration', this)">Integration</div>
         </div>
 
         <!-- DETAIL TAB 1: OVERVIEW -->
@@ -1540,29 +1539,6 @@
             <p style="font-size: 12.5px; color: var(--text-dim); margin-bottom: 14px;">Run on every publish. Required checks must pass for the game to be live; recommendations never block.</p>
             <div id="detailChecksFull" style="display: flex; flex-direction: column; gap: 10px; margin-bottom: 18px;"></div>
             <button class="btn-blue-action" id="btnRecheckGame" onclick="recheckGame()">Re-run checks</button>
-          </div>
-        </div>
-
-        <!-- DETAIL TAB 5: INTEGRATION -->
-        <div id="detailTabIntegration" style="display: none;">
-          <div class="card-panel" style="margin-bottom: 20px;">
-            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px; flex-wrap: wrap; gap: 10px;">
-              <div class="card-panel-header" style="margin-bottom: 0;">GameTok Bridge</div>
-              <a class="btn-outline-action" href="/skill.md" target="_blank" style="padding: 6px 14px; font-size: 12px; text-decoration: none;">Full guide (skill.md)</a>
-            </div>
-            <p style="font-size: 13px; color: var(--text-muted); margin-bottom: 14px;">
-              Connect your web game (HTML5, Canvas, Three.js, Phaser, Godot) to GameTok with one script tag. Your game stays on your own hosting.
-            </p>
-
-            <div style="font-weight: 700; font-size: 13.5px; color: #fff; margin-top: 14px;">1. Add the bridge to your index.html</div>
-            <div class="code-snippet" id="sdkIntegrationTagSnippet">&lt;script src="https://gametok.co/bridge.js"&gt;&lt;/script&gt;</div>
-            <button class="btn-outline-action" style="font-size: 11.5px; padding: 4px 12px; margin-bottom: 16px;" onclick="copyText(document.getElementById('sdkIntegrationTagSnippet').innerText, 'Bridge script tag copied!')">Copy Tag</button>
-
-            <div style="font-weight: 700; font-size: 13.5px; color: #fff; margin-top: 10px;">2. Scores &amp; game over (optional)</div>
-            <div class="code-snippet">if (window.GameTok) {
-  window.GameTok.submitScore(score);
-  window.GameTok.gameOver(score);
-}</div>
           </div>
         </div>
 
@@ -1884,7 +1860,7 @@
       <div style="font-size: 19px; font-weight: 800; margin-bottom: 22px;">Submit Game to GameTok</div>
 
       <div class="wizard-layout">
-        <!-- Left Stepper (3 Clear Steps) -->
+        <!-- Left Stepper -->
         <div class="wizard-stepper">
           <div class="wizard-step-item active" id="wStepTab1" onclick="jumpToWizardStep(1)">
             <div class="wizard-step-num">1</div>
@@ -1892,10 +1868,6 @@
           </div>
           <div class="wizard-step-item" id="wStepTab2" onclick="jumpToWizardStep(2)">
             <div class="wizard-step-num">2</div>
-            <span>SDK &amp; AI Agent</span>
-          </div>
-          <div class="wizard-step-item" id="wStepTab3" onclick="jumpToWizardStep(3)">
-            <div class="wizard-step-num">3</div>
             <span>Review &amp; Publish</span>
           </div>
         </div>
@@ -1947,8 +1919,6 @@
                 </div>
               </div>
 
-              </div>
-
               <div class="form-group">
                 <label class="form-label">Hosting Method *</label>
                 <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-bottom: 8px;">
@@ -1995,44 +1965,13 @@
               </div>
 
               <div style="display: flex; justify-content: flex-end; margin-top: 24px;">
-                <button type="submit" class="btn-blue-action">Next: Integration →</button>
+                <button type="submit" class="btn-blue-action">Next: Review →</button>
               </div>
             </form>
           </div>
 
-          <!-- STEP 2: Integration & AI Prompt -->
+          <!-- STEP 2: Review & Publish -->
           <div id="wStepContent2" style="display: none;">
-            <div style="font-weight: 800; font-size: 15px; margin-bottom: 4px;">Bridge &amp; AI Integration</div>
-            <p style="font-size: 12.5px; color: var(--text-dim); margin-bottom: 14px;">One drop-in tag links the game to your creator profile and reports scores.</p>
-
-            <div style="font-weight: 700; font-size: 12px; color: #fff; margin-bottom: 4px;">1. Add to your index.html:</div>
-            <div class="code-snippet" id="wizSnippetTag">&lt;script src="https://gametok.co/bridge.js"&gt;&lt;/script&gt;</div>
-            <button class="btn-outline-action" style="font-size: 11px; padding: 4px 10px; margin-bottom: 14px;" onclick="copyText(document.getElementById('wizSnippetTag').innerText, 'Bridge tag copied!')">Copy Tag</button>
-
-            <!-- Prominent AI Agent Instruction Card -->
-            <div style="background: rgba(37, 99, 235, 0.08); border: 1px solid rgba(56, 189, 248, 0.35); border-radius: 12px; padding: 14px; margin-bottom: 16px;">
-              <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 6px;">
-                <div style="font-weight: 800; font-size: 13px; color: var(--cyan); display: flex; align-items: center; gap: 6px;">
-                  <span>🤖</span> Building with an AI Coding Agent?
-                </div>
-                <button class="btn-blue-action" style="padding: 4px 10px; font-size: 11px;" onclick="copyAiPrompt()">
-                  📋 Copy AI Prompt
-                </button>
-              </div>
-              <p style="font-size: 12px; color: #cbd5e1; line-height: 1.45; margin-bottom: 8px;">
-                Give this prompt to Cursor, Claude, Windsurf, or ChatGPT to integrate GameTok in seconds:
-              </p>
-              <div class="code-snippet" style="font-size: 11px; padding: 10px; margin: 0;" id="wizAiPromptText">Publish this web game to GameTok. Read https://games.gametok.co/skill.md and follow it exactly: add the gametok.co/bridge.js tag to index.html, call window.GameTok.submitScore / gameOver if the game has a score, then publish with POST /api/publish using my GameTok API key (I'll paste it when you ask).</div>
-            </div>
-
-            <div style="display: flex; justify-content: space-between; margin-top: 20px;">
-              <button class="btn-outline-action" onclick="jumpToWizardStep(1)">← Back</button>
-              <button class="btn-blue-action" onclick="jumpToWizardStep(3)">Next: Review &amp; Submit →</button>
-            </div>
-          </div>
-
-          <!-- STEP 3: Review & Publish -->
-          <div id="wStepContent3" style="display: none;">
             <div style="font-weight: 800; font-size: 15px; margin-bottom: 4px;">Review &amp; Publish</div>
             <p style="font-size: 12.5px; color: var(--text-dim); margin-bottom: 18px;">Review your submission before submitting to the moderation queue.</p>
 
@@ -2046,7 +1985,7 @@
             </div>
 
             <div style="display: flex; justify-content: space-between;">
-              <button class="btn-outline-action" onclick="jumpToWizardStep(2)">← Back</button>
+              <button class="btn-outline-action" onclick="jumpToWizardStep(1)">← Back</button>
               <label style="display: flex; align-items: center; gap: 8px; font-size: 12.5px; color: var(--text-muted); margin-right: auto; margin-left: 14px; cursor: pointer;">
                 <input type="checkbox" id="wizAsDraft" style="accent-color: var(--blue);"> Save as a draft to test first
               </label>
@@ -2646,7 +2585,8 @@
 
     // Automatic checks: results stored on the game by publish / re-check (verification_notes JSON).
     function renderGameChecks(g) {
-      const checks = Array.isArray(g.checks) ? g.checks : [];
+      // 'bridge' was a recommended check before the SDK was dropped; older results still carry it.
+      const checks = (Array.isArray(g.checks) ? g.checks : []).filter(c => c.id !== 'bridge');
       const icon = (c) => c.ok === true ? '✓' : c.ok === false ? (c.blocking ? '✕' : '!') : '?';
       const color = (c) => c.ok === true ? 'var(--green)' : c.ok === false ? (c.blocking ? '#f87171' : '#fbbf24') : 'var(--text-dim)';
       const rows = checks.map(c => `
@@ -2755,7 +2695,7 @@
       document.querySelectorAll('#view-game-detail .detail-nav-tab').forEach(t => t.classList.remove('active'));
       if (tabEl) tabEl.classList.add('active');
 
-      const tabs = ['Overview', 'Analytics', 'Verification', 'Integration'];
+      const tabs = ['Overview', 'Analytics', 'Verification'];
       tabs.forEach(t => {
         const el = document.getElementById('detailTab' + t);
         if (el) el.style.display = t.toLowerCase() === tabKey.toLowerCase() ? (t === 'Overview' ? 'grid' : 'block') : 'none';
@@ -3225,7 +3165,7 @@
 
     function jumpToWizardStep(stepNum) {
       wizardCurrentStep = stepNum;
-      for (let i = 1; i <= 3; i++) {
+      for (let i = 1; i <= 2; i++) {
         const tab = document.getElementById('wStepTab' + i);
         const content = document.getElementById('wStepContent' + i);
         if (!tab || !content) continue;
@@ -3263,17 +3203,6 @@
       document.getElementById('wizSummaryDesc').textContent = desc || 'No description provided';
       document.getElementById('wizSummaryUrl').textContent = currentHostMode === 'link' ? url : `GameTok Hosted (${pickedGame ? pickedGame.name : 'your game'})`;
       jumpToWizardStep(2);
-    }
-
-    function copyAiPrompt() {
-      const text = document.getElementById('wizAiPromptText')?.innerText || 
-'Publish this web game to GameTok. Read https://games.gametok.co/skill.md and follow it exactly.';
-
-      navigator.clipboard.writeText(text).then(() => {
-        showToast('📋 AI prompt copied to clipboard! Paste it into Cursor / Claude / ChatGPT.');
-      }).catch(() => {
-        copyText(text, '📋 AI prompt copied!');
-      });
     }
 
     async function submitGameForReview() {
@@ -3405,18 +3334,10 @@
         showToast('Please select a game first');
         return;
       }
-      const prompt = `You are integrating "${g.name}" with GameTok (games.gametok.co).
-Read https://games.gametok.co/skill.md and follow it exactly:
+      const prompt = `Update "${g.name}" (game id: ${g.id}) on GameTok (games.gametok.co).
+Read https://games.gametok.co/skill.md and follow it exactly: re-publish with POST /api/publish using a GameTok API key (Settings → API Keys) whenever the game's URL, files or title change. Keep the same title so the existing game is updated.`;
 
-1. Add the GameTok bridge to index.html:
-   <script src="https://gametok.co/bridge.js"><\/script>
-
-2. If the game has a score / game-over state:
-   if (window.GameTok) { window.GameTok.submitScore(score); window.GameTok.gameOver(score); }
-
-3. Re-publish with POST /api/publish using your GameTok API key (Settings → API Keys) whenever the URL or title changes.`;
-
-      document.getElementById('promptModalTitle').textContent = `Integration Prompt: ${g.name}`;
+      document.getElementById('promptModalTitle').textContent = `AI agent prompt: ${g.name}`;
       document.getElementById('promptModalCode').textContent = prompt;
       document.getElementById('developerPromptModal').classList.add('active');
     }

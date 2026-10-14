@@ -4,51 +4,35 @@
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <title>Tap Tap — GameTok sample game</title>
-  <meta name="description" content="A 40-line GameTok sample: player identity, pause/resume and scores.">
-  <script src="https://gametok.co/bridge.js"></script>
+  <meta name="description" content="A tiny GameTok sample game: no SDK, just a web page that plays well on phones.">
   <style>
     body { margin: 0; height: 100dvh; display: grid; place-items: center; text-align: center;
-           font: 600 20px system-ui, sans-serif; background: #0b1020; color: #fff; }
+           font: 600 20px system-ui, sans-serif; background: #0b1020; color: #fff;
+           touch-action: manipulation; user-select: none; -webkit-user-select: none; }
     button { font: inherit; margin: 6px; padding: 16px 30px; border: 0; border-radius: 99px; background: #38bdf8; color: #001; }
-    img { width: 48px; height: 48px; border-radius: 50%; vertical-align: middle; }
     small { display: block; color: #8a97b2; font-size: 13px; margin-top: 8px; }
   </style>
 </head>
 <body>
   <main>
-    <p id="hi">Loading…</p>
-    <p>Taps: <b id="score">0</b></p>
+    <p>Tap as fast as you can</p>
+    <p>Taps: <b id="score">0</b> · Best: <b id="best">0</b></p>
     <button id="tap">Tap!</button>
-    <small id="status"></small>
+    <small>No SDK needed: GameTok shows any web game as it is.</small>
   </main>
   <script>
-    let score = 0, paused = false
+    // A GameTok game is just a web page. What makes it good on phones: a viewport tag,
+    // controls that respond to taps, and a light download.
+    let score = 0
     const $ = (id) => document.getElementById(id)
+    // Storage can be blocked (private mode, some frames): the game must still work without it.
+    let best = 0
+    try { best = Number(localStorage.getItem('taptap-best') || 0) } catch (e) {}
+    $('best').textContent = best
 
-    // 1. Who's playing? (inside GameTok only — on its own the game still works, as a guest)
-    GameTok.init()
-      .then(({ player, session, mode }) => {
-        // Names are chosen by players: insert them as text, never as HTML.
-        $('hi').textContent = `Hi ${player.name} 👋`
-        if (player.avatar) { const img = new Image(); img.src = player.avatar; img.alt = ''; $('hi').prepend(img, ' ') }
-        console.log('GameTok player', player.id, '(' + mode + ' mode)') // your id for this player in this game
-        // 2. Your server checks the session before trusting the player (see "Your server").
-        //    fetch('/api/me', { method: 'POST', body: JSON.stringify({ session }) })
-      })
-      .catch((err) => {
-        $('hi').textContent = 'Hi there 👋'
-        $('status').textContent = err.code === 'NOT_IN_GAMETOK' ? 'Open me from GameTok to see your name' : err.message
-      })
-
-    // 3. Stop when GameTok pauses you (app in the background, another game on screen)
-    GameTok.on('pause', () => { paused = true; document.body.style.opacity = 0.5 })
-    GameTok.on('resume', () => { paused = false; document.body.style.opacity = 1 })
-
-    // 4. Report scores
     $('tap').onclick = () => {
-      if (paused) return
       $('score').textContent = ++score
-      if (score % 10 === 0) GameTok.submitScore(score)
+      if (score > best) { best = score; $('best').textContent = best; try { localStorage.setItem('taptap-best', best) } catch (e) {} }
     }
   </script>
 </body>

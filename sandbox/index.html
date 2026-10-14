@@ -59,25 +59,15 @@
     <section>
       <div class="phone" id="phone"><iframe id="gameFrame" title="Game under test" allow="autoplay; fullscreen; clipboard-write"></iframe></div>
       <div class="controls">
-        <button onclick="send('gt-pause')">Send pause</button>
-        <button onclick="send('gt-resume')">Send resume</button>
         <button onclick="reloadGame()">Reload game</button>
       </div>
-      <p style="color: var(--dim); font-size: 12px;">This is the real GameTok player in test mode. <code>GameTok.init()</code> returns a test player (id <code>t_…</code>) and a test session; verify it on your server with a <strong>test</strong> key.</p>
+      <p style="color: var(--dim); font-size: 12px;">This is the real GameTok player. Only you can see this draft until you click Go live.</p>
     </section>
 
     <section>
       <div class="card">
-        <h2>Integration checklist</h2>
-        <p class="sub">Ticks itself as your game does each thing in this player. None of these block going live.</p>
-        <div class="check" data-event="bridge_loaded"><div class="dot">1</div><div>Bridge loaded<small>Add <code>&lt;script src="https://gametok.co/bridge.js"&gt;&lt;/script&gt;</code> to your page.</small></div></div>
-        <div class="check" data-event="player_requested"><div class="dot">2</div><div>Player requested<small>Call <code>GameTok.init()</code> when the game starts.</small></div></div>
-        <div class="check" data-event="session_verified"><div class="dot">3</div><div>Session verified by your server<small>POST the session to <code>/api/developer/sessions/verify</code> with your test key.</small></div></div>
-        <div class="check" data-event="score_submitted"><div class="dot">4</div><div>Score submitted<small>Optional: <code>GameTok.submitScore(score)</code>.</small></div></div>
-      </div>
-      <div class="card">
-        <h2>Messages</h2>
-        <p class="sub">Everything your game and the GameTok player say to each other.</p>
+        <h2>Activity</h2>
+        <p class="sub">What happens in the test player.</p>
         <div id="log"></div>
       </div>
     </section>
@@ -108,23 +98,11 @@
       document.getElementById('app').hidden = true;
     }
 
-    function renderChecklist(integration) {
-      document.querySelectorAll('.check').forEach(el => {
-        const done = Boolean(integration && integration[el.dataset.event]);
-        el.classList.toggle('done', done);
-        const dot = el.querySelector('.dot');
-        if (!dot.dataset.n) dot.dataset.n = dot.textContent;
-        dot.textContent = done ? '✓' : dot.dataset.n;
-      });
-    }
-
     async function record(event) {
       try {
         const res = await fetch(`${API_BASE}/developer/games/${encodeURIComponent(gameId)}/integration`, {
           method: 'POST', headers: authHeaders({ 'Content-Type': 'application/json' }), body: JSON.stringify({ event })
         });
-        const data = await res.json();
-        if (res.ok) renderChecklist(data.integration);
       } catch (e) {}
     }
 
@@ -133,12 +111,6 @@
       if (res.status === 401) { location.replace('/signin/?next=' + encodeURIComponent(location.pathname + location.search)); return null; }
       const data = await res.json();
       return (data.games || []).find(g => g.id === gameId) || null;
-    }
-
-    function send(type) {
-      if (!frame.contentWindow) return;
-      frame.contentWindow.postMessage({ type }, gameOrigin);
-      log('out', type);
     }
 
     function reloadGame() {
@@ -210,18 +182,12 @@
       document.getElementById('goLiveBtn').hidden = !isDraft;
       if (game.orientation === 'landscape') document.getElementById('phone').classList.add('landscape');
       try { gameOrigin = new URL(game.embedUrl).origin; } catch (e) {}
-      renderChecklist(game.integration || {});
       document.getElementById('notice').hidden = true;
       document.getElementById('app').hidden = false;
       frame.src = game.embedUrl;
       log('t', `loading ${game.embedUrl}`);
-      if (!isDraft) log('t', 'This game is live — sessions here are live-mode. Publish with a test key to test a draft.');
+      if (!isDraft) log('t', 'This game is already live. Publish a new draft to test changes before players see them.');
 
-      // Session verification is recorded server-side when your server calls verify.
-      setInterval(async () => {
-        const g = await loadGame().catch(() => null);
-        if (g) renderChecklist(g.integration || {});
-      }, 5000);
     }
     start();
   </script>
