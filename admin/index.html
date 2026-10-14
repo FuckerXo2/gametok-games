@@ -109,6 +109,12 @@
           <div class="tbl-wrap"><table class="data" id="seriesTable"></table></div>
         </details>
       </div>
+
+      <div class="panel">
+        <div class="panel-head"><h2>App downloads</h2><button class="btn btn-ghost btn-sm" id="storeRefresh" hidden>Fetch now</button></div>
+        <p class="sub">From the App Store and Google Play. The stores report a day or two late.</p>
+        <div class="grid" id="storeTiles" style="margin-bottom: 0;"></div>
+      </div>
     </section>
 
     <!-- GAMES -->
@@ -228,9 +234,37 @@
         ['People ever', fmt(d.newPeople.ever)],
       ].map(([l, v]) => `<span>${l} <b>${v}</b></span>`).join('');
       drawChart(d.series);
+      loadAppStores();
       $('seriesTable').innerHTML = `<thead><tr><th>Day</th><th class="num">People</th><th class="num">First time</th><th class="num">Came back</th></tr></thead><tbody>` +
         [...d.series].reverse().map((s) => `<tr><td>${esc(dayLabel(s.day))}</td><td class="num">${fmt(s.active)}</td><td class="num">${fmt(s.new)}</td><td class="num">${fmt(s.returning)}</td></tr>`).join('') + '</tbody>';
     }
+
+    // App Store / Google Play downloads. A store shows "Not connected" until its keys are set up.
+    async function loadAppStores() {
+      let d;
+      try { d = await api('/app-stores'); } catch (e) { $('storeTiles').innerHTML = '<p class="muted">Loading once the server update finishes.</p>'; return; }
+      const store = (key, name) => {
+        const s = d.stores[key];
+        if (!d.connected[key] && !s) return tile(name, 'Not connected', 'Waiting for the store keys');
+        if (!s) return tile(name, '—', 'Connected, waiting for the first numbers');
+        const extra = key === 'google' && s.activeDevices !== null ? ` · on ${fmt(s.activeDevices)} phones now` : '';
+        return tile(name, fmt(s.week), `downloads in the last 7 days · ${fmt(s.month)} in 30 days · ${fmt(s.allTime)} all time${extra}`);
+      };
+      const total = ['apple', 'google'].reduce((n, k) => n + (d.stores[k] ? d.stores[k].week : 0), 0);
+      const any = d.stores.apple || d.stores.google;
+      $('storeTiles').innerHTML = [
+        tile('Both stores', any ? fmt(total) : '—', 'downloads in the last 7 days'),
+        store('apple', 'App Store'),
+        store('google', 'Google Play'),
+      ].join('');
+      $('storeRefresh').hidden = !(d.connected.apple || d.connected.google);
+    }
+    $('storeRefresh').addEventListener('click', async () => {
+      $('storeRefresh').disabled = true;
+      $('storeRefresh').textContent = 'Fetching…';
+      try { await fetch(API + '/app-stores/refresh', { method: 'POST', headers: { Authorization: `Bearer ${token()}` } }); await loadAppStores(); }
+      finally { $('storeRefresh').disabled = false; $('storeRefresh').textContent = 'Fetch now'; }
+    });
 
     // Stacked bars, one per day: returning at the base, first-timers on top; 2px gap between them.
     function drawChart(series) {
