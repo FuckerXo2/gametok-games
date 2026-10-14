@@ -1,0 +1,414 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="robots" content="noindex, nofollow">
+  <title>GameTok Admin</title>
+  <link rel="icon" type="image/png" href="/assets/adaptive-icon.png">
+  <link rel="stylesheet" href="/assets/dev.css">
+  <script src="/session-sso.js"></script>
+  <style>
+    /* Chart series (validated on this dark surface: lightness band, CVD, contrast). */
+    :root { --s-views: #3987e5; --s-plays: #d95926; --s-players: #199e70; }
+    body { background: var(--bg); }
+    .admin { max-width: 1240px; margin: 0 auto; padding: 24px 16px 80px; }
+    .admin-top { display: flex; align-items: center; justify-content: space-between; gap: 12px; flex-wrap: wrap; margin-bottom: 20px; }
+    .admin-top h1 { font-size: 22px; margin: 0; display: flex; align-items: center; gap: 10px; }
+    .admin-top h1 img { width: 28px; height: 28px; }
+    .live-dot { width: 8px; height: 8px; border-radius: 50%; background: var(--s-players); display: inline-block; box-shadow: 0 0 0 0 rgba(25,158,112,.6); animation: pulse 2s infinite; }
+    @keyframes pulse { 70% { box-shadow: 0 0 0 8px rgba(25,158,112,0); } 100% { box-shadow: 0 0 0 0 rgba(25,158,112,0); } }
+    .controls { display: flex; gap: 8px; align-items: center; color: var(--muted); font-size: 13px; }
+    .seg { display: inline-flex; background: var(--surface); border: 1px solid var(--border); border-radius: 999px; padding: 3px; }
+    .seg button { background: none; border: 0; color: var(--muted); font: inherit; font-size: 13px; padding: 6px 12px; border-radius: 999px; cursor: pointer; }
+    .seg button[aria-pressed="true"] { background: var(--text); color: #050507; }
+    .tabs-row { display: flex; gap: 6px; border-bottom: 1px solid var(--border); margin-bottom: 20px; overflow-x: auto; }
+    .tabs-row button { background: none; border: 0; border-bottom: 2px solid transparent; color: var(--muted); font: inherit; font-size: 14px; font-weight: 600; padding: 10px 12px; cursor: pointer; white-space: nowrap; }
+    .tabs-row button[aria-selected="true"] { color: var(--text); border-bottom-color: var(--text); }
+    .grid-kpi { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 12px; margin-bottom: 12px; }
+    @media (max-width: 860px) { .grid-kpi { grid-template-columns: repeat(2, minmax(0, 1fr)); } }
+    .tile { background: var(--surface); border: 1px solid var(--border); border-radius: 14px; padding: 16px; min-width: 0; }
+    .tile .t { color: var(--muted); font-size: 12.5px; }
+    .tile .v { font-size: 28px; font-weight: 800; letter-spacing: -0.02em; margin-top: 4px; font-variant-numeric: tabular-nums; }
+    .tile .s { color: var(--muted); font-size: 12px; margin-top: 4px; }
+    .totals { display: flex; flex-wrap: wrap; gap: 8px 20px; color: var(--muted); font-size: 13px; margin: 8px 0 20px; }
+    .totals b { color: var(--text); font-variant-numeric: tabular-nums; }
+    .panel { background: var(--surface); border: 1px solid var(--border); border-radius: 14px; padding: 18px; margin-bottom: 16px; }
+    .panel h2 { font-size: 15px; margin: 0 0 4px; }
+    .panel .sub { color: var(--muted); font-size: 12.5px; margin: 0 0 14px; }
+    .legend { display: flex; gap: 16px; flex-wrap: wrap; font-size: 12.5px; color: var(--muted); margin-bottom: 8px; }
+    .legend span { display: inline-flex; align-items: center; gap: 6px; }
+    .legend i { width: 14px; height: 3px; border-radius: 2px; display: inline-block; }
+    .chart-wrap { position: relative; }
+    .chart-wrap svg { width: 100%; height: 260px; display: block; overflow: visible; }
+    .chart-wrap .tip { position: absolute; pointer-events: none; background: #050507; border: 1px solid var(--border); border-radius: 10px; padding: 8px 10px; font-size: 12px; white-space: nowrap; transform: translate(-50%, -100%); display: none; z-index: 2; }
+    .tip .row { display: flex; align-items: center; gap: 6px; color: var(--text); }
+    .tip i { width: 8px; height: 8px; border-radius: 50%; display: inline-block; }
+    .tbl-wrap { overflow-x: auto; }
+    table.data { width: 100%; border-collapse: collapse; font-size: 13px; }
+    table.data th { text-align: left; color: var(--muted); font-weight: 600; font-size: 12px; padding: 8px 10px; border-bottom: 1px solid var(--border); white-space: nowrap; cursor: pointer; user-select: none; }
+    table.data th.num, table.data td.num { text-align: right; font-variant-numeric: tabular-nums; }
+    table.data td { padding: 9px 10px; border-bottom: 1px solid var(--border); white-space: nowrap; }
+    table.data tbody tr:hover { background: var(--surface-2); }
+    table.data tr.click { cursor: pointer; }
+    .game-cell { display: flex; align-items: center; gap: 10px; }
+    .game-cell img { width: 34px; height: 34px; border-radius: 8px; object-fit: cover; background: var(--surface-2); }
+    .muted { color: var(--muted); }
+    .pill { display: inline-block; padding: 2px 8px; border-radius: 999px; font-size: 11.5px; border: 1px solid var(--border); color: var(--muted); }
+    .feed { list-style: none; margin: 0; padding: 0; }
+    .feed li { display: grid; grid-template-columns: 92px 70px 1fr; gap: 10px; padding: 10px 0; border-bottom: 1px solid var(--border); font-size: 13.5px; align-items: baseline; }
+    .feed .when { color: var(--muted); font-size: 12px; font-variant-numeric: tabular-nums; }
+    .kind { font-size: 11.5px; font-weight: 700; text-transform: uppercase; letter-spacing: .04em; }
+    .kind.play { color: var(--s-plays); } .kind.signup { color: var(--s-players); } .kind.publish { color: var(--s-views); }
+    .search { width: 100%; max-width: 360px; background: var(--surface); border: 1px solid var(--border); border-radius: 10px; color: var(--text); font: inherit; padding: 10px 12px; margin-bottom: 12px; }
+    .drawer { position: fixed; inset: 0 0 0 auto; width: min(520px, 100%); background: var(--surface); border-left: 1px solid var(--border); padding: 22px; overflow-y: auto; z-index: 20; transform: translateX(100%); transition: transform .3s cubic-bezier(.2,.7,.2,1); }
+    .drawer.open { transform: none; }
+    .drawer .close { position: absolute; top: 14px; right: 14px; }
+    .gate { max-width: 440px; margin: 15vh auto; text-align: center; }
+    .note { color: var(--muted); font-size: 12px; margin-top: 8px; }
+    [hidden] { display: none !important; }
+  </style>
+</head>
+<body>
+  <div class="gate" id="gate" hidden>
+    <h1 class="h2">Admins only</h1>
+    <p class="muted" id="gateText">Sign in with your GameTok admin account.</p>
+    <a class="btn btn-primary" href="/signin/?next=%2Fadmin%2F">Sign in</a>
+  </div>
+
+  <div class="admin" id="app" hidden>
+    <div class="admin-top">
+      <h1><img src="/assets/adaptive-icon.png" alt=""> GameTok Admin <span class="live-dot" title="Refreshing every 30 seconds"></span></h1>
+      <div class="controls">
+        <span>Range</span>
+        <div class="seg" id="range">
+          <button data-days="7">7 days</button>
+          <button data-days="30" aria-pressed="true">30 days</button>
+          <button data-days="90">90 days</button>
+        </div>
+      </div>
+    </div>
+
+    <div class="tabs-row" role="tablist">
+      <button role="tab" data-tab="overview" aria-selected="true">Overview</button>
+      <button role="tab" data-tab="live" aria-selected="false">Live activity</button>
+      <button role="tab" data-tab="games" aria-selected="false">Games</button>
+      <button role="tab" data-tab="users" aria-selected="false">Users</button>
+    </div>
+
+    <!-- OVERVIEW -->
+    <section data-view="overview">
+      <div class="grid-kpi" id="kpis"></div>
+      <div class="totals" id="totals"></div>
+      <div class="panel">
+        <h2>Every day</h2>
+        <p class="sub">Views = a game shown on screen. Plays = a game opened and played. Players = distinct people who played (an account, or a device without one). Lagos days.</p>
+        <div class="legend">
+          <span><i style="background: var(--s-views)"></i>Views</span>
+          <span><i style="background: var(--s-plays)"></i>Plays</span>
+          <span><i style="background: var(--s-players)"></i>Players</span>
+        </div>
+        <div class="chart-wrap" id="chart"><svg role="img" aria-label="Daily views, plays and players"></svg><div class="tip"></div></div>
+        <details style="margin-top: 12px;"><summary class="muted" style="cursor: pointer; font-size: 13px;">Show as a table</summary>
+          <div class="tbl-wrap"><table class="data" id="seriesTable"></table></div>
+        </details>
+      </div>
+    </section>
+
+    <!-- LIVE -->
+    <section data-view="live" hidden>
+      <div class="panel">
+        <h2>Live activity</h2>
+        <p class="sub">Newest first: sign-ups, plays (with time played) and games published. Refreshes every 15 seconds.</p>
+        <ul class="feed" id="feed"></ul>
+      </div>
+    </section>
+
+    <!-- GAMES -->
+    <section data-view="games" hidden>
+      <div class="panel">
+        <h2>Games</h2>
+        <p class="sub">For the selected range. Play rate = plays ÷ views. Click a column to sort.</p>
+        <div class="tbl-wrap"><table class="data" id="gamesTable"></table></div>
+      </div>
+    </section>
+
+    <!-- USERS -->
+    <section data-view="users" hidden>
+      <div class="panel">
+        <h2>Users <span class="muted" id="userCount" style="font-weight: 500;"></span></h2>
+        <p class="sub">Accounts, newest first. All time. Click someone to see what they played.</p>
+        <input class="search" id="userSearch" type="search" placeholder="Search username, name or email">
+        <div class="tbl-wrap"><table class="data" id="usersTable"></table></div>
+        <button class="btn btn-ghost btn-sm" id="moreUsers" style="margin-top: 12px;" hidden>Load more</button>
+      </div>
+    </section>
+  </div>
+
+  <aside class="drawer" id="drawer" aria-label="User details">
+    <button class="btn btn-ghost btn-sm close" onclick="closeDrawer()">Close</button>
+    <div id="drawerBody"></div>
+  </aside>
+
+  <script>
+    const API = 'https://gametok-backend-267787411422.us-central1.run.app/api/admin/insights';
+    const $ = (id) => document.getElementById(id);
+    const esc = (v) => String(v ?? '').replace(/[&<>"']/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
+    const fmt = (n) => (n === null || n === undefined ? '—' : Number(n).toLocaleString());
+    const dur = (s) => {
+      if (s === null || s === undefined) return '—';
+      s = Math.round(s);
+      if (s < 60) return `${s}s`;
+      if (s < 3600) return `${Math.floor(s / 60)}m ${s % 60 ? (s % 60) + 's' : ''}`.trim();
+      return `${Math.floor(s / 3600)}h ${Math.round((s % 3600) / 60)}m`;
+    };
+    const pct = (a, b) => (b ? `${Math.round((a / b) * 100)}%` : '—');
+    const ago = (t) => {
+      if (!t) return '—';
+      const s = (Date.now() - new Date(t).getTime()) / 1000;
+      if (s < 60) return 'just now';
+      if (s < 3600) return `${Math.floor(s / 60)}m ago`;
+      if (s < 86400) return `${Math.floor(s / 3600)}h ago`;
+      return `${Math.floor(s / 86400)}d ago`;
+    };
+    const day = (t) => (t ? new Date(t).toLocaleDateString(undefined, { day: 'numeric', month: 'short', year: 'numeric' }) : '—');
+    const token = () => { try { return localStorage.getItem('gametok_auth_token') || ''; } catch (e) { return ''; } };
+
+    let days = 30;
+    let tab = 'overview';
+
+    async function api(path) {
+      const res = await fetch(API + path, { headers: { Authorization: `Bearer ${token()}` } });
+      if (res.status === 401) { showGate(); throw new Error('unauthorized'); }
+      const data = await res.json().catch(() => ({}));
+      if (!res.ok) throw new Error(data.error || `HTTP ${res.status}`);
+      return data;
+    }
+
+    function showGate() {
+      $('app').hidden = true;
+      $('gate').hidden = false;
+      if (token()) $('gateText').textContent = 'This account isn\'t an admin. Sign in with your GameTok admin account.';
+    }
+
+    // ---------- Overview ----------
+    async function loadOverview() {
+      const d = await api(`/overview?days=${days}`);
+      const k = d.kpis;
+      const win = days <= 7 ? k.d7 : k.d30;
+      const winLabel = days <= 7 ? 'last 7 days' : 'last 30 days';
+      const tiles = [
+        ['Players today', k.today.players, `${fmt(win.players)} in the ${winLabel}`],
+        ['Plays today', k.today.sessions, `${fmt(win.sessions)} in the ${winLabel}`],
+        ['Views today', k.today.views, `${fmt(win.views)} in the ${winLabel}`],
+        ['Sign-ups today', k.today.signups, `${fmt(win.signups)} in the ${winLabel}`],
+        ['Play rate', null, `plays ÷ views, ${winLabel}`, pct(win.sessions, win.views)],
+        ['Time played', null, `total, ${winLabel}`, dur(win.seconds_played)],
+        ['Average play', null, `per play, ${winLabel}`, dur(win.avg_session_seconds)],
+        ['Games published', win.games_published, winLabel],
+      ];
+      $('kpis').innerHTML = tiles.map(([t, v, s, text]) =>
+        `<div class="tile"><div class="t">${esc(t)}</div><div class="v">${text !== undefined ? esc(text) : fmt(v)}</div><div class="s">${esc(s)}</div></div>`).join('');
+      const tt = d.totals;
+      $('totals').innerHTML = [
+        ['Accounts', tt.accounts], ['Live games', tt.live_games], ['Drafts', tt.drafts],
+        ['Developers', tt.developers], ['Devices with push', tt.push_devices],
+      ].map(([l, v]) => `<span>${esc(l)} <b>${fmt(v)}</b></span>`).join('');
+      drawChart(d.series);
+      $('seriesTable').innerHTML = `<thead><tr><th>Day</th><th class="num">Views</th><th class="num">Plays</th><th class="num">Players</th><th class="num">Time played</th><th class="num">Sign-ups</th></tr></thead><tbody>` +
+        [...d.series].reverse().map((r) => `<tr><td>${esc(r.day)}</td><td class="num">${fmt(r.views)}</td><td class="num">${fmt(r.sessions)}</td><td class="num">${fmt(r.players)}</td><td class="num">${dur(r.secondsPlayed)}</td><td class="num">${fmt(r.signups)}</td></tr>`).join('') + '</tbody>';
+    }
+
+    // Line chart: one count axis, three series, crosshair + tooltip, direct labels at the line ends.
+    function drawChart(series) {
+      const wrap = $('chart');
+      const svg = wrap.querySelector('svg');
+      const tip = wrap.querySelector('.tip');
+      const W = svg.clientWidth || 800, H = 260, L = 36, R = 64, T = 12, B = 26;
+      const keys = [['views', 'Views', 'var(--s-views)'], ['sessions', 'Plays', 'var(--s-plays)'], ['players', 'Players', 'var(--s-players)']];
+      const max = Math.max(4, ...series.flatMap((r) => keys.map(([k]) => r[k])));
+      const nice = Math.pow(10, Math.floor(Math.log10(max)));
+      const top = Math.ceil(max / nice) * nice;
+      const x = (i) => L + (series.length <= 1 ? 0 : (i / (series.length - 1)) * (W - L - R));
+      const y = (v) => T + (1 - v / top) * (H - T - B);
+      let out = '';
+      for (let g = 0; g <= 4; g++) {
+        const v = (top / 4) * g;
+        out += `<line x1="${L}" x2="${W - R}" y1="${y(v)}" y2="${y(v)}" stroke="var(--border)" stroke-width="1"/>`;
+        out += `<text x="${L - 8}" y="${y(v) + 4}" fill="var(--muted)" font-size="11" text-anchor="end">${fmt(Math.round(v))}</text>`;
+      }
+      const step = Math.max(1, Math.ceil(series.length / 7));
+      series.forEach((r, i) => {
+        if (i % step === 0 || i === series.length - 1) {
+          out += `<text x="${x(i)}" y="${H - 6}" fill="var(--muted)" font-size="11" text-anchor="middle">${esc(new Date(r.day + 'T12:00:00').toLocaleDateString(undefined, { day: 'numeric', month: 'short' }))}</text>`;
+        }
+      });
+      const ends = [];
+      keys.forEach(([k, label, color]) => {
+        const pts = series.map((r, i) => `${x(i)},${y(r[k])}`).join(' ');
+        out += `<polyline points="${pts}" fill="none" stroke="${color}" stroke-width="2" stroke-linejoin="round" stroke-linecap="round"/>`;
+        const last = series[series.length - 1];
+        if (last) ends.push({ y: y(last[k]), label, color });
+      });
+      // Direct labels at the right end, nudged apart so they never overlap.
+      ends.sort((a, b) => a.y - b.y);
+      for (let i = 1; i < ends.length; i++) if (ends[i].y - ends[i - 1].y < 13) ends[i].y = ends[i - 1].y + 13;
+      ends.forEach((e) => { out += `<text x="${W - R + 8}" y="${e.y + 4}" fill="var(--text)" font-size="11.5">${e.label}</text>`; });
+      out += `<line class="xh" x1="0" x2="0" y1="${T}" y2="${H - B}" stroke="var(--muted)" stroke-width="1" stroke-dasharray="3 3" visibility="hidden"/>`;
+      out += `<rect x="${L}" y="${T}" width="${W - L - R}" height="${H - T - B}" fill="transparent" class="hit"/>`;
+      svg.setAttribute('viewBox', `0 0 ${W} ${H}`);
+      svg.innerHTML = out;
+      const hit = svg.querySelector('.hit'), xh = svg.querySelector('.xh');
+      hit.addEventListener('pointermove', (ev) => {
+        const rect = svg.getBoundingClientRect();
+        const px = ((ev.clientX - rect.left) / rect.width) * W;
+        const i = Math.max(0, Math.min(series.length - 1, Math.round(((px - L) / (W - L - R)) * (series.length - 1))));
+        const r = series[i];
+        xh.setAttribute('x1', x(i)); xh.setAttribute('x2', x(i)); xh.setAttribute('visibility', 'visible');
+        tip.style.display = 'block';
+        tip.style.left = `${(x(i) / W) * rect.width}px`;
+        tip.style.top = `${(T / H) * rect.height + 4}px`;
+        tip.innerHTML = `<div class="muted" style="margin-bottom: 4px;">${esc(r.day)}</div>` +
+          keys.map(([k, label, color]) => `<div class="row"><i style="background:${color}"></i>${label} <b style="margin-left:auto;padding-left:12px">${fmt(r[k])}</b></div>`).join('') +
+          `<div class="row muted" style="margin-top:4px">Sign-ups <b style="margin-left:auto;padding-left:12px;color:var(--text)">${fmt(r.signups)}</b></div>`;
+      });
+      hit.addEventListener('pointerleave', () => { tip.style.display = 'none'; xh.setAttribute('visibility', 'hidden'); });
+    }
+
+    // ---------- Live ----------
+    async function loadLive() {
+      const d = await api('/activity?limit=80');
+      $('feed').innerHTML = d.events.map((e) => {
+        const what = e.kind === 'play'
+          ? `<b>${esc(e.who || 'guest')}</b> played <b>${esc(e.game || e.game_id)}</b> <span class="muted">${e.seconds ? 'for ' + dur(e.seconds) : ''} · ${esc(e.detail || '')}</span>`
+          : e.kind === 'signup'
+            ? `<b>${esc(e.who || 'someone')}</b> signed up <span class="muted">${esc(e.detail ? 'with ' + e.detail : 'with email')}</span>`
+            : `<b>${esc(e.who || 'a developer')}</b> published <b>${esc(e.game)}</b> <span class="muted">${esc(e.detail || '')}</span>`;
+        return `<li><span class="when" title="${esc(new Date(e.at).toLocaleString())}">${ago(e.at)}</span><span class="kind ${e.kind}">${e.kind}</span><span>${what}</span></li>`;
+      }).join('') || '<li><span></span><span></span><span class="muted">Nothing yet.</span></li>';
+    }
+
+    // ---------- Games ----------
+    let gamesRows = [];
+    let gamesSort = { key: 'sessions', dir: -1 };
+    async function loadGames() {
+      gamesRows = (await api(`/games?days=${days}`)).games;
+      renderGames();
+    }
+    function renderGames() {
+      const cols = [
+        ['name', 'Game'], ['creator', 'Creator'], ['status', 'Status'], ['platform', 'Phones'],
+        ['views', 'Views', 1], ['sessions', 'Plays', 1], ['players', 'Players', 1], ['rate', 'Play rate', 1],
+        ['seconds_played', 'Time played', 1], ['avg_session_seconds', 'Avg play', 1], ['last_played_at', 'Last played'],
+      ];
+      const rows = gamesRows.map((g) => ({ ...g, rate: g.views ? g.sessions / g.views : null }));
+      const { key, dir } = gamesSort;
+      rows.sort((a, b) => {
+        const av = a[key], bv = b[key];
+        if (av === null || av === undefined) return 1;
+        if (bv === null || bv === undefined) return -1;
+        return (av > bv ? 1 : av < bv ? -1 : 0) * dir;
+      });
+      const phones = { all: 'Home feed', explore: 'Explore only', desktop: 'Not on phones' };
+      $('gamesTable').innerHTML = `<thead><tr>${cols.map(([k, l, n]) => `<th class="${n ? 'num' : ''}" data-sort="${k}">${esc(l)}${gamesSort.key === k ? (gamesSort.dir < 0 ? ' ↓' : ' ↑') : ''}</th>`).join('')}</tr></thead><tbody>` +
+        rows.map((g) => `<tr>
+          <td><div class="game-cell">${g.thumbnail ? `<img src="${esc(g.thumbnail)}" alt="" loading="lazy">` : '<img alt="">'}<a href="https://gametok.co/game/${encodeURIComponent(g.id)}" target="_blank" rel="noopener">${esc(g.name)}</a></div></td>
+          <td class="muted">${g.creator ? '@' + esc(g.creator) : '—'}</td>
+          <td><span class="pill">${esc(g.status || 'published')}</span></td>
+          <td class="muted">${esc(phones[g.platform] || 'Not measured')}</td>
+          <td class="num">${fmt(g.views)}</td><td class="num">${fmt(g.sessions)}</td><td class="num">${fmt(g.players)}</td>
+          <td class="num">${g.rate === null ? '—' : Math.round(g.rate * 100) + '%'}</td>
+          <td class="num">${dur(g.seconds_played)}</td><td class="num">${dur(g.avg_session_seconds)}</td>
+          <td class="muted">${ago(g.last_played_at)}</td></tr>`).join('') + '</tbody>';
+      $('gamesTable').querySelectorAll('th').forEach((th) => th.addEventListener('click', () => {
+        const k = th.dataset.sort;
+        gamesSort = { key: k, dir: gamesSort.key === k ? -gamesSort.dir : -1 };
+        renderGames();
+      }));
+    }
+
+    // ---------- Users ----------
+    let userOffset = 0;
+    async function loadUsers(append = false) {
+      if (!append) userOffset = 0;
+      const q = $('userSearch').value.trim();
+      const d = await api(`/users?limit=50&offset=${userOffset}${q ? '&q=' + encodeURIComponent(q) : ''}`);
+      $('userCount').textContent = `· ${fmt(d.total)}`;
+      const rows = d.users.map((u) => `<tr class="click" data-id="${esc(u.id)}">
+        <td><b>${esc(u.username ? '@' + u.username : (u.display_name || 'No username'))}</b><div class="muted" style="font-size: 12px;">${esc(u.email || '')}</div></td>
+        <td class="muted">${esc(u.oauth_provider || 'email')}</td>
+        <td class="muted">${day(u.created_at)}</td>
+        <td class="num">${fmt(u.sessions)}</td><td class="num">${fmt(u.games_played)}</td><td class="num">${dur(u.seconds_played)}</td>
+        <td class="muted">${ago(u.last_played_at)}</td>
+        <td class="num">${u.games_published ? fmt(u.games_published) : '—'}</td>
+        <td class="muted">${u.push_enabled ? 'On' : '—'}</td></tr>`).join('');
+      const head = `<thead><tr><th>User</th><th>Signed up with</th><th>Joined</th><th class="num">Plays</th><th class="num">Games</th><th class="num">Time played</th><th>Last played</th><th class="num">Published</th><th>Push</th></tr></thead>`;
+      if (append) $('usersTable').querySelector('tbody').insertAdjacentHTML('beforeend', rows);
+      else $('usersTable').innerHTML = head + `<tbody>${rows}</tbody>`;
+      userOffset += d.users.length;
+      $('moreUsers').hidden = userOffset >= d.total;
+      $('usersTable').querySelectorAll('tr.click').forEach((tr) => { tr.onclick = () => openUser(tr.dataset.id); });
+    }
+
+    async function openUser(id) {
+      $('drawerBody').innerHTML = '<p class="muted">Loading…</p>';
+      $('drawer').classList.add('open');
+      const d = await api(`/users/${encodeURIComponent(id)}`);
+      const u = d.user;
+      $('drawerBody').innerHTML = `
+        <h2 class="h2" style="font-size: 22px; margin: 0 0 4px;">${esc(u.username ? '@' + u.username : (u.display_name || 'User'))}</h2>
+        <p class="muted" style="margin: 0 0 16px;">${esc(u.email || 'no email')} · ${esc(u.oauth_provider || 'email')} · joined ${day(u.created_at)}${u.developer_agreement_accepted_at ? ' · developer' : ''}</p>
+        <h3 style="font-size: 14px;">Games played</h3>
+        ${d.games.length ? `<table class="data"><thead><tr><th>Game</th><th class="num">Plays</th><th class="num">Time</th><th>Last</th></tr></thead><tbody>${d.games.map((g) => `<tr><td>${esc(g.name || g.game_id)}</td><td class="num">${fmt(g.sessions)}</td><td class="num">${dur(g.seconds_played)}</td><td class="muted">${ago(g.last_played_at)}</td></tr>`).join('')}</tbody></table>` : '<p class="muted">No plays recorded.</p>'}
+        <h3 style="font-size: 14px; margin-top: 20px;">Published games</h3>
+        ${d.published.length ? `<ul>${d.published.map((g) => `<li>${esc(g.name)} <span class="pill">${esc(g.status || 'published')}</span> <span class="muted">${day(g.created_at)}</span></li>`).join('')}</ul>` : '<p class="muted">None.</p>'}
+        <h3 style="font-size: 14px; margin-top: 20px;">Recent searches</h3>
+        ${d.searches.length ? `<ul>${d.searches.map((s) => `<li>${esc(s.query)} <span class="muted">${ago(s.created_at)}</span></li>`).join('')}</ul>` : '<p class="muted">None.</p>'}`;
+    }
+    function closeDrawer() { $('drawer').classList.remove('open'); }
+    document.addEventListener('keydown', (e) => { if (e.key === 'Escape') closeDrawer(); });
+
+    // ---------- Wiring ----------
+    const loaders = { overview: loadOverview, live: loadLive, games: loadGames, users: () => loadUsers(false) };
+    const load = () => loaders[tab]().catch((e) => { if (e.message !== 'unauthorized') console.error(e); });
+
+    document.querySelectorAll('.tabs-row button').forEach((b) => b.addEventListener('click', () => {
+      tab = b.dataset.tab;
+      document.querySelectorAll('.tabs-row button').forEach((x) => x.setAttribute('aria-selected', String(x === b)));
+      document.querySelectorAll('[data-view]').forEach((v) => { v.hidden = v.dataset.view !== tab; });
+      load();
+    }));
+    document.querySelectorAll('#range button').forEach((b) => b.addEventListener('click', () => {
+      days = Number(b.dataset.days);
+      document.querySelectorAll('#range button').forEach((x) => x.setAttribute('aria-pressed', String(x === b)));
+      load();
+    }));
+    let searchTimer;
+    $('userSearch').addEventListener('input', () => { clearTimeout(searchTimer); searchTimer = setTimeout(() => loadUsers(false), 300); });
+    $('moreUsers').addEventListener('click', () => loadUsers(true));
+    window.addEventListener('resize', () => { if (tab === 'overview') load(); });
+
+    // Live tab refreshes every 15 s; the others every 30 s (paused while the tab is hidden).
+    setInterval(() => { if (!document.hidden && tab === 'live') load(); }, 15000);
+    setInterval(() => { if (!document.hidden && tab !== 'live' && tab !== 'users') load(); }, 30000);
+
+    (async function start() {
+      if (!token() && window.GameTokSSO) {
+        const shared = await window.GameTokSSO.get().catch(() => null);
+        if (shared) { try { localStorage.setItem('gametok_auth_token', shared.token); } catch (e) {} }
+      }
+      if (!token()) return showGate();
+      try {
+        await loadOverview();
+        $('gate').hidden = true;
+        $('app').hidden = false;
+        drawChartAfterShow();
+      } catch (e) {
+        if (e.message !== 'unauthorized') { $('app').hidden = false; console.error(e); }
+      }
+    })();
+    // The chart measures its width, which is 0 while the page is hidden; redraw once shown.
+    function drawChartAfterShow() { requestAnimationFrame(() => loadOverview().catch(() => {})); }
+  </script>
+</body>
+</html>
