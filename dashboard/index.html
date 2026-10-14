@@ -972,13 +972,41 @@
     }
     .subview.active {
       display: block;
-      animation: fadeIn 0.2s ease;
     }
 
-    @keyframes fadeIn {
-      from { opacity: 0; transform: translateY(4px); }
-      to { opacity: 1; transform: translateY(0); }
+    /* Motion (same feel as the landing page, quicker for an everyday tool). Each time a page
+       opens its blocks rise in one after another; stat cards and game rows follow in sequence.
+       Animations restart because a page goes from display: none to block. */
+    @keyframes riseIn {
+      from { opacity: 0; transform: translateY(14px); }
+      to { opacity: 1; transform: none; }
     }
+    @keyframes popIn {
+      from { opacity: 0; transform: translateY(16px) scale(0.97); }
+      to { opacity: 1; transform: none; }
+    }
+    @keyframes fadeIn {
+      from { opacity: 0; }
+      to { opacity: 1; }
+    }
+    @keyframes slideIn {
+      from { opacity: 0; transform: translateX(-14px); }
+      to { opacity: 1; transform: none; }
+    }
+    .subview.active > *, .subview.active .stagger > *, .data-table tbody tr {
+      animation: riseIn 0.5s cubic-bezier(.2,.7,.2,1) both;
+    }
+    .subview.active > :nth-child(1), .subview.active .stagger > :nth-child(1), .data-table tbody tr:nth-child(1) { animation-delay: 0ms; }
+    .subview.active > :nth-child(2), .subview.active .stagger > :nth-child(2), .data-table tbody tr:nth-child(2) { animation-delay: 55ms; }
+    .subview.active > :nth-child(3), .subview.active .stagger > :nth-child(3), .data-table tbody tr:nth-child(3) { animation-delay: 110ms; }
+    .subview.active > :nth-child(4), .subview.active .stagger > :nth-child(4), .data-table tbody tr:nth-child(4) { animation-delay: 165ms; }
+    .subview.active > :nth-child(5), .subview.active .stagger > :nth-child(5), .data-table tbody tr:nth-child(5) { animation-delay: 220ms; }
+    .subview.active > :nth-child(6), .subview.active .stagger > :nth-child(6), .data-table tbody tr:nth-child(6) { animation-delay: 275ms; }
+    .subview.active > :nth-child(7), .subview.active .stagger > :nth-child(7), .data-table tbody tr:nth-child(7) { animation-delay: 330ms; }
+    .subview.active > :nth-child(8), .subview.active .stagger > :nth-child(8), .data-table tbody tr:nth-child(8) { animation-delay: 385ms; }
+    .sidebar { animation: slideIn 0.5s cubic-bezier(.2,.7,.2,1) both; }
+    .modal-overlay.active { animation: fadeIn 0.2s ease both; }
+    .modal-overlay.active > .modal-box { animation: popIn 0.35s cubic-bezier(.2,.7,.2,1) both; }
 
     /* Pagination */
     .pagination-bar {
@@ -1168,7 +1196,7 @@
     }
 
     @media (prefers-reduced-motion: reduce) {
-      *, *::before, *::after { scroll-behavior: auto !important; animation-duration: 0.01ms !important; animation-iteration-count: 1 !important; transition-duration: 0.01ms !important; }
+      *, *::before, *::after { scroll-behavior: auto !important; animation-duration: 0.01ms !important; animation-iteration-count: 1 !important; animation-delay: 0ms !important; transition-duration: 0.01ms !important; }
     }
   
     /* ===== Developer-site theme (matches assets/dev.css) ===== */
@@ -1347,7 +1375,7 @@
         </div>
 
         <!-- 3 Stat Cards Row -->
-        <div class="stat-row-3" style="grid-template-columns: repeat(2, minmax(0, 1fr));">
+        <div class="stat-row-3 stagger" style="grid-template-columns: repeat(2, minmax(0, 1fr));">
           <div class="card-stat">
             <div class="card-stat-icon-wrap icon-cyan-bg">
               <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2">
@@ -1430,7 +1458,7 @@
         </div>
 
         <!-- 4-Column Card Grid -->
-        <div class="games-card-grid" id="gamesCardGrid"></div>
+        <div class="games-card-grid stagger" id="gamesCardGrid"></div>
       </section>
 
       <!-- ========================================== -->
@@ -1525,7 +1553,7 @@
 
         <!-- DETAIL TAB 3: GAME ANALYTICS -->
         <div id="detailTabAnalytics" style="display: none;">
-          <div class="stat-row-3">
+          <div class="stat-row-3 stagger">
             <div class="card-stat"><div class="card-stat-title">Plays</div><div class="card-stat-value" id="detailStatPlays">–</div><div class="card-stat-sub" id="detailStatPlayers">Unique players: –</div></div>
             <div class="card-stat"><div class="card-stat-title">Average Session</div><div class="card-stat-value" id="detailStatDuration">–</div><div class="card-stat-sub">Reported by bridge.js</div></div>
             <div class="card-stat"><div class="card-stat-title">High Score</div><div class="card-stat-value" id="detailStatHighScore">–</div><div class="card-stat-sub" id="detailStatScores">Scores submitted: –</div></div>
@@ -1563,7 +1591,7 @@
         </div>
 
         <!-- 4 Analytics Metric Cards -->
-        <div class="stat-row-4">
+        <div class="stat-row-4 stagger">
           <div class="card-stat">
             <div class="card-stat-icon-wrap icon-cyan-bg">
               <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/></svg>
