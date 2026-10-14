@@ -9,44 +9,45 @@
   <link rel="stylesheet" href="/assets/dev.css">
   <script src="/session-sso.js"></script>
   <style>
-    /* Chart series (validated on this dark surface: lightness band, CVD, contrast). */
-    :root { --s-views: #3987e5; --s-plays: #d95926; --s-players: #199e70; }
+    /* Chart colours, validated on this dark surface (lightness band, colour-blind separation, contrast). */
+    :root { --s-returning: #3987e5; --s-new: #d95926; --good: #199e70; }
     body { background: var(--bg); }
     .admin { max-width: 1240px; margin: 0 auto; padding: 24px 16px 80px; }
     .admin-top { display: flex; align-items: center; justify-content: space-between; gap: 12px; flex-wrap: wrap; margin-bottom: 20px; }
     .admin-top h1 { font-size: 22px; margin: 0; display: flex; align-items: center; gap: 10px; }
     .admin-top h1 img { width: 28px; height: 28px; }
-    .live-dot { width: 8px; height: 8px; border-radius: 50%; background: var(--s-players); display: inline-block; box-shadow: 0 0 0 0 rgba(25,158,112,.6); animation: pulse 2s infinite; }
-    @keyframes pulse { 70% { box-shadow: 0 0 0 8px rgba(25,158,112,0); } 100% { box-shadow: 0 0 0 0 rgba(25,158,112,0); } }
-    .controls { display: flex; gap: 8px; align-items: center; color: var(--muted); font-size: 13px; }
+    .controls { display: flex; gap: 14px; align-items: center; color: var(--muted); font-size: 13px; flex-wrap: wrap; }
     .seg { display: inline-flex; background: var(--surface); border: 1px solid var(--border); border-radius: 999px; padding: 3px; }
     .seg button { background: none; border: 0; color: var(--muted); font: inherit; font-size: 13px; padding: 6px 12px; border-radius: 999px; cursor: pointer; }
     .seg button[aria-pressed="true"] { background: var(--text); color: #050507; }
+    .toggle { display: inline-flex; align-items: center; gap: 6px; cursor: pointer; }
     .tabs-row { display: flex; gap: 6px; border-bottom: 1px solid var(--border); margin-bottom: 20px; overflow-x: auto; }
     .tabs-row button { background: none; border: 0; border-bottom: 2px solid transparent; color: var(--muted); font: inherit; font-size: 14px; font-weight: 600; padding: 10px 12px; cursor: pointer; white-space: nowrap; }
     .tabs-row button[aria-selected="true"] { color: var(--text); border-bottom-color: var(--text); }
-    .grid-kpi { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 12px; margin-bottom: 12px; }
-    @media (max-width: 860px) { .grid-kpi { grid-template-columns: repeat(2, minmax(0, 1fr)); } }
+    .grid { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 12px; margin-bottom: 12px; }
+    @media (max-width: 900px) { .grid { grid-template-columns: repeat(2, minmax(0, 1fr)); } }
     .tile { background: var(--surface); border: 1px solid var(--border); border-radius: 14px; padding: 16px; min-width: 0; }
-    .tile .t { color: var(--muted); font-size: 12.5px; }
-    .tile .v { font-size: 28px; font-weight: 800; letter-spacing: -0.02em; margin-top: 4px; font-variant-numeric: tabular-nums; }
-    .tile .s { color: var(--muted); font-size: 12px; margin-top: 4px; }
-    .totals { display: flex; flex-wrap: wrap; gap: 8px 20px; color: var(--muted); font-size: 13px; margin: 8px 0 20px; }
-    .totals b { color: var(--text); font-variant-numeric: tabular-nums; }
+    .tile .t { color: var(--text); font-size: 13.5px; font-weight: 600; }
+    .tile .v { font-size: 34px; font-weight: 800; letter-spacing: -0.02em; margin: 6px 0 2px; font-variant-numeric: tabular-nums; }
+    .tile .s { color: var(--muted); font-size: 12.5px; line-height: 1.4; }
+    .tile.hero .v { font-size: 40px; }
+    .small-stats { display: flex; flex-wrap: wrap; gap: 8px 22px; color: var(--muted); font-size: 13px; margin: 6px 0 20px; }
+    .small-stats b { color: var(--text); font-variant-numeric: tabular-nums; }
     .panel { background: var(--surface); border: 1px solid var(--border); border-radius: 14px; padding: 18px; margin-bottom: 16px; }
-    .panel h2 { font-size: 15px; margin: 0 0 4px; }
-    .panel .sub { color: var(--muted); font-size: 12.5px; margin: 0 0 14px; }
-    .legend { display: flex; gap: 16px; flex-wrap: wrap; font-size: 12.5px; color: var(--muted); margin-bottom: 8px; }
+    .panel h2 { font-size: 16px; margin: 0 0 4px; }
+    .panel .sub { color: var(--muted); font-size: 13px; margin: 0 0 14px; line-height: 1.5; }
+    .legend { display: flex; gap: 16px; flex-wrap: wrap; font-size: 13px; color: var(--muted); margin-bottom: 8px; }
     .legend span { display: inline-flex; align-items: center; gap: 6px; }
-    .legend i { width: 14px; height: 3px; border-radius: 2px; display: inline-block; }
+    .legend i { width: 12px; height: 12px; border-radius: 3px; display: inline-block; }
     .chart-wrap { position: relative; }
-    .chart-wrap svg { width: 100%; height: 260px; display: block; overflow: visible; }
-    .chart-wrap .tip { position: absolute; pointer-events: none; background: #050507; border: 1px solid var(--border); border-radius: 10px; padding: 8px 10px; font-size: 12px; white-space: nowrap; transform: translate(-50%, -100%); display: none; z-index: 2; }
+    .chart-wrap svg { width: 100%; height: 240px; display: block; overflow: visible; }
+    .tip { position: absolute; pointer-events: none; background: #050507; border: 1px solid var(--border); border-radius: 10px; padding: 8px 10px; font-size: 12.5px; white-space: nowrap; transform: translate(-50%, -100%); display: none; z-index: 2; }
     .tip .row { display: flex; align-items: center; gap: 6px; color: var(--text); }
-    .tip i { width: 8px; height: 8px; border-radius: 50%; display: inline-block; }
+    .tip i { width: 8px; height: 8px; border-radius: 2px; display: inline-block; }
     .tbl-wrap { overflow-x: auto; }
     table.data { width: 100%; border-collapse: collapse; font-size: 13px; }
-    table.data th { text-align: left; color: var(--muted); font-weight: 600; font-size: 12px; padding: 8px 10px; border-bottom: 1px solid var(--border); white-space: nowrap; cursor: pointer; user-select: none; }
+    table.data th { text-align: left; color: var(--muted); font-weight: 600; font-size: 12px; padding: 8px 10px; border-bottom: 1px solid var(--border); white-space: nowrap; }
+    table.data th[data-sort] { cursor: pointer; user-select: none; }
     table.data th.num, table.data td.num { text-align: right; font-variant-numeric: tabular-nums; }
     table.data td { padding: 9px 10px; border-bottom: 1px solid var(--border); white-space: nowrap; }
     table.data tbody tr:hover { background: var(--surface-2); }
@@ -58,14 +59,13 @@
     .feed { list-style: none; margin: 0; padding: 0; }
     .feed li { display: grid; grid-template-columns: 92px 70px 1fr; gap: 10px; padding: 10px 0; border-bottom: 1px solid var(--border); font-size: 13.5px; align-items: baseline; }
     .feed .when { color: var(--muted); font-size: 12px; font-variant-numeric: tabular-nums; }
-    .kind { font-size: 11.5px; font-weight: 700; text-transform: uppercase; letter-spacing: .04em; }
-    .kind.play { color: var(--s-plays); } .kind.signup { color: var(--s-players); } .kind.publish { color: var(--s-views); }
+    .kind { font-size: 11.5px; font-weight: 700; text-transform: uppercase; letter-spacing: .04em; color: var(--muted); }
     .search { width: 100%; max-width: 360px; background: var(--surface); border: 1px solid var(--border); border-radius: 10px; color: var(--text); font: inherit; padding: 10px 12px; margin-bottom: 12px; }
     .drawer { position: fixed; inset: 0 0 0 auto; width: min(520px, 100%); background: var(--surface); border-left: 1px solid var(--border); padding: 22px; overflow-y: auto; z-index: 20; transform: translateX(100%); transition: transform .3s cubic-bezier(.2,.7,.2,1); }
     .drawer.open { transform: none; }
     .drawer .close { position: absolute; top: 14px; right: 14px; }
     .gate { max-width: 440px; margin: 15vh auto; text-align: center; }
-    .note { color: var(--muted); font-size: 12px; margin-top: 8px; }
+    .note { background: var(--surface-2); border: 1px solid var(--border); border-radius: 10px; padding: 10px 12px; color: var(--muted); font-size: 12.5px; line-height: 1.5; margin-bottom: 14px; }
     [hidden] { display: none !important; }
   </style>
 </head>
@@ -78,10 +78,10 @@
 
   <div class="admin" id="app" hidden>
     <div class="admin-top">
-      <h1><img src="/assets/adaptive-icon.png" alt=""> GameTok Admin <span class="live-dot" title="Refreshing every 30 seconds"></span></h1>
+      <h1><img src="/assets/adaptive-icon.png" alt=""> GameTok Admin</h1>
       <div class="controls">
-        <span>Range</span>
-        <div class="seg" id="range">
+        <label class="toggle"><input type="checkbox" id="internal"> Include team &amp; test accounts</label>
+        <div class="seg" id="range" title="Range for the chart and the games table">
           <button data-days="7">7 days</button>
           <button data-days="30" aria-pressed="true">30 days</button>
           <button data-days="90">90 days</button>
@@ -91,36 +91,35 @@
 
     <div class="tabs-row" role="tablist">
       <button role="tab" data-tab="overview" aria-selected="true">Overview</button>
-      <button role="tab" data-tab="live" aria-selected="false">Live activity</button>
+      <button role="tab" data-tab="retention" aria-selected="false">Do people come back?</button>
       <button role="tab" data-tab="games" aria-selected="false">Games</button>
-      <button role="tab" data-tab="users" aria-selected="false">Users</button>
+      <button role="tab" data-tab="users" aria-selected="false">Accounts</button>
+      <button role="tab" data-tab="live" aria-selected="false">Live</button>
     </div>
 
     <!-- OVERVIEW -->
     <section data-view="overview">
-      <div class="grid-kpi" id="kpis"></div>
-      <div class="totals" id="totals"></div>
+      <div class="grid" id="heroTiles"></div>
+      <div class="grid" id="tiles"></div>
+      <div class="small-stats" id="smallStats"></div>
       <div class="panel">
-        <h2>Every day</h2>
-        <p class="sub">Views = a game shown on screen. Plays = a game opened and played. Players = distinct people who played (an account, or a device without one). Lagos days.</p>
-        <div class="legend">
-          <span><i style="background: var(--s-views)"></i>Views</span>
-          <span><i style="background: var(--s-plays)"></i>Plays</span>
-          <span><i style="background: var(--s-players)"></i>Players</span>
-        </div>
-        <div class="chart-wrap" id="chart"><svg role="img" aria-label="Daily views, plays and players"></svg><div class="tip"></div></div>
+        <h2>People who played each day</h2>
+        <p class="sub">Each bar is one day. <b style="color: var(--s-new)">Orange</b> = people there for the first time. <b style="color: var(--s-returning)">Blue</b> = people who had been before. A healthy app's blue part grows over time.</p>
+        <div class="legend"><span><i style="background: var(--s-returning)"></i>Came back</span><span><i style="background: var(--s-new)"></i>First time</span></div>
+        <div class="chart-wrap" id="chart"><svg role="img" aria-label="People who played each day, split into first-timers and returning"></svg><div class="tip"></div></div>
         <details style="margin-top: 12px;"><summary class="muted" style="cursor: pointer; font-size: 13px;">Show as a table</summary>
           <div class="tbl-wrap"><table class="data" id="seriesTable"></table></div>
         </details>
       </div>
     </section>
 
-    <!-- LIVE -->
-    <section data-view="live" hidden>
+    <!-- RETENTION -->
+    <section data-view="retention" hidden>
       <div class="panel">
-        <h2>Live activity</h2>
-        <p class="sub">Newest first: sign-ups, plays (with time played) and games published. Refreshes every 15 seconds.</p>
-        <ul class="feed" id="feed"></ul>
+        <h2>Do people come back?</h2>
+        <p class="sub">Everyone who played for the first time on a given day, and how many of them played again 1 day, 7 days and 30 days later. This is the most important number for a feed app: if people don't come back, new players just leak away.</p>
+        <div class="note">Before 11 Oct only each person's first and last play of each game was saved, so returns before then are undercounted. From 11 Oct every play is saved.</div>
+        <div class="tbl-wrap"><table class="data" id="cohortTable"></table></div>
       </div>
     </section>
 
@@ -128,7 +127,7 @@
     <section data-view="games" hidden>
       <div class="panel">
         <h2>Games</h2>
-        <p class="sub">For the selected range. Play rate = plays ÷ views. Click a column to sort.</p>
+        <p class="sub">For the selected range. <b>Came back</b> = people who played that game on more than one day. Click a column to sort.</p>
         <div class="tbl-wrap"><table class="data" id="gamesTable"></table></div>
       </div>
     </section>
@@ -136,16 +135,25 @@
     <!-- USERS -->
     <section data-view="users" hidden>
       <div class="panel">
-        <h2>Users <span class="muted" id="userCount" style="font-weight: 500;"></span></h2>
-        <p class="sub">Accounts, newest first. All time. Click someone to see what they played.</p>
+        <h2>Accounts <span class="muted" id="userCount" style="font-weight: 500;"></span></h2>
+        <p class="sub">People who made an account, newest first. Most players don't make one: guests are counted in the Overview, not here. Click someone to see what they played.</p>
         <input class="search" id="userSearch" type="search" placeholder="Search username, name or email">
         <div class="tbl-wrap"><table class="data" id="usersTable"></table></div>
         <button class="btn btn-ghost btn-sm" id="moreUsers" style="margin-top: 12px;" hidden>Load more</button>
       </div>
     </section>
+
+    <!-- LIVE -->
+    <section data-view="live" hidden>
+      <div class="panel">
+        <h2>Live</h2>
+        <p class="sub">What's happening right now, newest first: plays, new accounts and games published. Refreshes every 15 seconds.</p>
+        <ul class="feed" id="feed"></ul>
+      </div>
+    </section>
   </div>
 
-  <aside class="drawer" id="drawer" aria-label="User details">
+  <aside class="drawer" id="drawer" aria-label="Account details">
     <button class="btn btn-ghost btn-sm close" onclick="closeDrawer()">Close</button>
     <div id="drawerBody"></div>
   </aside>
@@ -159,10 +167,10 @@
       if (s === null || s === undefined) return '—';
       s = Math.round(s);
       if (s < 60) return `${s}s`;
-      if (s < 3600) return `${Math.floor(s / 60)}m ${s % 60 ? (s % 60) + 's' : ''}`.trim();
+      if (s < 3600) return `${Math.floor(s / 60)}m${s % 60 ? ' ' + (s % 60) + 's' : ''}`;
       return `${Math.floor(s / 3600)}h ${Math.round((s % 3600) / 60)}m`;
     };
-    const pct = (a, b) => (b ? `${Math.round((a / b) * 100)}%` : '—');
+    const pctOf = (part, whole) => (whole ? `${Math.round((part / whole) * 100)}%` : '—');
     const ago = (t) => {
       if (!t) return '—';
       const s = (Date.now() - new Date(t).getTime()) / 1000;
@@ -171,11 +179,15 @@
       if (s < 86400) return `${Math.floor(s / 3600)}h ago`;
       return `${Math.floor(s / 86400)}d ago`;
     };
-    const day = (t) => (t ? new Date(t).toLocaleDateString(undefined, { day: 'numeric', month: 'short', year: 'numeric' }) : '—');
+    const day = (t) => (t ? new Date(t).toLocaleDateString(undefined, { day: 'numeric', month: 'short' }) : '—');
+    const dayLabel = (iso) => new Date(iso + 'T12:00:00').toLocaleDateString(undefined, { weekday: 'short', day: 'numeric', month: 'short' });
     const token = () => { try { return localStorage.getItem('gametok_auth_token') || ''; } catch (e) { return ''; } };
 
     let days = 30;
     let tab = 'overview';
+    let internal = false;
+    let overview = null;
+    const q = (extra = '') => `?days=${days}${internal ? '&internal=1' : ''}${extra}`;
 
     async function api(path) {
       const res = await fetch(API + path, { headers: { Authorization: `Bearer ${token()}` } });
@@ -191,117 +203,104 @@
       if (token()) $('gateText').textContent = 'This account isn\'t an admin. Sign in with your GameTok admin account.';
     }
 
+    const tile = (title, value, sub, hero) =>
+      `<div class="tile${hero ? ' hero' : ''}"><div class="t">${esc(title)}</div><div class="v">${esc(value)}</div><div class="s">${sub}</div></div>`;
+
     // ---------- Overview ----------
     async function loadOverview() {
-      const d = await api(`/overview?days=${days}`);
-      const k = d.kpis;
-      const win = days <= 7 ? k.d7 : k.d30;
-      const winLabel = days <= 7 ? 'last 7 days' : 'last 30 days';
-      const tiles = [
-        ['Players today', k.today.players, `${fmt(win.players)} in the ${winLabel}`],
-        ['Plays today', k.today.sessions, `${fmt(win.sessions)} in the ${winLabel}`],
-        ['Views today', k.today.views, `${fmt(win.views)} in the ${winLabel}`],
-        ['Sign-ups today', k.today.signups, `${fmt(win.signups)} in the ${winLabel}`],
-        ['Play rate', null, `plays ÷ views, ${winLabel}`, pct(win.sessions, win.views)],
-        ['Time played', null, `total, ${winLabel}`, dur(win.seconds_played)],
-        ['Average play', null, `per play, ${winLabel}`, dur(win.avg_session_seconds)],
-        ['Games published', win.games_published, winLabel],
-      ];
-      $('kpis').innerHTML = tiles.map(([t, v, s, text]) =>
-        `<div class="tile"><div class="t">${esc(t)}</div><div class="v">${text !== undefined ? esc(text) : fmt(v)}</div><div class="s">${esc(s)}</div></div>`).join('');
-      const tt = d.totals;
-      $('totals').innerHTML = [
-        ['Accounts', tt.accounts], ['Live games', tt.live_games], ['Drafts', tt.drafts],
-        ['Developers', tt.developers], ['Devices with push', tt.push_devices],
-      ].map(([l, v]) => `<span>${esc(l)} <b>${fmt(v)}</b></span>`).join('');
+      const d = overview = await api('/overview' + q());
+      const r = d.retention;
+      const rTile = (x) => (x ? `${Math.round(x.pct * 100)}%` : '—');
+      $('heroTiles').innerHTML = [
+        tile('Active today', fmt(d.active.today), 'people who played today', true),
+        tile('Active this week', fmt(d.active.week), 'different people in the last 7 days', true),
+        tile('Active this month', fmt(d.active.month), 'different people in the last 30 days', true),
+        tile('Total plays', fmt(d.totals.plays_all_time), `games played, all time · ${fmt(d.totals.plays_today)} today`, true),
+      ].join('');
+      $('tiles').innerHTML = [
+        tile('New today', fmt(d.newPeople.today), `first time on GameTok · ${fmt(d.newPeople.week)} this week`),
+        tile('Came back next day', rTile(r.d1), r.d1 ? `of ${fmt(r.d1.people)} new people (last 30 days) played again the next day` : 'not enough data yet'),
+        tile('Came back a week later', rTile(r.d7), r.d7 ? `of ${fmt(r.d7.people)} new people played again 7 days later` : 'not enough data yet'),
+        tile('Time per person', d.perPerson.secondsPerDay === null ? '—' : dur(d.perPerson.secondsPerDay),
+          d.perPerson.secondsPerDay === null ? 'measuring since 14 Oct, shows once people play' : 'average time played per person per day (7 days)'),
+      ].join('');
+      $('smallStats').innerHTML = [
+        ['Games per visit', d.perPerson.playsPerVisit === null ? '—' : d.perPerson.playsPerVisit.toFixed(1)],
+        ['Accounts', `${fmt(d.totals.accounts)}${internal ? '' : ` <span class="muted">(+${fmt(d.totals.internal_accounts)} team &amp; test hidden)</span>`}`],
+        ['New accounts this week', fmt(d.totals.signups_week)],
+        ['Live games', fmt(d.totals.live_games)],
+        ['Phones that get notifications', fmt(d.totals.push_devices)],
+        ['People ever', fmt(d.newPeople.ever)],
+      ].map(([l, v]) => `<span>${l} <b>${v}</b></span>`).join('');
       drawChart(d.series);
-      $('seriesTable').innerHTML = `<thead><tr><th>Day</th><th class="num">Views</th><th class="num">Plays</th><th class="num">Players</th><th class="num">Time played</th><th class="num">Sign-ups</th></tr></thead><tbody>` +
-        [...d.series].reverse().map((r) => `<tr><td>${esc(r.day)}</td><td class="num">${fmt(r.views)}</td><td class="num">${fmt(r.sessions)}</td><td class="num">${fmt(r.players)}</td><td class="num">${dur(r.secondsPlayed)}</td><td class="num">${fmt(r.signups)}</td></tr>`).join('') + '</tbody>';
+      $('seriesTable').innerHTML = `<thead><tr><th>Day</th><th class="num">People</th><th class="num">First time</th><th class="num">Came back</th></tr></thead><tbody>` +
+        [...d.series].reverse().map((s) => `<tr><td>${esc(dayLabel(s.day))}</td><td class="num">${fmt(s.active)}</td><td class="num">${fmt(s.new)}</td><td class="num">${fmt(s.returning)}</td></tr>`).join('') + '</tbody>';
+      renderCohorts(d.cohorts);
     }
 
-    // Line chart: one count axis, three series, crosshair + tooltip, direct labels at the line ends.
+    // Stacked bars, one per day: returning at the base, first-timers on top; 2px gap between them.
     function drawChart(series) {
       const wrap = $('chart');
       const svg = wrap.querySelector('svg');
       const tip = wrap.querySelector('.tip');
-      const W = svg.clientWidth || 800, H = 260, L = 36, R = 64, T = 12, B = 26;
-      const keys = [['views', 'Views', 'var(--s-views)'], ['sessions', 'Plays', 'var(--s-plays)'], ['players', 'Players', 'var(--s-players)']];
-      const max = Math.max(4, ...series.flatMap((r) => keys.map(([k]) => r[k])));
-      const nice = Math.pow(10, Math.floor(Math.log10(max)));
-      const top = Math.ceil(max / nice) * nice;
-      const x = (i) => L + (series.length <= 1 ? 0 : (i / (series.length - 1)) * (W - L - R));
+      const W = Math.max(svg.clientWidth, 320), H = 240, L = 34, R = 8, T = 10, B = 26;
+      const max = Math.max(4, ...series.map((s) => s.active));
+      const step = max <= 10 ? 2 : Math.pow(10, Math.floor(Math.log10(max))) / (max / Math.pow(10, Math.floor(Math.log10(max))) < 3 ? 2 : 1);
+      const top = Math.ceil(max / step) * step;
+      const slot = (W - L - R) / series.length;
+      const bw = Math.max(2, Math.min(22, slot * 0.7));
       const y = (v) => T + (1 - v / top) * (H - T - B);
       let out = '';
-      for (let g = 0; g <= 4; g++) {
-        const v = (top / 4) * g;
+      for (let v = 0; v <= top; v += step) {
         out += `<line x1="${L}" x2="${W - R}" y1="${y(v)}" y2="${y(v)}" stroke="var(--border)" stroke-width="1"/>`;
-        out += `<text x="${L - 8}" y="${y(v) + 4}" fill="var(--muted)" font-size="11" text-anchor="end">${fmt(Math.round(v))}</text>`;
+        out += `<text x="${L - 8}" y="${y(v) + 4}" fill="var(--muted)" font-size="11" text-anchor="end">${fmt(v)}</text>`;
       }
-      const step = Math.max(1, Math.ceil(series.length / 7));
-      series.forEach((r, i) => {
-        if (i % step === 0 || i === series.length - 1) {
-          out += `<text x="${x(i)}" y="${H - 6}" fill="var(--muted)" font-size="11" text-anchor="middle">${esc(new Date(r.day + 'T12:00:00').toLocaleDateString(undefined, { day: 'numeric', month: 'short' }))}</text>`;
+      const every = Math.max(1, Math.ceil(series.length / 8));
+      series.forEach((s, i) => {
+        const cx = L + slot * i + slot / 2, x = cx - bw / 2;
+        const yRet = y(s.returning), yAll = y(s.active), base = y(0);
+        if (s.returning > 0) out += `<rect x="${x}" y="${yRet}" width="${bw}" height="${Math.max(0, base - yRet)}" rx="2" fill="var(--s-returning)"/>`;
+        if (s.new > 0) out += `<rect x="${x}" y="${yAll}" width="${bw}" height="${Math.max(0, yRet - yAll - (s.returning > 0 ? 2 : 0))}" rx="2" fill="var(--s-new)"/>`;
+        // Labels count back from today, so the last one never crowds its neighbour.
+        if ((series.length - 1 - i) % every === 0) {
+          out += `<text x="${cx}" y="${H - 6}" fill="var(--muted)" font-size="11" text-anchor="middle">${esc(new Date(s.day + 'T12:00:00').toLocaleDateString(undefined, { day: 'numeric', month: 'short' }))}</text>`;
         }
+        out += `<rect x="${L + slot * i}" y="${T}" width="${slot}" height="${H - T - B}" fill="transparent" data-i="${i}" class="hit"/>`;
       });
-      const ends = [];
-      keys.forEach(([k, label, color]) => {
-        const pts = series.map((r, i) => `${x(i)},${y(r[k])}`).join(' ');
-        out += `<polyline points="${pts}" fill="none" stroke="${color}" stroke-width="2" stroke-linejoin="round" stroke-linecap="round"/>`;
-        const last = series[series.length - 1];
-        if (last) ends.push({ y: y(last[k]), label, color });
-      });
-      // Direct labels at the right end, nudged apart so they never overlap.
-      ends.sort((a, b) => a.y - b.y);
-      for (let i = 1; i < ends.length; i++) if (ends[i].y - ends[i - 1].y < 13) ends[i].y = ends[i - 1].y + 13;
-      ends.forEach((e) => { out += `<text x="${W - R + 8}" y="${e.y + 4}" fill="var(--text)" font-size="11.5">${e.label}</text>`; });
-      out += `<line class="xh" x1="0" x2="0" y1="${T}" y2="${H - B}" stroke="var(--muted)" stroke-width="1" stroke-dasharray="3 3" visibility="hidden"/>`;
-      out += `<rect x="${L}" y="${T}" width="${W - L - R}" height="${H - T - B}" fill="transparent" class="hit"/>`;
       svg.setAttribute('viewBox', `0 0 ${W} ${H}`);
       svg.innerHTML = out;
-      const hit = svg.querySelector('.hit'), xh = svg.querySelector('.xh');
-      hit.addEventListener('pointermove', (ev) => {
-        const rect = svg.getBoundingClientRect();
-        const px = ((ev.clientX - rect.left) / rect.width) * W;
-        const i = Math.max(0, Math.min(series.length - 1, Math.round(((px - L) / (W - L - R)) * (series.length - 1))));
-        const r = series[i];
-        xh.setAttribute('x1', x(i)); xh.setAttribute('x2', x(i)); xh.setAttribute('visibility', 'visible');
-        tip.style.display = 'block';
-        tip.style.left = `${(x(i) / W) * rect.width}px`;
-        tip.style.top = `${(T / H) * rect.height + 4}px`;
-        tip.innerHTML = `<div class="muted" style="margin-bottom: 4px;">${esc(r.day)}</div>` +
-          keys.map(([k, label, color]) => `<div class="row"><i style="background:${color}"></i>${label} <b style="margin-left:auto;padding-left:12px">${fmt(r[k])}</b></div>`).join('') +
-          `<div class="row muted" style="margin-top:4px">Sign-ups <b style="margin-left:auto;padding-left:12px;color:var(--text)">${fmt(r.signups)}</b></div>`;
+      svg.querySelectorAll('.hit').forEach((h) => {
+        h.addEventListener('pointerenter', () => {
+          const i = +h.dataset.i, s = series[i];
+          const rect = svg.getBoundingClientRect();
+          tip.style.display = 'block';
+          tip.style.left = `${((L + slot * i + slot / 2) / W) * rect.width}px`;
+          tip.style.top = `${(y(s.active) / H) * rect.height - 6}px`;
+          tip.innerHTML = `<div class="muted" style="margin-bottom: 4px;">${esc(dayLabel(s.day))}</div>
+            <div class="row"><b>${fmt(s.active)}</b>&nbsp;people played</div>
+            <div class="row"><i style="background: var(--s-returning)"></i>Came back <b style="margin-left: auto; padding-left: 12px;">${fmt(s.returning)}</b></div>
+            <div class="row"><i style="background: var(--s-new)"></i>First time <b style="margin-left: auto; padding-left: 12px;">${fmt(s.new)}</b></div>`;
+        });
+        h.addEventListener('pointerleave', () => { tip.style.display = 'none'; });
       });
-      hit.addEventListener('pointerleave', () => { tip.style.display = 'none'; xh.setAttribute('visibility', 'hidden'); });
     }
 
-    // ---------- Live ----------
-    async function loadLive() {
-      const d = await api('/activity?limit=80');
-      $('feed').innerHTML = d.events.map((e) => {
-        const what = e.kind === 'play'
-          ? `<b>${esc(e.who || 'guest')}</b> played <b>${esc(e.game || e.game_id)}</b> <span class="muted">${e.seconds ? 'for ' + dur(e.seconds) : ''} · ${esc(e.detail || '')}</span>`
-          : e.kind === 'signup'
-            ? `<b>${esc(e.who || 'someone')}</b> signed up <span class="muted">${esc(e.detail ? 'with ' + e.detail : 'with email')}</span>`
-            : `<b>${esc(e.who || 'a developer')}</b> published <b>${esc(e.game)}</b> <span class="muted">${esc(e.detail || '')}</span>`;
-        return `<li><span class="when" title="${esc(new Date(e.at).toLocaleString())}">${ago(e.at)}</span><span class="kind ${e.kind}">${e.kind}</span><span>${what}</span></li>`;
-      }).join('') || '<li><span></span><span></span><span class="muted">Nothing yet.</span></li>';
+    function renderCohorts(cohorts) {
+      const cell = (v, size) => (v === null ? '<td class="num muted">not yet</td>' : `<td class="num">${fmt(v)} <span class="muted">(${pctOf(v, size)})</span></td>`);
+      $('cohortTable').innerHTML = `<thead><tr><th>First played on</th><th class="num">New people</th><th class="num">Back next day</th><th class="num">Back after 7 days</th><th class="num">Back after 30 days</th><th class="num">Ever came back</th></tr></thead><tbody>` +
+        cohorts.map((c) => `<tr><td>${esc(dayLabel(c.day))}</td><td class="num">${fmt(c.size)}</td>${cell(c.d1, c.size)}${cell(c.d7, c.size)}${cell(c.d30, c.size)}<td class="num">${fmt(c.everBack)} <span class="muted">(${pctOf(c.everBack, c.size)})</span></td></tr>`).join('') + '</tbody>';
     }
 
     // ---------- Games ----------
     let gamesRows = [];
-    let gamesSort = { key: 'sessions', dir: -1 };
-    async function loadGames() {
-      gamesRows = (await api(`/games?days=${days}`)).games;
-      renderGames();
-    }
+    let gamesSort = { key: 'people', dir: -1 };
+    async function loadGames() { gamesRows = (await api('/games' + q())).games; renderGames(); }
     function renderGames() {
       const cols = [
-        ['name', 'Game'], ['creator', 'Creator'], ['status', 'Status'], ['platform', 'Phones'],
-        ['views', 'Views', 1], ['sessions', 'Plays', 1], ['players', 'Players', 1], ['rate', 'Play rate', 1],
-        ['seconds_played', 'Time played', 1], ['avg_session_seconds', 'Avg play', 1], ['last_played_at', 'Last played'],
+        ['name', 'Game'], ['people', 'People', 1], ['came_back', 'Came back', 1], ['rate', 'Return rate', 1],
+        ['plays', 'Plays', 1], ['plays_all_time', 'Plays all time', 1], ['avg_play_seconds', 'Avg play', 1], ['platform', 'On phones'], ['creator', 'Creator'],
       ];
-      const rows = gamesRows.map((g) => ({ ...g, rate: g.views ? g.sessions / g.views : null }));
+      const rows = gamesRows.map((g) => ({ ...g, rate: g.people ? g.came_back / g.people : null }));
       const { key, dir } = gamesSort;
       rows.sort((a, b) => {
         const av = a[key], bv = b[key];
@@ -309,40 +308,37 @@
         if (bv === null || bv === undefined) return -1;
         return (av > bv ? 1 : av < bv ? -1 : 0) * dir;
       });
-      const phones = { all: 'Home feed', explore: 'Explore only', desktop: 'Not on phones' };
-      $('gamesTable').innerHTML = `<thead><tr>${cols.map(([k, l, n]) => `<th class="${n ? 'num' : ''}" data-sort="${k}">${esc(l)}${gamesSort.key === k ? (gamesSort.dir < 0 ? ' ↓' : ' ↑') : ''}</th>`).join('')}</tr></thead><tbody>` +
+      const phones = { all: 'Home feed', explore: 'Explore only', desktop: 'No' };
+      $('gamesTable').innerHTML = `<thead><tr>${cols.map(([k, l, n]) => `<th class="${n ? 'num' : ''}" data-sort="${k}">${esc(l)}${key === k ? (dir < 0 ? ' ↓' : ' ↑') : ''}</th>`).join('')}</tr></thead><tbody>` +
         rows.map((g) => `<tr>
-          <td><div class="game-cell">${g.thumbnail ? `<img src="${esc(g.thumbnail)}" alt="" loading="lazy">` : '<img alt="">'}<a href="https://gametok.co/game/${encodeURIComponent(g.id)}" target="_blank" rel="noopener">${esc(g.name)}</a></div></td>
-          <td class="muted">${g.creator ? '@' + esc(g.creator) : '—'}</td>
-          <td><span class="pill">${esc(g.status || 'published')}</span></td>
-          <td class="muted">${esc(phones[g.platform] || 'Not measured')}</td>
-          <td class="num">${fmt(g.views)}</td><td class="num">${fmt(g.sessions)}</td><td class="num">${fmt(g.players)}</td>
+          <td><div class="game-cell">${g.thumbnail ? `<img src="${esc(g.thumbnail)}" alt="" loading="lazy">` : '<img alt="">'}<a href="https://gametok.co/game/${encodeURIComponent(g.id)}" target="_blank" rel="noopener">${esc(g.name)}</a>${g.status === 'draft' ? ' <span class="pill">draft</span>' : ''}</div></td>
+          <td class="num">${fmt(g.people)}</td><td class="num">${fmt(g.came_back)}</td>
           <td class="num">${g.rate === null ? '—' : Math.round(g.rate * 100) + '%'}</td>
-          <td class="num">${dur(g.seconds_played)}</td><td class="num">${dur(g.avg_session_seconds)}</td>
-          <td class="muted">${ago(g.last_played_at)}</td></tr>`).join('') + '</tbody>';
-      $('gamesTable').querySelectorAll('th').forEach((th) => th.addEventListener('click', () => {
+          <td class="num">${fmt(g.plays)}</td><td class="num">${fmt(g.plays_all_time)}</td><td class="num">${dur(g.avg_play_seconds)}</td>
+          <td class="muted">${esc(phones[g.platform] || 'Not measured')}</td>
+          <td class="muted">${g.creator ? '@' + esc(g.creator) : '—'}</td></tr>`).join('') + '</tbody>';
+      $('gamesTable').querySelectorAll('th[data-sort]').forEach((th) => th.addEventListener('click', () => {
         const k = th.dataset.sort;
         gamesSort = { key: k, dir: gamesSort.key === k ? -gamesSort.dir : -1 };
         renderGames();
       }));
     }
 
-    // ---------- Users ----------
+    // ---------- Accounts ----------
     let userOffset = 0;
     async function loadUsers(append = false) {
       if (!append) userOffset = 0;
-      const q = $('userSearch').value.trim();
-      const d = await api(`/users?limit=50&offset=${userOffset}${q ? '&q=' + encodeURIComponent(q) : ''}`);
+      const search = $('userSearch').value.trim();
+      const d = await api(`/users${q(`&limit=50&offset=${userOffset}${search ? '&q=' + encodeURIComponent(search) : ''}`)}`);
       $('userCount').textContent = `· ${fmt(d.total)}`;
       const rows = d.users.map((u) => `<tr class="click" data-id="${esc(u.id)}">
-        <td><b>${esc(u.username ? '@' + u.username : (u.display_name || 'No username'))}</b><div class="muted" style="font-size: 12px;">${esc(u.email || '')}</div></td>
-        <td class="muted">${esc(u.oauth_provider || 'email')}</td>
+        <td><b>${esc(u.username ? '@' + u.username : (u.display_name || 'No username'))}</b>${u.is_internal ? ' <span class="pill">team/test</span>' : ''}<div class="muted" style="font-size: 12px;">${esc(u.email || '')}</div></td>
         <td class="muted">${day(u.created_at)}</td>
-        <td class="num">${fmt(u.sessions)}</td><td class="num">${fmt(u.games_played)}</td><td class="num">${dur(u.seconds_played)}</td>
+        <td class="num">${fmt(u.plays)}</td><td class="num">${fmt(u.games_played)}</td>
         <td class="muted">${ago(u.last_played_at)}</td>
         <td class="num">${u.games_published ? fmt(u.games_published) : '—'}</td>
-        <td class="muted">${u.push_enabled ? 'On' : '—'}</td></tr>`).join('');
-      const head = `<thead><tr><th>User</th><th>Signed up with</th><th>Joined</th><th class="num">Plays</th><th class="num">Games</th><th class="num">Time played</th><th>Last played</th><th class="num">Published</th><th>Push</th></tr></thead>`;
+        <td class="muted">${esc(u.oauth_provider || 'email')}</td></tr>`).join('');
+      const head = `<thead><tr><th>Account</th><th>Joined</th><th class="num">Plays</th><th class="num">Games</th><th>Last played</th><th class="num">Published</th><th>Signed up with</th></tr></thead>`;
       if (append) $('usersTable').querySelector('tbody').insertAdjacentHTML('beforeend', rows);
       else $('usersTable').innerHTML = head + `<tbody>${rows}</tbody>`;
       userOffset += d.users.length;
@@ -356,41 +352,53 @@
       const d = await api(`/users/${encodeURIComponent(id)}`);
       const u = d.user;
       $('drawerBody').innerHTML = `
-        <h2 class="h2" style="font-size: 22px; margin: 0 0 4px;">${esc(u.username ? '@' + u.username : (u.display_name || 'User'))}</h2>
-        <p class="muted" style="margin: 0 0 16px;">${esc(u.email || 'no email')} · ${esc(u.oauth_provider || 'email')} · joined ${day(u.created_at)}${u.developer_agreement_accepted_at ? ' · developer' : ''}</p>
+        <h2 class="h2" style="font-size: 22px; margin: 0 0 4px;">${esc(u.username ? '@' + u.username : (u.display_name || 'Account'))}</h2>
+        <p class="muted" style="margin: 0 0 16px;">${esc(u.email || 'no email')} · ${esc(u.oauth_provider || 'email')} · joined ${day(u.created_at)}${u.developer_agreement_accepted_at ? ' · developer' : ''}${u.is_internal ? ' · team/test' : ''}</p>
         <h3 style="font-size: 14px;">Games played</h3>
-        ${d.games.length ? `<table class="data"><thead><tr><th>Game</th><th class="num">Plays</th><th class="num">Time</th><th>Last</th></tr></thead><tbody>${d.games.map((g) => `<tr><td>${esc(g.name || g.game_id)}</td><td class="num">${fmt(g.sessions)}</td><td class="num">${dur(g.seconds_played)}</td><td class="muted">${ago(g.last_played_at)}</td></tr>`).join('')}</tbody></table>` : '<p class="muted">No plays recorded.</p>'}
+        ${d.games.length ? `<table class="data"><thead><tr><th>Game</th><th class="num">Plays</th><th>First</th><th>Last</th></tr></thead><tbody>${d.games.map((g) => `<tr><td>${esc(g.name || g.game_id)}</td><td class="num">${fmt(g.plays)}</td><td class="muted">${day(g.first_played_at)}</td><td class="muted">${ago(g.last_played_at)}</td></tr>`).join('')}</tbody></table>` : '<p class="muted">Hasn\'t played anything.</p>'}
         <h3 style="font-size: 14px; margin-top: 20px;">Published games</h3>
-        ${d.published.length ? `<ul>${d.published.map((g) => `<li>${esc(g.name)} <span class="pill">${esc(g.status || 'published')}</span> <span class="muted">${day(g.created_at)}</span></li>`).join('')}</ul>` : '<p class="muted">None.</p>'}
-        <h3 style="font-size: 14px; margin-top: 20px;">Recent searches</h3>
-        ${d.searches.length ? `<ul>${d.searches.map((s) => `<li>${esc(s.query)} <span class="muted">${ago(s.created_at)}</span></li>`).join('')}</ul>` : '<p class="muted">None.</p>'}`;
+        ${d.published.length ? `<ul>${d.published.map((g) => `<li>${esc(g.name)} <span class="pill">${esc(g.status || 'published')}</span></li>`).join('')}</ul>` : '<p class="muted">None.</p>'}`;
     }
     function closeDrawer() { $('drawer').classList.remove('open'); }
     document.addEventListener('keydown', (e) => { if (e.key === 'Escape') closeDrawer(); });
 
+    // ---------- Live ----------
+    async function loadLive() {
+      const d = await api('/activity' + q('&limit=80'));
+      $('feed').innerHTML = d.events.map((e) => {
+        const what = e.kind === 'play'
+          ? `<b>${esc(e.who || 'a guest')}</b> played <b>${esc(e.game || e.game_id)}</b> <span class="muted">${e.seconds ? 'for ' + dur(e.seconds) + ' · ' : ''}${esc(e.detail === 'mobile' ? 'on a phone' : e.detail === 'web' ? 'on a computer' : '')}</span>`
+          : e.kind === 'signup'
+            ? `<b>${esc(e.who || 'someone')}</b> made an account <span class="muted">${esc(e.detail ? 'with ' + e.detail : 'with email')}</span>`
+            : `<b>${esc(e.who ? '@' + e.who : 'a developer')}</b> published <b>${esc(e.game)}</b>`;
+        const label = { play: 'Play', signup: 'Account', publish: 'Game' }[e.kind] || e.kind;
+        return `<li><span class="when" title="${esc(new Date(e.at).toLocaleString())}">${ago(e.at)}</span><span class="kind">${label}</span><span>${what}</span></li>`;
+      }).join('') || '<li><span></span><span></span><span class="muted">Nothing yet.</span></li>';
+    }
+
     // ---------- Wiring ----------
-    const loaders = { overview: loadOverview, live: loadLive, games: loadGames, users: () => loadUsers(false) };
+    const loaders = { overview: loadOverview, retention: loadOverview, games: loadGames, users: () => loadUsers(false), live: loadLive };
     const load = () => loaders[tab]().catch((e) => { if (e.message !== 'unauthorized') console.error(e); });
 
     document.querySelectorAll('.tabs-row button').forEach((b) => b.addEventListener('click', () => {
       tab = b.dataset.tab;
       document.querySelectorAll('.tabs-row button').forEach((x) => x.setAttribute('aria-selected', String(x === b)));
       document.querySelectorAll('[data-view]').forEach((v) => { v.hidden = v.dataset.view !== tab; });
-      load();
+      if (tab === 'retention' && overview) renderCohorts(overview.cohorts); else load();
     }));
     document.querySelectorAll('#range button').forEach((b) => b.addEventListener('click', () => {
       days = Number(b.dataset.days);
       document.querySelectorAll('#range button').forEach((x) => x.setAttribute('aria-pressed', String(x === b)));
       load();
     }));
+    $('internal').addEventListener('change', () => { internal = $('internal').checked; load(); });
     let searchTimer;
     $('userSearch').addEventListener('input', () => { clearTimeout(searchTimer); searchTimer = setTimeout(() => loadUsers(false), 300); });
     $('moreUsers').addEventListener('click', () => loadUsers(true));
-    window.addEventListener('resize', () => { if (tab === 'overview') load(); });
+    window.addEventListener('resize', () => { if (tab === 'overview' && overview) drawChart(overview.series); });
 
-    // Live tab refreshes every 15 s; the others every 30 s (paused while the tab is hidden).
     setInterval(() => { if (!document.hidden && tab === 'live') load(); }, 15000);
-    setInterval(() => { if (!document.hidden && tab !== 'live' && tab !== 'users') load(); }, 30000);
+    setInterval(() => { if (!document.hidden && tab === 'overview') load(); }, 60000);
 
     (async function start() {
       if (!token() && window.GameTokSSO) {
@@ -399,16 +407,13 @@
       }
       if (!token()) return showGate();
       try {
+        $('app').hidden = false;
         await loadOverview();
         $('gate').hidden = true;
-        $('app').hidden = false;
-        drawChartAfterShow();
       } catch (e) {
-        if (e.message !== 'unauthorized') { $('app').hidden = false; console.error(e); }
+        if (e.message !== 'unauthorized') console.error(e);
       }
     })();
-    // The chart measures its width, which is 0 while the page is hidden; redraw once shown.
-    function drawChartAfterShow() { requestAnimationFrame(() => loadOverview().catch(() => {})); }
   </script>
 </body>
 </html>
