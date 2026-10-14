@@ -195,15 +195,23 @@
       `<div class="tile${hero ? ' hero' : ''}"><div class="t">${esc(title)}</div><div class="v">${esc(value)}</div><div class="s">${sub}</div></div>`;
 
     // ---------- Overview ----------
+    // "3 signed in · 11 guests" under an active count (older servers don't send the split).
+    function split(key, fallback) {
+      const d = overview;
+      if (!d || !d.signedIn) return `${fallback}, guests included`;
+      const signed = d.signedIn[key], guests = d.active[key] - signed;
+      return `<b style="color: var(--text)">${fmt(signed)}</b> signed in · <b style="color: var(--text)">${fmt(guests)}</b> guests`;
+    }
+
     async function loadOverview() {
       const d = await api('/overview' + q());
       // An older server answers without these numbers (it's mid-deploy): say so instead of going blank.
       if (!d.active) throw new Error('server-updating');
       overview = d;
       $('heroTiles').innerHTML = [
-        tile('Active today', fmt(d.active.today), 'people who played today, with or without an account', true),
-        tile('Active this week', fmt(d.active.week), 'different people in the last 7 days, guests included', true),
-        tile('Active this month', fmt(d.active.month), 'different people in the last 30 days, guests included', true),
+        tile('Active today', fmt(d.active.today), split('today', 'played today'), true),
+        tile('Active this week', fmt(d.active.week), split('week', 'different people in the last 7 days'), true),
+        tile('Active this month', fmt(d.active.month), split('month', 'different people in the last 30 days'), true),
         tile('Total plays', fmt(d.totals.plays_all_time), `games played, all time · ${fmt(d.totals.plays_today)} today`, true),
       ].join('');
       $('tiles').innerHTML = [
