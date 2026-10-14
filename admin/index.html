@@ -89,6 +89,8 @@
       </div>
     </div>
 
+    <div class="note" id="status" hidden></div>
+
     <div class="tabs-row" role="tablist">
       <button role="tab" data-tab="overview" aria-selected="true">Overview</button>
       <button role="tab" data-tab="retention" aria-selected="false">Do people come back?</button>
@@ -208,7 +210,10 @@
 
     // ---------- Overview ----------
     async function loadOverview() {
-      const d = overview = await api('/overview' + q());
+      const d = await api('/overview' + q());
+      // An older server answers without these numbers (it's mid-deploy): say so instead of going blank.
+      if (!d.active || !d.retention) throw new Error('server-updating');
+      overview = d;
       const r = d.retention;
       const rTile = (x) => (x ? `${Math.round(x.pct * 100)}%` : '—');
       $('heroTiles').innerHTML = [
@@ -378,13 +383,23 @@
 
     // ---------- Wiring ----------
     const loaders = { overview: loadOverview, retention: loadOverview, games: loadGames, users: () => loadUsers(false), live: loadLive };
-    const load = () => loaders[tab]().catch((e) => { if (e.message !== 'unauthorized') console.error(e); });
+    const load = () => loaders[tab]()
+      .then(() => { $('status').hidden = true; })
+      .catch((e) => {
+        if (e.message === 'unauthorized') return;
+        console.error(e);
+        $('status').hidden = false;
+        $('status').textContent = e.message === 'server-updating'
+          ? 'The server is still installing the new numbers. This page checks again every minute and fills in by itself.'
+          : `Couldn't load the numbers (${e.message}). Checking again in a minute.`;
+      });
 
     document.querySelectorAll('.tabs-row button').forEach((b) => b.addEventListener('click', () => {
       tab = b.dataset.tab;
       document.querySelectorAll('.tabs-row button').forEach((x) => x.setAttribute('aria-selected', String(x === b)));
       document.querySelectorAll('[data-view]').forEach((v) => { v.hidden = v.dataset.view !== tab; });
       if (tab === 'retention' && overview) renderCohorts(overview.cohorts); else load();
+      if (tab === 'overview' && overview) drawChart(overview.series);
     }));
     document.querySelectorAll('#range button').forEach((b) => b.addEventListener('click', () => {
       days = Number(b.dataset.days);
@@ -398,7 +413,7 @@
     window.addEventListener('resize', () => { if (tab === 'overview' && overview) drawChart(overview.series); });
 
     setInterval(() => { if (!document.hidden && tab === 'live') load(); }, 15000);
-    setInterval(() => { if (!document.hidden && tab === 'overview') load(); }, 60000);
+    setInterval(() => { if (!document.hidden && (tab === 'overview' || !$('status').hidden)) load(); }, 60000);
 
     (async function start() {
       if (!token() && window.GameTokSSO) {
@@ -406,13 +421,8 @@
         if (shared) { try { localStorage.setItem('gametok_auth_token', shared.token); } catch (e) {} }
       }
       if (!token()) return showGate();
-      try {
-        $('app').hidden = false;
-        await loadOverview();
-        $('gate').hidden = true;
-      } catch (e) {
-        if (e.message !== 'unauthorized') console.error(e);
-      }
+      $('app').hidden = false;
+      load();
     })();
   </script>
 </body>
