@@ -198,27 +198,23 @@
     async function loadOverview() {
       const d = await api('/overview' + q());
       // An older server answers without these numbers (it's mid-deploy): say so instead of going blank.
-      if (!d.active || !d.retention) throw new Error('server-updating');
+      if (!d.active) throw new Error('server-updating');
       overview = d;
-      const r = d.retention;
-      const rTile = (x) => (x ? `${Math.round(x.pct * 100)}%` : '—');
       $('heroTiles').innerHTML = [
-        tile('Active today', fmt(d.active.today), 'people who played today', true),
-        tile('Active this week', fmt(d.active.week), 'different people in the last 7 days', true),
-        tile('Active this month', fmt(d.active.month), 'different people in the last 30 days', true),
+        tile('Active today', fmt(d.active.today), 'people who played today, with or without an account', true),
+        tile('Active this week', fmt(d.active.week), 'different people in the last 7 days, guests included', true),
+        tile('Active this month', fmt(d.active.month), 'different people in the last 30 days, guests included', true),
         tile('Total plays', fmt(d.totals.plays_all_time), `games played, all time · ${fmt(d.totals.plays_today)} today`, true),
       ].join('');
       $('tiles').innerHTML = [
         tile('New today', fmt(d.newPeople.today), `first time on GameTok · ${fmt(d.newPeople.week)} this week`),
-        tile('Came back next day', rTile(r.d1), r.d1 ? `of ${fmt(r.d1.people)} new people (last 30 days) played again the next day` : 'not enough data yet'),
-        tile('Came back a week later', rTile(r.d7), r.d7 ? `of ${fmt(r.d7.people)} new people played again 7 days later` : 'not enough data yet'),
+        tile('Games per visit', d.perPerson.playsPerVisit === null ? '—' : d.perPerson.playsPerVisit.toFixed(1), 'games someone plays each day they come (7 days)'),
+        tile('New accounts this week', fmt(d.totals.signups_week), `people who signed up · ${fmt(d.totals.signups_today)} today`),
         tile('Time per person', d.perPerson.secondsPerDay === null ? '—' : dur(d.perPerson.secondsPerDay),
           d.perPerson.secondsPerDay === null ? 'measuring since 14 Oct, shows once people play' : 'average time played per person per day (7 days)'),
       ].join('');
       $('smallStats').innerHTML = [
-        ['Games per visit', d.perPerson.playsPerVisit === null ? '—' : d.perPerson.playsPerVisit.toFixed(1)],
         ['Accounts', `${fmt(d.totals.accounts)}${internal ? '' : ` <span class="muted">(+${fmt(d.totals.internal_accounts)} team &amp; test hidden)</span>`}`],
-        ['New accounts this week', fmt(d.totals.signups_week)],
         ['Live games', fmt(d.totals.live_games)],
         ['Phones that get notifications', fmt(d.totals.push_devices)],
         ['People ever', fmt(d.newPeople.ever)],
