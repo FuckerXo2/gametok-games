@@ -97,6 +97,7 @@
 
     <!-- OVERVIEW -->
     <section data-view="overview">
+      <div class="panel" id="gtaLive" style="display: flex; align-items: center; gap: 14px; padding: 14px 18px;"><span style="width: 10px; height: 10px; border-radius: 50%; background: #22c55e; box-shadow: 0 0 10px #22c55e;"></span><b>GTA Lagos</b><span class="muted" id="gtaLiveText">checking who's in the game…</span></div>
       <div class="grid" id="heroTiles"></div>
       <div class="grid" id="tiles"></div>
       <div class="small-stats" id="smallStats"></div>
@@ -430,7 +431,17 @@
     window.addEventListener('resize', () => { if (tab === 'overview' && overview) drawChart(overview.series); });
 
     setInterval(() => { if (!document.hidden && tab === 'live') load(); }, 15000);
-    setInterval(() => { if (!document.hidden && (tab === 'overview' || !$('status').hidden)) load(); }, 60000);
+    setInterval(() => { if (!document.hidden && (tab === 'overview' || tab === 'games' || !$('status').hidden)) load(); }, 60000);
+    // GTA Lagos: how many people are in the game right now, from its multiplayer server (every 15 s)
+    async function gtaLive() {
+      if (document.hidden) return;
+      try {
+        const t = await (await fetch('https://lagos-online-267787411422.europe-west2.run.app/', { cache: 'no-store' })).text();
+        const n = +((t.match(/(\d+) playing/) || [])[1] || 0);
+        $('gtaLiveText').innerHTML = `<b style="color: var(--text); font-size: 18px;">${fmt(n)}</b> ${n === 1 ? 'person' : 'people'} in the game right now`;
+      } catch (e) { $('gtaLiveText').textContent = "can't reach the GTA Lagos server"; }
+    }
+    gtaLive(); setInterval(gtaLive, 15000);
 
     (async function start() {
       if (!token() && window.GameTokSSO) {
