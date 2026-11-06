@@ -1,0 +1,3 @@
+/admin https://gametok.co/admin/ 302
+/admin/* https://gametok.co/admin/ 302
+/* https://gametok.co/ 302
